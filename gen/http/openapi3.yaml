@@ -1,0 +1,31 @@
+openapi: 3.0.3
+info:
+  title: Policy Service
+  description: The policy service exposes HTTP API for executing policies.
+  version: "1.0"
+servers:
+- url: http://localhost:8080
+  description: Policy Server
+paths:
+  /liveness:
+    get:
+      tags:
+      - health
+      summary: Liveness health
+      operationId: health#Liveness
+      responses:
+        "200":
+          description: OK response.
+  /readiness:
+    get:
+      tags:
+      - health
+      summary: Readiness health
+      operationId: health#Readiness
+      responses:
+        "200":
+          description: OK response.
+components: {}
+tags:
+- name: health
+  description: Health service provides health check endpoints.
