@@ -14,6 +14,7 @@ import (
 	"os"
 
 	healthc "code.vereign.com/gaiax/tsa/policy/gen/http/health/client"
+	policyc "code.vereign.com/gaiax/tsa/policy/gen/http/policy/client"
 	goahttp "goa.design/goa/v3/http"
 	goa "goa.design/goa/v3/pkg"
 )
@@ -24,12 +25,16 @@ import (
 //
 func UsageCommands() string {
 	return `health (liveness|readiness)
+policy evaluate
 `
 }
 
 // UsageExamples produces an example of a valid invocation of the CLI tool.
 func UsageExamples() string {
 	return os.Args[0] + ` health liveness` + "\n" +
+		os.Args[0] + ` policy evaluate --body '{
+      "data": "Quasi et et laudantium non."
+   }' --group "Et facilis sit corporis enim." --policy-name "Saepe aut cumque." --version "Ab accusamus voluptatem et est."` + "\n" +
 		""
 }
 
@@ -48,10 +53,21 @@ func ParseEndpoint(
 		healthLivenessFlags = flag.NewFlagSet("liveness", flag.ExitOnError)
 
 		healthReadinessFlags = flag.NewFlagSet("readiness", flag.ExitOnError)
+
+		policyFlags = flag.NewFlagSet("policy", flag.ContinueOnError)
+
+		policyEvaluateFlags          = flag.NewFlagSet("evaluate", flag.ExitOnError)
+		policyEvaluateBodyFlag       = policyEvaluateFlags.String("body", "REQUIRED", "")
+		policyEvaluateGroupFlag      = policyEvaluateFlags.String("group", "REQUIRED", "Policy group")
+		policyEvaluatePolicyNameFlag = policyEvaluateFlags.String("policy-name", "REQUIRED", "Policy name")
+		policyEvaluateVersionFlag    = policyEvaluateFlags.String("version", "REQUIRED", "Policy version")
 	)
 	healthFlags.Usage = healthUsage
 	healthLivenessFlags.Usage = healthLivenessUsage
 	healthReadinessFlags.Usage = healthReadinessUsage
+
+	policyFlags.Usage = policyUsage
+	policyEvaluateFlags.Usage = policyEvaluateUsage
 
 	if err := flag.CommandLine.Parse(os.Args[1:]); err != nil {
 		return nil, nil, err
@@ -70,6 +86,8 @@ func ParseEndpoint(
 		switch svcn {
 		case "health":
 			svcf = healthFlags
+		case "policy":
+			svcf = policyFlags
 		default:
 			return nil, nil, fmt.Errorf("unknown service %q", svcn)
 		}
@@ -92,6 +110,13 @@ func ParseEndpoint(
 
 			case "readiness":
 				epf = healthReadinessFlags
+
+			}
+
+		case "policy":
+			switch epn {
+			case "evaluate":
+				epf = policyEvaluateFlags
 
 			}
 
@@ -124,6 +149,13 @@ func ParseEndpoint(
 			case "readiness":
 				endpoint = c.Readiness()
 				data = nil
+			}
+		case "policy":
+			c := policyc.NewClient(scheme, host, doer, enc, dec, restore)
+			switch epn {
+			case "evaluate":
+				endpoint = c.Evaluate()
+				data, err = policyc.BuildEvaluatePayload(*policyEvaluateBodyFlag, *policyEvaluateGroupFlag, *policyEvaluatePolicyNameFlag, *policyEvaluateVersionFlag)
 			}
 		}
 	}
@@ -165,5 +197,34 @@ Readiness implements Readiness.
 
 Example:
     %[1]s health readiness
+`, os.Args[0])
+}
+
+// policyUsage displays the usage of the policy command and its subcommands.
+func policyUsage() {
+	fmt.Fprintf(os.Stderr, `Policy Service provides evaluation of policies through Open Policy Agent.
+Usage:
+    %[1]s [globalflags] policy COMMAND [flags]
+
+COMMAND:
+    evaluate: Evaluate implements Evaluate.
+
+Additional help:
+    %[1]s policy COMMAND --help
+`, os.Args[0])
+}
+func policyEvaluateUsage() {
+	fmt.Fprintf(os.Stderr, `%[1]s [flags] policy evaluate -body JSON -group STRING -policy-name STRING -version STRING
+
+Evaluate implements Evaluate.
+    -body JSON: 
+    -group STRING: Policy group
+    -policy-name STRING: Policy name
+    -version STRING: Policy version
+
+Example:
+    %[1]s policy evaluate --body '{
+      "data": "Quasi et et laudantium non."
+   }' --group "Et facilis sit corporis enim." --policy-name "Saepe aut cumque." --version "Ab accusamus voluptatem et est."
 `, os.Args[0])
 }

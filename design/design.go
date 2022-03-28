@@ -15,6 +15,19 @@ var _ = API("policy", func() {
 	})
 })
 
+var _ = Service("policy", func() {
+	Description("Policy Service provides evaluation of policies through Open Policy Agent.")
+
+	Method("Evaluate", func() {
+		Payload(EvaluateRequest)
+		Result(EvaluateResult)
+		HTTP(func() {
+			POST("/policy/{group}/{policyName}/{version}/evaluation")
+			Response(StatusOK)
+		})
+	})
+})
+
 var _ = Service("health", func() {
 	Description("Health service provides health check endpoints.")
 
