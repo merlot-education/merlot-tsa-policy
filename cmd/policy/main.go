@@ -25,6 +25,7 @@ import (
 	"code.vereign.com/gaiax/tsa/policy/internal/service"
 	"code.vereign.com/gaiax/tsa/policy/internal/service/health"
 	"code.vereign.com/gaiax/tsa/policy/internal/service/policy"
+	"code.vereign.com/gaiax/tsa/policy/internal/storage"
 )
 
 var Version = "0.0.0+development"
@@ -41,7 +42,9 @@ func main() {
 	}
 	defer logger.Sync() //nolint:errcheck
 
-	logger.Info("staring policy service", zap.String("version", Version), zap.String("goa", goa.Version()))
+	logger.Info("policy service started", zap.String("version", Version), zap.String("goa", goa.Version()))
+
+	storage := storage.New()
 
 	// create services
 	var (
@@ -49,7 +52,7 @@ func main() {
 		healthSvc goahealth.Service
 	)
 	{
-		policySvc = policy.New()
+		policySvc = policy.New(storage, logger)
 		healthSvc = health.New()
 	}
 
