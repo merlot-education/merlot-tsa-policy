@@ -24,6 +24,44 @@ paths:
           description: OK response.
       schemes:
       - http
+  /policy/{group}/{policyName}/{version}/evaluation:
+    post:
+      tags:
+      - policy
+      summary: Evaluate policy
+      operationId: policy#Evaluate
+      parameters:
+      - name: group
+        in: path
+        description: Policy group
+        required: true
+        type: string
+      - name: policyName
+        in: path
+        description: Policy name
+        required: true
+        type: string
+      - name: version
+        in: path
+        description: Policy version
+        required: true
+        type: string
+      - name: EvaluateRequestBody
+        in: body
+        required: true
+        schema:
+          $ref: '#/definitions/PolicyEvaluateRequestBody'
+          required:
+          - data
+      responses:
+        "200":
+          description: OK response.
+          schema:
+            $ref: '#/definitions/PolicyEvaluateResponseBody'
+            required:
+            - result
+      schemes:
+      - http
   /readiness:
     get:
       tags:
@@ -35,3 +73,30 @@ paths:
           description: OK response.
       schemes:
       - http
+definitions:
+  PolicyEvaluateRequestBody:
+    title: PolicyEvaluateRequestBody
+    type: object
+    properties:
+      data:
+        type: string
+        description: Data passed as input to the policy execution runtime
+        example: Ipsum nihil quo.
+        format: binary
+    example:
+      data: Repellat velit omnis.
+    required:
+    - data
+  PolicyEvaluateResponseBody:
+    title: PolicyEvaluateResponseBody
+    type: object
+    properties:
+      result:
+        type: string
+        description: Arbitrary JSON response.
+        example: Illum ad assumenda consectetur minima voluptatibus.
+        format: binary
+    example:
+      result: Id odio aperiam voluptatem molestias corrupti sunt.
+    required:
+    - result

@@ -18,10 +18,14 @@ import (
 	goahealth "code.vereign.com/gaiax/tsa/policy/gen/health"
 	goahealthsrv "code.vereign.com/gaiax/tsa/policy/gen/http/health/server"
 	goaopenapisrv "code.vereign.com/gaiax/tsa/policy/gen/http/openapi/server"
+	goapolicysrv "code.vereign.com/gaiax/tsa/policy/gen/http/policy/server"
 	"code.vereign.com/gaiax/tsa/policy/gen/openapi"
+	goapolicy "code.vereign.com/gaiax/tsa/policy/gen/policy"
 	"code.vereign.com/gaiax/tsa/policy/internal/config"
 	"code.vereign.com/gaiax/tsa/policy/internal/service"
 	"code.vereign.com/gaiax/tsa/policy/internal/service/health"
+	"code.vereign.com/gaiax/tsa/policy/internal/service/policy"
+	"code.vereign.com/gaiax/tsa/policy/internal/storage"
 )
 
 var Version = "0.0.0+development"
@@ -38,22 +42,28 @@ func main() {
 	}
 	defer logger.Sync() //nolint:errcheck
 
-	logger.Info("staring policy service", zap.String("version", Version), zap.String("goa", goa.Version()))
+	logger.Info("policy service started", zap.String("version", Version), zap.String("goa", goa.Version()))
+
+	storage := storage.New()
 
 	// create services
 	var (
+		policySvc goapolicy.Service
 		healthSvc goahealth.Service
 	)
 	{
+		policySvc = policy.New(storage, logger)
 		healthSvc = health.New()
 	}
 
 	// create endpoints
 	var (
+		policyEndpoints  *goapolicy.Endpoints
 		healthEndpoints  *goahealth.Endpoints
 		openapiEndpoints *openapi.Endpoints
 	)
 	{
+		policyEndpoints = goapolicy.NewEndpoints(policySvc)
 		healthEndpoints = goahealth.NewEndpoints(healthSvc)
 		openapiEndpoints = openapi.NewEndpoints(nil)
 	}
@@ -76,15 +86,18 @@ func main() {
 	// the service input and output data structures to HTTP requests and
 	// responses.
 	var (
+		policyServer  *goapolicysrv.Server
 		healthServer  *goahealthsrv.Server
 		openapiServer *goaopenapisrv.Server
 	)
 	{
+		policyServer = goapolicysrv.New(policyEndpoints, mux, dec, enc, nil, errFormatter)
 		healthServer = goahealthsrv.New(healthEndpoints, mux, dec, enc, nil, errFormatter)
 		openapiServer = goaopenapisrv.New(openapiEndpoints, mux, dec, enc, nil, errFormatter, nil, nil)
 	}
 
 	// Configure the mux.
+	goapolicysrv.Mount(mux, policyServer)
 	goahealthsrv.Mount(mux, healthServer)
 	goaopenapisrv.Mount(mux, openapiServer)
 
