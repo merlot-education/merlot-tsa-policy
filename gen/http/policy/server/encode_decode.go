@@ -64,3 +64,61 @@ func DecodeEvaluateRequest(mux goahttp.Muxer, decoder func(*http.Request) goahtt
 		return payload, nil
 	}
 }
+
+// EncodeLockResponse returns an encoder for responses returned by the policy
+// Lock endpoint.
+func EncodeLockResponse(encoder func(context.Context, http.ResponseWriter) goahttp.Encoder) func(context.Context, http.ResponseWriter, interface{}) error {
+	return func(ctx context.Context, w http.ResponseWriter, v interface{}) error {
+		w.WriteHeader(http.StatusOK)
+		return nil
+	}
+}
+
+// DecodeLockRequest returns a decoder for requests sent to the policy Lock
+// endpoint.
+func DecodeLockRequest(mux goahttp.Muxer, decoder func(*http.Request) goahttp.Decoder) func(*http.Request) (interface{}, error) {
+	return func(r *http.Request) (interface{}, error) {
+		var (
+			group      string
+			policyName string
+			version    string
+
+			params = mux.Vars(r)
+		)
+		group = params["group"]
+		policyName = params["policyName"]
+		version = params["version"]
+		payload := NewLockRequest(group, policyName, version)
+
+		return payload, nil
+	}
+}
+
+// EncodeUnlockResponse returns an encoder for responses returned by the policy
+// Unlock endpoint.
+func EncodeUnlockResponse(encoder func(context.Context, http.ResponseWriter) goahttp.Encoder) func(context.Context, http.ResponseWriter, interface{}) error {
+	return func(ctx context.Context, w http.ResponseWriter, v interface{}) error {
+		w.WriteHeader(http.StatusOK)
+		return nil
+	}
+}
+
+// DecodeUnlockRequest returns a decoder for requests sent to the policy Unlock
+// endpoint.
+func DecodeUnlockRequest(mux goahttp.Muxer, decoder func(*http.Request) goahttp.Decoder) func(*http.Request) (interface{}, error) {
+	return func(r *http.Request) (interface{}, error) {
+		var (
+			group      string
+			policyName string
+			version    string
+
+			params = mux.Vars(r)
+		)
+		group = params["group"]
+		policyName = params["policyName"]
+		version = params["version"]
+		payload := NewUnlockRequest(group, policyName, version)
+
+		return payload, nil
+	}
+}

@@ -102,3 +102,115 @@ func DecodeEvaluateResponse(decoder func(*http.Response) goahttp.Decoder, restor
 		}
 	}
 }
+
+// BuildLockRequest instantiates a HTTP request object with method and path set
+// to call the "policy" service "Lock" endpoint
+func (c *Client) BuildLockRequest(ctx context.Context, v interface{}) (*http.Request, error) {
+	var (
+		group      string
+		policyName string
+		version    string
+	)
+	{
+		p, ok := v.(*policy.LockRequest)
+		if !ok {
+			return nil, goahttp.ErrInvalidType("policy", "Lock", "*policy.LockRequest", v)
+		}
+		group = p.Group
+		policyName = p.PolicyName
+		version = p.Version
+	}
+	u := &url.URL{Scheme: c.scheme, Host: c.host, Path: LockPolicyPath(group, policyName, version)}
+	req, err := http.NewRequest("POST", u.String(), nil)
+	if err != nil {
+		return nil, goahttp.ErrInvalidURL("policy", "Lock", u.String(), err)
+	}
+	if ctx != nil {
+		req = req.WithContext(ctx)
+	}
+
+	return req, nil
+}
+
+// DecodeLockResponse returns a decoder for responses returned by the policy
+// Lock endpoint. restoreBody controls whether the response body should be
+// restored after having been read.
+func DecodeLockResponse(decoder func(*http.Response) goahttp.Decoder, restoreBody bool) func(*http.Response) (interface{}, error) {
+	return func(resp *http.Response) (interface{}, error) {
+		if restoreBody {
+			b, err := ioutil.ReadAll(resp.Body)
+			if err != nil {
+				return nil, err
+			}
+			resp.Body = ioutil.NopCloser(bytes.NewBuffer(b))
+			defer func() {
+				resp.Body = ioutil.NopCloser(bytes.NewBuffer(b))
+			}()
+		} else {
+			defer resp.Body.Close()
+		}
+		switch resp.StatusCode {
+		case http.StatusOK:
+			return nil, nil
+		default:
+			body, _ := ioutil.ReadAll(resp.Body)
+			return nil, goahttp.ErrInvalidResponse("policy", "Lock", resp.StatusCode, string(body))
+		}
+	}
+}
+
+// BuildUnlockRequest instantiates a HTTP request object with method and path
+// set to call the "policy" service "Unlock" endpoint
+func (c *Client) BuildUnlockRequest(ctx context.Context, v interface{}) (*http.Request, error) {
+	var (
+		group      string
+		policyName string
+		version    string
+	)
+	{
+		p, ok := v.(*policy.UnlockRequest)
+		if !ok {
+			return nil, goahttp.ErrInvalidType("policy", "Unlock", "*policy.UnlockRequest", v)
+		}
+		group = p.Group
+		policyName = p.PolicyName
+		version = p.Version
+	}
+	u := &url.URL{Scheme: c.scheme, Host: c.host, Path: UnlockPolicyPath(group, policyName, version)}
+	req, err := http.NewRequest("DELETE", u.String(), nil)
+	if err != nil {
+		return nil, goahttp.ErrInvalidURL("policy", "Unlock", u.String(), err)
+	}
+	if ctx != nil {
+		req = req.WithContext(ctx)
+	}
+
+	return req, nil
+}
+
+// DecodeUnlockResponse returns a decoder for responses returned by the policy
+// Unlock endpoint. restoreBody controls whether the response body should be
+// restored after having been read.
+func DecodeUnlockResponse(decoder func(*http.Response) goahttp.Decoder, restoreBody bool) func(*http.Response) (interface{}, error) {
+	return func(resp *http.Response) (interface{}, error) {
+		if restoreBody {
+			b, err := ioutil.ReadAll(resp.Body)
+			if err != nil {
+				return nil, err
+			}
+			resp.Body = ioutil.NopCloser(bytes.NewBuffer(b))
+			defer func() {
+				resp.Body = ioutil.NopCloser(bytes.NewBuffer(b))
+			}()
+		} else {
+			defer resp.Body.Close()
+		}
+		switch resp.StatusCode {
+		case http.StatusOK:
+			return nil, nil
+		default:
+			body, _ := ioutil.ReadAll(resp.Body)
+			return nil, goahttp.ErrInvalidResponse("policy", "Unlock", resp.StatusCode, string(body))
+		}
+	}
+}

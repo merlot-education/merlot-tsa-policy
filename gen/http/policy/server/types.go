@@ -47,6 +47,26 @@ func NewEvaluateRequest(body *EvaluateRequestBody, group string, policyName stri
 	return v
 }
 
+// NewLockRequest builds a policy service Lock endpoint payload.
+func NewLockRequest(group string, policyName string, version string) *policy.LockRequest {
+	v := &policy.LockRequest{}
+	v.Group = group
+	v.PolicyName = policyName
+	v.Version = version
+
+	return v
+}
+
+// NewUnlockRequest builds a policy service Unlock endpoint payload.
+func NewUnlockRequest(group string, policyName string, version string) *policy.UnlockRequest {
+	v := &policy.UnlockRequest{}
+	v.Group = group
+	v.PolicyName = policyName
+	v.Version = version
+
+	return v
+}
+
 // ValidateEvaluateRequestBody runs the validations defined on
 // EvaluateRequestBody
 func ValidateEvaluateRequestBody(body *EvaluateRequestBody) (err error) {

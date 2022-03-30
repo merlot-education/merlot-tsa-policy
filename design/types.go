@@ -15,3 +15,17 @@ var EvaluateResult = Type("EvaluateResult", func() {
 	Field(1, "result", Any, "Arbitrary JSON response.")
 	Required("result")
 })
+
+var LockRequest = Type("LockRequest", func() {
+	Field(1, "group", String, "Policy group")
+	Field(2, "policyName", String, "Policy name")
+	Field(3, "version", String, "Policy version")
+	Required("group", "policyName", "version")
+})
+
+var UnlockRequest = Type("UnlockRequest", func() {
+	Field(1, "group", String, "Policy group")
+	Field(2, "policyName", String, "Policy name")
+	Field(3, "version", String, "Policy version")
+	Required("group", "policyName", "version")
+})

@@ -29,6 +29,7 @@ paths:
       tags:
       - policy
       summary: Evaluate policy
+      description: Evaluate executes a policy with the given 'data' as input.
       operationId: policy#Evaluate
       parameters:
       - name: group
@@ -62,6 +63,61 @@ paths:
             - result
       schemes:
       - http
+  /policy/{group}/{policyName}/{version}/lock:
+    post:
+      tags:
+      - policy
+      summary: Lock policy
+      description: Lock a policy so that it cannot be evaluated.
+      operationId: policy#Lock
+      parameters:
+      - name: group
+        in: path
+        description: Policy group
+        required: true
+        type: string
+      - name: policyName
+        in: path
+        description: Policy name
+        required: true
+        type: string
+      - name: version
+        in: path
+        description: Policy version
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK response.
+      schemes:
+      - http
+    delete:
+      tags:
+      - policy
+      summary: Unlock policy
+      description: Unlock a policy so it can be evaluated again.
+      operationId: policy#Unlock
+      parameters:
+      - name: group
+        in: path
+        description: Policy group
+        required: true
+        type: string
+      - name: policyName
+        in: path
+        description: Policy name
+        required: true
+        type: string
+      - name: version
+        in: path
+        description: Policy version
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK response.
+      schemes:
+      - http
   /readiness:
     get:
       tags:
@@ -81,10 +137,10 @@ definitions:
       data:
         type: string
         description: Data passed as input to the policy execution runtime
-        example: Ipsum nihil quo.
+        example: Aut minus alias.
         format: binary
     example:
-      data: Repellat velit omnis.
+      data: At eos facilis molestias in voluptas rem.
     required:
     - data
   PolicyEvaluateResponseBody:
@@ -94,9 +150,9 @@ definitions:
       result:
         type: string
         description: Arbitrary JSON response.
-        example: Illum ad assumenda consectetur minima voluptatibus.
+        example: Aliquam atque voluptatum ut dolorem.
         format: binary
     example:
-      result: Id odio aperiam voluptatem molestias corrupti sunt.
+      result: Aut facere veniam repudiandae id.
     required:
     - result

@@ -19,10 +19,31 @@ var _ = Service("policy", func() {
 	Description("Policy Service provides evaluation of policies through Open Policy Agent.")
 
 	Method("Evaluate", func() {
+		Description("Evaluate executes a policy with the given 'data' as input.")
 		Payload(EvaluateRequest)
 		Result(EvaluateResult)
 		HTTP(func() {
 			POST("/policy/{group}/{policyName}/{version}/evaluation")
+			Response(StatusOK)
+		})
+	})
+
+	Method("Lock", func() {
+		Description("Lock a policy so that it cannot be evaluated.")
+		Payload(LockRequest)
+		Result(Empty)
+		HTTP(func() {
+			POST("/policy/{group}/{policyName}/{version}/lock")
+			Response(StatusOK)
+		})
+	})
+
+	Method("Unlock", func() {
+		Description("Unlock a policy so it can be evaluated again.")
+		Payload(UnlockRequest)
+		Result(Empty)
+		HTTP(func() {
+			DELETE("/policy/{group}/{policyName}/{version}/lock")
 			Response(StatusOK)
 		})
 	})

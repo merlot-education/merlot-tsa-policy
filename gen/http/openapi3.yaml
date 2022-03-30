@@ -21,6 +21,7 @@ paths:
       tags:
       - policy
       summary: Evaluate policy
+      description: Evaluate executes a policy with the given 'data' as input.
       operationId: policy#Evaluate
       parameters:
       - name: group
@@ -30,8 +31,8 @@ paths:
         schema:
           type: string
           description: Policy group
-          example: Explicabo beatae quisquam officiis libero voluptatibus.
-        example: Repudiandae dolore quod.
+          example: Non mollitia nesciunt impedit facere.
+        example: Ut commodi perspiciatis corporis.
       - name: policyName
         in: path
         description: Policy name
@@ -39,8 +40,8 @@ paths:
         schema:
           type: string
           description: Policy name
-          example: Aut ut fuga quae eius minus.
-        example: Architecto quibusdam ab.
+          example: Accusamus autem sequi.
+        example: Et nulla.
       - name: version
         in: path
         description: Policy version
@@ -48,8 +49,8 @@ paths:
         schema:
           type: string
           description: Policy version
-          example: In illum est et hic.
-        example: Deleniti non nihil dolor aut sed.
+          example: In quis nesciunt autem et.
+        example: Sunt in et quia cum.
       requestBody:
         required: true
         content:
@@ -57,7 +58,7 @@ paths:
             schema:
               $ref: '#/components/schemas/EvaluateRequestBody'
             example:
-              data: Quasi et et laudantium non.
+              data: Id odio aperiam voluptatem molestias corrupti sunt.
       responses:
         "200":
           description: OK response.
@@ -66,7 +67,82 @@ paths:
               schema:
                 $ref: '#/components/schemas/EvaluateResult'
               example:
-                result: Et voluptates.
+                result: Provident fugiat at cupiditate.
+  /policy/{group}/{policyName}/{version}/lock:
+    delete:
+      tags:
+      - policy
+      summary: Unlock policy
+      description: Unlock a policy so it can be evaluated again.
+      operationId: policy#Unlock
+      parameters:
+      - name: group
+        in: path
+        description: Policy group
+        required: true
+        schema:
+          type: string
+          description: Policy group
+          example: Accusamus enim.
+        example: Recusandae est rerum corrupti quia.
+      - name: policyName
+        in: path
+        description: Policy name
+        required: true
+        schema:
+          type: string
+          description: Policy name
+          example: Quam dolores architecto itaque.
+        example: Voluptas ad corporis adipisci inventore ipsum.
+      - name: version
+        in: path
+        description: Policy version
+        required: true
+        schema:
+          type: string
+          description: Policy version
+          example: Recusandae dolorum nisi distinctio vitae ad.
+        example: Perspiciatis voluptatem.
+      responses:
+        "200":
+          description: OK response.
+    post:
+      tags:
+      - policy
+      summary: Lock policy
+      description: Lock a policy so that it cannot be evaluated.
+      operationId: policy#Lock
+      parameters:
+      - name: group
+        in: path
+        description: Policy group
+        required: true
+        schema:
+          type: string
+          description: Policy group
+          example: Commodi nemo fugiat id praesentium accusantium expedita.
+        example: Qui non quia.
+      - name: policyName
+        in: path
+        description: Policy name
+        required: true
+        schema:
+          type: string
+          description: Policy name
+          example: Error maxime quasi quia non voluptatibus error.
+        example: Optio quia et laborum.
+      - name: version
+        in: path
+        description: Policy version
+        required: true
+        schema:
+          type: string
+          description: Policy version
+          example: In libero perspiciatis voluptatum ut soluta.
+        example: Ut amet.
+      responses:
+        "200":
+          description: OK response.
   /readiness:
     get:
       tags:
@@ -84,10 +160,10 @@ components:
         data:
           type: string
           description: Data passed as input to the policy execution runtime
-          example: Vitae qui.
+          example: Ab accusantium ut ut aliquid sint animi.
           format: binary
       example:
-        data: Provident fugiat at cupiditate.
+        data: Dolorem cumque laborum quis nesciunt.
       required:
       - data
     EvaluateResult:
@@ -96,10 +172,10 @@ components:
         result:
           type: string
           description: Arbitrary JSON response.
-          example: Commodi vitae voluptatem.
+          example: Aut voluptas.
           format: binary
       example:
-        result: Similique quisquam optio.
+        result: Sint nam voluptatem ea consequatur similique et.
       required:
       - result
 tags:

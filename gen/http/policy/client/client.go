@@ -21,6 +21,12 @@ type Client struct {
 	// endpoint.
 	EvaluateDoer goahttp.Doer
 
+	// Lock Doer is the HTTP client used to make requests to the Lock endpoint.
+	LockDoer goahttp.Doer
+
+	// Unlock Doer is the HTTP client used to make requests to the Unlock endpoint.
+	UnlockDoer goahttp.Doer
+
 	// RestoreResponseBody controls whether the response bodies are reset after
 	// decoding so they can be read again.
 	RestoreResponseBody bool
@@ -42,6 +48,8 @@ func NewClient(
 ) *Client {
 	return &Client{
 		EvaluateDoer:        doer,
+		LockDoer:            doer,
+		UnlockDoer:          doer,
 		RestoreResponseBody: restoreBody,
 		scheme:              scheme,
 		host:                host,
@@ -69,6 +77,44 @@ func (c *Client) Evaluate() goa.Endpoint {
 		resp, err := c.EvaluateDoer.Do(req)
 		if err != nil {
 			return nil, goahttp.ErrRequestError("policy", "Evaluate", err)
+		}
+		return decodeResponse(resp)
+	}
+}
+
+// Lock returns an endpoint that makes HTTP requests to the policy service Lock
+// server.
+func (c *Client) Lock() goa.Endpoint {
+	var (
+		decodeResponse = DecodeLockResponse(c.decoder, c.RestoreResponseBody)
+	)
+	return func(ctx context.Context, v interface{}) (interface{}, error) {
+		req, err := c.BuildLockRequest(ctx, v)
+		if err != nil {
+			return nil, err
+		}
+		resp, err := c.LockDoer.Do(req)
+		if err != nil {
+			return nil, goahttp.ErrRequestError("policy", "Lock", err)
+		}
+		return decodeResponse(resp)
+	}
+}
+
+// Unlock returns an endpoint that makes HTTP requests to the policy service
+// Unlock server.
+func (c *Client) Unlock() goa.Endpoint {
+	var (
+		decodeResponse = DecodeUnlockResponse(c.decoder, c.RestoreResponseBody)
+	)
+	return func(ctx context.Context, v interface{}) (interface{}, error) {
+		req, err := c.BuildUnlockRequest(ctx, v)
+		if err != nil {
+			return nil, err
+		}
+		resp, err := c.UnlockDoer.Do(req)
+		if err != nil {
+			return nil, goahttp.ErrRequestError("policy", "Unlock", err)
 		}
 		return decodeResponse(resp)
 	}
