@@ -2,11 +2,13 @@ package storage
 
 import (
 	"context"
-	"fmt"
+	"strings"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
+
+	"code.vereign.com/gaiax/tsa/golib/errors"
 )
 
 type Policy struct {
@@ -19,37 +21,31 @@ type Policy struct {
 	LastUpdated time.Time
 }
 
-type MongoStorage struct {
+type Storage struct {
 	db         *mongo.Client
 	dbname     string
 	collection string
 }
 
-func NewMongo(db *mongo.Client, dbname, collection string) *MongoStorage {
-	return &MongoStorage{
+func New(db *mongo.Client, dbname, collection string) *Storage {
+	return &Storage{
 		db:         db,
 		dbname:     dbname,
 		collection: collection,
 	}
 }
 
-func (s *MongoStorage) Policy(ctx context.Context, name, group, version string) (*Policy, error) {
-	fmt.Println("name =", name)
-	fmt.Println("group =", group)
-	fmt.Println("version =", version)
-
-	fmt.Println("dbname = ", s.dbname)
-	fmt.Println("col = ", s.collection)
-
+func (s *Storage) Policy(ctx context.Context, name, group, version string) (*Policy, error) {
 	result := s.db.Database(s.dbname).Collection(s.collection).FindOne(ctx, bson.M{
 		"name":    name,
 		"group":   group,
 		"version": version,
 	})
 
-	fmt.Printf("result = %#+v\n", result)
-
 	if result.Err() != nil {
+		if strings.Contains(result.Err().Error(), "no documents in result") {
+			return nil, errors.New(errors.NotFound, "policy not found")
+		}
 		return nil, result.Err()
 	}
 
@@ -59,13 +55,38 @@ func (s *MongoStorage) Policy(ctx context.Context, name, group, version string) 
 	}
 
 	return &policy, nil
+}
 
-	//key := fmt.Sprintf("%s:%s:%s", name, group, version)
-	//
-	//policy, ok := policies[key]
-	//if !ok {
-	//	return nil, errors.New(errors.NotFound, "policy not found in storage")
-	//}
-	//
-	//return policy, nil
+func (s *Storage) LockPolicy(ctx context.Context, name, group, version string) error {
+	_, err := s.db.Database(s.dbname).Collection(s.collection).UpdateOne(
+		ctx,
+		bson.M{
+			"name":    name,
+			"group":   group,
+			"version": version,
+		},
+		bson.M{
+			"$set": bson.M{
+				"locked": true,
+			},
+		},
+	)
+	return err
+}
+
+func (s *Storage) UnlockPolicy(ctx context.Context, name, group, version string) error {
+	_, err := s.db.Database(s.dbname).Collection(s.collection).UpdateOne(
+		ctx,
+		bson.M{
+			"name":    name,
+			"group":   group,
+			"version": version,
+		},
+		bson.M{
+			"$set": bson.M{
+				"locked": false,
+			},
+		},
+	)
+	return err
 }

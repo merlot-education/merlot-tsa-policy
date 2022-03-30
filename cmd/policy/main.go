@@ -8,6 +8,8 @@ import (
 	"time"
 
 	"github.com/kelseyhightower/envconfig"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	goahttp "goa.design/goa/v3/http"
@@ -31,11 +33,13 @@ import (
 var Version = "0.0.0+development"
 
 func main() {
+	// load configuration from environment
 	var cfg config.Config
 	if err := envconfig.Process("", &cfg); err != nil {
 		log.Fatalf("cannot load configuration: %v", err)
 	}
 
+	// create logger
 	logger, err := createLogger(cfg.LogLevel)
 	if err != nil {
 		log.Fatalln(err)
@@ -44,7 +48,21 @@ func main() {
 
 	logger.Info("policy service started", zap.String("version", Version), zap.String("goa", goa.Version()))
 
-	storage := storage.New()
+	// connect to mongo db
+	db, err := mongo.Connect(
+		context.Background(),
+		options.Client().ApplyURI(cfg.Mongo.Addr).SetAuth(options.Credential{
+			Username: cfg.Mongo.User,
+			Password: cfg.Mongo.Pass,
+		}),
+	)
+	if err != nil {
+		logger.Fatal("error connecting to mongodb", zap.Error(err))
+	}
+	defer db.Disconnect(context.Background()) //nolint:errcheck
+
+	// create storage
+	storage := storage.New(db, cfg.Mongo.DB, cfg.Mongo.Collection)
 
 	// create services
 	var (
