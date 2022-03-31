@@ -11,7 +11,7 @@ package storage
 //		Group:       "example",
 //		Version:     "1.0",
 //		Locked:      false,
-//		LastUpdated: time.Now(),
+//		LastUpdate: time.Now(),
 //		Rego: `
 //			package gaiax
 //

@@ -12,31 +12,27 @@ import (
 )
 
 type Policy struct {
-	Filename    string
-	Name        string
-	Group       string
-	Version     string
-	Rego        string
-	Locked      bool
-	LastUpdated time.Time
+	Filename   string
+	Name       string
+	Group      string
+	Version    string
+	Rego       string
+	Locked     bool
+	LastUpdate time.Time
 }
 
 type Storage struct {
-	db         *mongo.Client
-	dbname     string
-	collection string
+	policy *mongo.Collection
 }
 
 func New(db *mongo.Client, dbname, collection string) *Storage {
 	return &Storage{
-		db:         db,
-		dbname:     dbname,
-		collection: collection,
+		policy: db.Database(dbname).Collection(collection),
 	}
 }
 
 func (s *Storage) Policy(ctx context.Context, name, group, version string) (*Policy, error) {
-	result := s.db.Database(s.dbname).Collection(s.collection).FindOne(ctx, bson.M{
+	result := s.policy.FindOne(ctx, bson.M{
 		"name":    name,
 		"group":   group,
 		"version": version,
@@ -57,8 +53,8 @@ func (s *Storage) Policy(ctx context.Context, name, group, version string) (*Pol
 	return &policy, nil
 }
 
-func (s *Storage) LockPolicy(ctx context.Context, name, group, version string) error {
-	_, err := s.db.Database(s.dbname).Collection(s.collection).UpdateOne(
+func (s *Storage) SetPolicyLock(ctx context.Context, name, group, version string, lock bool) error {
+	_, err := s.policy.UpdateOne(
 		ctx,
 		bson.M{
 			"name":    name,
@@ -67,24 +63,8 @@ func (s *Storage) LockPolicy(ctx context.Context, name, group, version string) e
 		},
 		bson.M{
 			"$set": bson.M{
-				"locked": true,
-			},
-		},
-	)
-	return err
-}
-
-func (s *Storage) UnlockPolicy(ctx context.Context, name, group, version string) error {
-	_, err := s.db.Database(s.dbname).Collection(s.collection).UpdateOne(
-		ctx,
-		bson.M{
-			"name":    name,
-			"group":   group,
-			"version": version,
-		},
-		bson.M{
-			"$set": bson.M{
-				"locked": false,
+				"locked":     lock,
+				"lastUpdate": time.Now(),
 			},
 		},
 	)

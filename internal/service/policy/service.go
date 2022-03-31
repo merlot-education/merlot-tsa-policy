@@ -13,8 +13,7 @@ import (
 
 type Storage interface {
 	Policy(ctx context.Context, name, group, version string) (*storage.Policy, error)
-	LockPolicy(ctx context.Context, name, group, version string) error
-	UnlockPolicy(ctx context.Context, name, group, version string) error
+	SetPolicyLock(ctx context.Context, name, group, version string, lock bool) error
 }
 
 type Service struct {
@@ -100,7 +99,7 @@ func (s *Service) Lock(ctx context.Context, req *policy.LockRequest) error {
 		return errors.New(errors.Forbidden, "policy is already locked")
 	}
 
-	if err := s.storage.LockPolicy(ctx, req.PolicyName, req.Group, req.Version); err != nil {
+	if err := s.storage.SetPolicyLock(ctx, req.PolicyName, req.Group, req.Version, true); err != nil {
 		logger.Error("error locking policy", zap.Error(err))
 		return errors.New("error locking policy", err)
 	}
@@ -131,7 +130,7 @@ func (s *Service) Unlock(ctx context.Context, req *policy.UnlockRequest) error {
 		return errors.New(errors.Forbidden, "policy is unlocked")
 	}
 
-	if err := s.storage.UnlockPolicy(ctx, req.PolicyName, req.Group, req.Version); err != nil {
+	if err := s.storage.SetPolicyLock(ctx, req.PolicyName, req.Group, req.Version, false); err != nil {
 		logger.Error("error unlocking policy", zap.Error(err))
 		return errors.New("error unlocking policy", err)
 	}
