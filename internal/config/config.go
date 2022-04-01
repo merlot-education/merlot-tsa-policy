@@ -5,6 +5,7 @@ import "time"
 type Config struct {
 	HTTP  httpConfig
 	Redis redisConfig
+	Mongo mongoConfig
 
 	LogLevel string `envconfig:"LOG_LEVEL" default:"INFO"`
 }
@@ -23,4 +24,12 @@ type redisConfig struct {
 	Pass string        `envconfig:"REDIS_PASS" required:"true"`
 	DB   int           `envconfig:"REDIS_DB" default:"1"`
 	TTL  time.Duration `envconfig:"REDIS_EXPIRATION"` //  no default expiration, keys are set to live forever
+}
+
+type mongoConfig struct {
+	Addr       string `envconfig:"MONGO_ADDR" required:"true"`
+	User       string `envconfig:"MONGO_USER" required:"true"`
+	Pass       string `envconfig:"MONGO_PASS" required:"true"`
+	DB         string `envconfig:"MONGO_DBNAME" default:"policy"`
+	Collection string `envconfig:"MONGO_COLLECTION" default:"policies"`
 }

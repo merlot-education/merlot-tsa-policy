@@ -16,12 +16,16 @@ import (
 // Client is the "policy" service client.
 type Client struct {
 	EvaluateEndpoint goa.Endpoint
+	LockEndpoint     goa.Endpoint
+	UnlockEndpoint   goa.Endpoint
 }
 
 // NewClient initializes a "policy" service client given the endpoints.
-func NewClient(evaluate goa.Endpoint) *Client {
+func NewClient(evaluate, lock, unlock goa.Endpoint) *Client {
 	return &Client{
 		EvaluateEndpoint: evaluate,
+		LockEndpoint:     lock,
+		UnlockEndpoint:   unlock,
 	}
 }
 
@@ -33,4 +37,16 @@ func (c *Client) Evaluate(ctx context.Context, p *EvaluateRequest) (res *Evaluat
 		return
 	}
 	return ires.(*EvaluateResult), nil
+}
+
+// Lock calls the "Lock" endpoint of the "policy" service.
+func (c *Client) Lock(ctx context.Context, p *LockRequest) (err error) {
+	_, err = c.LockEndpoint(ctx, p)
+	return
+}
+
+// Unlock calls the "Unlock" endpoint of the "policy" service.
+func (c *Client) Unlock(ctx context.Context, p *UnlockRequest) (err error) {
+	_, err = c.UnlockEndpoint(ctx, p)
+	return
 }

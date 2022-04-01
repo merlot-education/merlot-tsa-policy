@@ -20,6 +20,8 @@ import (
 type Server struct {
 	Mounts   []*MountPoint
 	Evaluate http.Handler
+	Lock     http.Handler
+	Unlock   http.Handler
 }
 
 // ErrorNamer is an interface implemented by generated error structs that
@@ -56,8 +58,12 @@ func New(
 	return &Server{
 		Mounts: []*MountPoint{
 			{"Evaluate", "POST", "/policy/{group}/{policyName}/{version}/evaluation"},
+			{"Lock", "POST", "/policy/{group}/{policyName}/{version}/lock"},
+			{"Unlock", "DELETE", "/policy/{group}/{policyName}/{version}/lock"},
 		},
 		Evaluate: NewEvaluateHandler(e.Evaluate, mux, decoder, encoder, errhandler, formatter),
+		Lock:     NewLockHandler(e.Lock, mux, decoder, encoder, errhandler, formatter),
+		Unlock:   NewUnlockHandler(e.Unlock, mux, decoder, encoder, errhandler, formatter),
 	}
 }
 
@@ -67,11 +73,15 @@ func (s *Server) Service() string { return "policy" }
 // Use wraps the server handlers with the given middleware.
 func (s *Server) Use(m func(http.Handler) http.Handler) {
 	s.Evaluate = m(s.Evaluate)
+	s.Lock = m(s.Lock)
+	s.Unlock = m(s.Unlock)
 }
 
 // Mount configures the mux to serve the policy endpoints.
 func Mount(mux goahttp.Muxer, h *Server) {
 	MountEvaluateHandler(mux, h.Evaluate)
+	MountLockHandler(mux, h.Lock)
+	MountUnlockHandler(mux, h.Unlock)
 }
 
 // Mount configures the mux to serve the policy endpoints.
@@ -109,6 +119,108 @@ func NewEvaluateHandler(
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := context.WithValue(r.Context(), goahttp.AcceptTypeKey, r.Header.Get("Accept"))
 		ctx = context.WithValue(ctx, goa.MethodKey, "Evaluate")
+		ctx = context.WithValue(ctx, goa.ServiceKey, "policy")
+		payload, err := decodeRequest(r)
+		if err != nil {
+			if err := encodeError(ctx, w, err); err != nil {
+				errhandler(ctx, w, err)
+			}
+			return
+		}
+		res, err := endpoint(ctx, payload)
+		if err != nil {
+			if err := encodeError(ctx, w, err); err != nil {
+				errhandler(ctx, w, err)
+			}
+			return
+		}
+		if err := encodeResponse(ctx, w, res); err != nil {
+			errhandler(ctx, w, err)
+		}
+	})
+}
+
+// MountLockHandler configures the mux to serve the "policy" service "Lock"
+// endpoint.
+func MountLockHandler(mux goahttp.Muxer, h http.Handler) {
+	f, ok := h.(http.HandlerFunc)
+	if !ok {
+		f = func(w http.ResponseWriter, r *http.Request) {
+			h.ServeHTTP(w, r)
+		}
+	}
+	mux.Handle("POST", "/policy/{group}/{policyName}/{version}/lock", f)
+}
+
+// NewLockHandler creates a HTTP handler which loads the HTTP request and calls
+// the "policy" service "Lock" endpoint.
+func NewLockHandler(
+	endpoint goa.Endpoint,
+	mux goahttp.Muxer,
+	decoder func(*http.Request) goahttp.Decoder,
+	encoder func(context.Context, http.ResponseWriter) goahttp.Encoder,
+	errhandler func(context.Context, http.ResponseWriter, error),
+	formatter func(err error) goahttp.Statuser,
+) http.Handler {
+	var (
+		decodeRequest  = DecodeLockRequest(mux, decoder)
+		encodeResponse = EncodeLockResponse(encoder)
+		encodeError    = goahttp.ErrorEncoder(encoder, formatter)
+	)
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := context.WithValue(r.Context(), goahttp.AcceptTypeKey, r.Header.Get("Accept"))
+		ctx = context.WithValue(ctx, goa.MethodKey, "Lock")
+		ctx = context.WithValue(ctx, goa.ServiceKey, "policy")
+		payload, err := decodeRequest(r)
+		if err != nil {
+			if err := encodeError(ctx, w, err); err != nil {
+				errhandler(ctx, w, err)
+			}
+			return
+		}
+		res, err := endpoint(ctx, payload)
+		if err != nil {
+			if err := encodeError(ctx, w, err); err != nil {
+				errhandler(ctx, w, err)
+			}
+			return
+		}
+		if err := encodeResponse(ctx, w, res); err != nil {
+			errhandler(ctx, w, err)
+		}
+	})
+}
+
+// MountUnlockHandler configures the mux to serve the "policy" service "Unlock"
+// endpoint.
+func MountUnlockHandler(mux goahttp.Muxer, h http.Handler) {
+	f, ok := h.(http.HandlerFunc)
+	if !ok {
+		f = func(w http.ResponseWriter, r *http.Request) {
+			h.ServeHTTP(w, r)
+		}
+	}
+	mux.Handle("DELETE", "/policy/{group}/{policyName}/{version}/lock", f)
+}
+
+// NewUnlockHandler creates a HTTP handler which loads the HTTP request and
+// calls the "policy" service "Unlock" endpoint.
+func NewUnlockHandler(
+	endpoint goa.Endpoint,
+	mux goahttp.Muxer,
+	decoder func(*http.Request) goahttp.Decoder,
+	encoder func(context.Context, http.ResponseWriter) goahttp.Encoder,
+	errhandler func(context.Context, http.ResponseWriter, error),
+	formatter func(err error) goahttp.Statuser,
+) http.Handler {
+	var (
+		decodeRequest  = DecodeUnlockRequest(mux, decoder)
+		encodeResponse = EncodeUnlockResponse(encoder)
+		encodeError    = goahttp.ErrorEncoder(encoder, formatter)
+	)
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := context.WithValue(r.Context(), goahttp.AcceptTypeKey, r.Header.Get("Accept"))
+		ctx = context.WithValue(ctx, goa.MethodKey, "Unlock")
 		ctx = context.WithValue(ctx, goa.ServiceKey, "policy")
 		payload, err := decodeRequest(r)
 		if err != nil {

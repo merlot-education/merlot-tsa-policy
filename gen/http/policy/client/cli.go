@@ -23,7 +23,7 @@ func BuildEvaluatePayload(policyEvaluateBody string, policyEvaluateGroup string,
 	{
 		err = json.Unmarshal([]byte(policyEvaluateBody), &body)
 		if err != nil {
-			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"data\": \"Quasi et et laudantium non.\"\n   }'")
+			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"data\": \"Id odio aperiam voluptatem molestias corrupti sunt.\"\n   }'")
 		}
 		if body.Data == nil {
 			err = goa.MergeErrors(err, goa.MissingFieldError("data", "body"))
@@ -47,6 +47,52 @@ func BuildEvaluatePayload(policyEvaluateBody string, policyEvaluateGroup string,
 	v := &policy.EvaluateRequest{
 		Data: body.Data,
 	}
+	v.Group = group
+	v.PolicyName = policyName
+	v.Version = version
+
+	return v, nil
+}
+
+// BuildLockPayload builds the payload for the policy Lock endpoint from CLI
+// flags.
+func BuildLockPayload(policyLockGroup string, policyLockPolicyName string, policyLockVersion string) (*policy.LockRequest, error) {
+	var group string
+	{
+		group = policyLockGroup
+	}
+	var policyName string
+	{
+		policyName = policyLockPolicyName
+	}
+	var version string
+	{
+		version = policyLockVersion
+	}
+	v := &policy.LockRequest{}
+	v.Group = group
+	v.PolicyName = policyName
+	v.Version = version
+
+	return v, nil
+}
+
+// BuildUnlockPayload builds the payload for the policy Unlock endpoint from
+// CLI flags.
+func BuildUnlockPayload(policyUnlockGroup string, policyUnlockPolicyName string, policyUnlockVersion string) (*policy.UnlockRequest, error) {
+	var group string
+	{
+		group = policyUnlockGroup
+	}
+	var policyName string
+	{
+		policyName = policyUnlockPolicyName
+	}
+	var version string
+	{
+		version = policyUnlockVersion
+	}
+	v := &policy.UnlockRequest{}
 	v.Group = group
 	v.PolicyName = policyName
 	v.Version = version

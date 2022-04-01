@@ -14,6 +14,9 @@ github.com/dimfeld/httptreemux/v5
 # github.com/ghodss/yaml v1.0.0
 ## explicit
 github.com/ghodss/yaml
+# github.com/go-stack/stack v1.8.0
+## explicit
+github.com/go-stack/stack
 # github.com/gobwas/glob v0.2.3
 ## explicit
 github.com/gobwas/glob
@@ -24,6 +27,9 @@ github.com/gobwas/glob/syntax/ast
 github.com/gobwas/glob/syntax/lexer
 github.com/gobwas/glob/util/runes
 github.com/gobwas/glob/util/strings
+# github.com/golang/snappy v0.0.4
+## explicit
+github.com/golang/snappy
 # github.com/google/uuid v1.3.0
 ## explicit
 github.com/google/uuid
@@ -37,6 +43,14 @@ github.com/gorilla/websocket
 # github.com/kelseyhightower/envconfig v1.4.0
 ## explicit
 github.com/kelseyhightower/envconfig
+# github.com/klauspost/compress v1.13.6
+## explicit; go 1.15
+github.com/klauspost/compress
+github.com/klauspost/compress/fse
+github.com/klauspost/compress/huff0
+github.com/klauspost/compress/internal/snapref
+github.com/klauspost/compress/zstd
+github.com/klauspost/compress/zstd/internal/xxhash
 # github.com/manveru/faker v0.0.0-20171103152722-9fbc68a78c4d
 ## explicit
 github.com/manveru/faker
@@ -114,6 +128,15 @@ github.com/rcrowley/go-metrics
 github.com/sergi/go-diff/diffmatchpatch
 # github.com/smartystreets/assertions v1.2.1
 ## explicit; go 1.17
+# github.com/xdg-go/pbkdf2 v1.0.0
+## explicit; go 1.9
+github.com/xdg-go/pbkdf2
+# github.com/xdg-go/scram v1.0.2
+## explicit; go 1.11
+github.com/xdg-go/scram
+# github.com/xdg-go/stringprep v1.0.2
+## explicit; go 1.11
+github.com/xdg-go/stringprep
 # github.com/xeipuuv/gojsonpointer v0.0.0-20190905194746-02993c407bfb
 ## explicit
 github.com/xeipuuv/gojsonpointer
@@ -123,9 +146,48 @@ github.com/xeipuuv/gojsonreference
 # github.com/yashtewari/glob-intersection v0.0.0-20180916065949-5c77d914dd0b
 ## explicit
 github.com/yashtewari/glob-intersection
+# github.com/youmark/pkcs8 v0.0.0-20181117223130-1be2e3e5546d
+## explicit
+github.com/youmark/pkcs8
 # github.com/zach-klippenstein/goregen v0.0.0-20160303162051-795b5e3961ea
 ## explicit
 github.com/zach-klippenstein/goregen
+# go.mongodb.org/mongo-driver v1.8.4
+## explicit; go 1.10
+go.mongodb.org/mongo-driver/bson
+go.mongodb.org/mongo-driver/bson/bsoncodec
+go.mongodb.org/mongo-driver/bson/bsonoptions
+go.mongodb.org/mongo-driver/bson/bsonrw
+go.mongodb.org/mongo-driver/bson/bsontype
+go.mongodb.org/mongo-driver/bson/primitive
+go.mongodb.org/mongo-driver/event
+go.mongodb.org/mongo-driver/internal
+go.mongodb.org/mongo-driver/internal/randutil
+go.mongodb.org/mongo-driver/mongo
+go.mongodb.org/mongo-driver/mongo/address
+go.mongodb.org/mongo-driver/mongo/description
+go.mongodb.org/mongo-driver/mongo/options
+go.mongodb.org/mongo-driver/mongo/readconcern
+go.mongodb.org/mongo-driver/mongo/readpref
+go.mongodb.org/mongo-driver/mongo/writeconcern
+go.mongodb.org/mongo-driver/tag
+go.mongodb.org/mongo-driver/version
+go.mongodb.org/mongo-driver/x/bsonx
+go.mongodb.org/mongo-driver/x/bsonx/bsoncore
+go.mongodb.org/mongo-driver/x/mongo/driver
+go.mongodb.org/mongo-driver/x/mongo/driver/auth
+go.mongodb.org/mongo-driver/x/mongo/driver/auth/internal/awsv4
+go.mongodb.org/mongo-driver/x/mongo/driver/auth/internal/gssapi
+go.mongodb.org/mongo-driver/x/mongo/driver/connstring
+go.mongodb.org/mongo-driver/x/mongo/driver/dns
+go.mongodb.org/mongo-driver/x/mongo/driver/mongocrypt
+go.mongodb.org/mongo-driver/x/mongo/driver/mongocrypt/options
+go.mongodb.org/mongo-driver/x/mongo/driver/ocsp
+go.mongodb.org/mongo-driver/x/mongo/driver/operation
+go.mongodb.org/mongo-driver/x/mongo/driver/session
+go.mongodb.org/mongo-driver/x/mongo/driver/topology
+go.mongodb.org/mongo-driver/x/mongo/driver/uuid
+go.mongodb.org/mongo-driver/x/mongo/driver/wiremessage
 # go.uber.org/atomic v1.7.0
 ## explicit; go 1.13
 go.uber.org/atomic
@@ -147,6 +209,10 @@ goa.design/goa/v3/eval
 goa.design/goa/v3/expr
 goa.design/goa/v3/http
 goa.design/goa/v3/pkg
+# golang.org/x/crypto v0.0.0-20210921155107-089bfa567519
+## explicit; go 1.17
+golang.org/x/crypto/ocsp
+golang.org/x/crypto/pbkdf2
 # golang.org/x/mod v0.6.0-dev.0.20220106191415-9b9b3d81d5e3
 ## explicit; go 1.17
 golang.org/x/mod/internal/lazyregexp
@@ -158,6 +224,10 @@ golang.org/x/sync/errgroup
 # golang.org/x/sys v0.0.0-20220317061510-51cd9980dadf
 ## explicit; go 1.17
 golang.org/x/sys/execabs
+# golang.org/x/text v0.3.7
+## explicit; go 1.17
+golang.org/x/text/transform
+golang.org/x/text/unicode/norm
 # golang.org/x/tools v0.1.10
 ## explicit; go 1.17
 golang.org/x/tools/go/ast/astutil
