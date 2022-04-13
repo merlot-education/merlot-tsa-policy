@@ -12,27 +12,11 @@ import (
 	goa "goa.design/goa/v3/pkg"
 )
 
-// EvaluateRequestBody is the type of the "policy" service "Evaluate" endpoint
-// HTTP request body.
-type EvaluateRequestBody struct {
-	// Data passed as input to the policy execution runtime
-	Data interface{} `form:"data" json:"data" xml:"data"`
-}
-
 // EvaluateResponseBody is the type of the "policy" service "Evaluate" endpoint
 // HTTP response body.
 type EvaluateResponseBody struct {
 	// Arbitrary JSON response.
 	Result interface{} `form:"result,omitempty" json:"result,omitempty" xml:"result,omitempty"`
-}
-
-// NewEvaluateRequestBody builds the HTTP request body from the payload of the
-// "Evaluate" endpoint of the "policy" service.
-func NewEvaluateRequestBody(p *policy.EvaluateRequest) *EvaluateRequestBody {
-	body := &EvaluateRequestBody{
-		Data: p.Data,
-	}
-	return body
 }
 
 // NewEvaluateResultOK builds a "policy" service "Evaluate" endpoint result

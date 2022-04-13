@@ -33,14 +33,14 @@ var MethodNames = [3]string{"Evaluate", "Lock", "Unlock"}
 
 // EvaluateRequest is the payload type of the policy service Evaluate method.
 type EvaluateRequest struct {
-	// Policy group
+	// Policy group.
 	Group string
-	// Policy name
+	// Policy name.
 	PolicyName string
-	// Policy version
+	// Policy version.
 	Version string
-	// Data passed as input to the policy execution runtime
-	Data interface{}
+	// Input data passed to the policy execution runtime.
+	Input interface{}
 }
 
 // EvaluateResult is the result type of the policy service Evaluate method.
@@ -51,20 +51,20 @@ type EvaluateResult struct {
 
 // LockRequest is the payload type of the policy service Lock method.
 type LockRequest struct {
-	// Policy group
+	// Policy group.
 	Group string
-	// Policy name
+	// Policy name.
 	PolicyName string
-	// Policy version
+	// Policy version.
 	Version string
 }
 
 // UnlockRequest is the payload type of the policy service Unlock method.
 type UnlockRequest struct {
-	// Policy group
+	// Policy group.
 	Group string
-	// Policy name
+	// Policy name.
 	PolicyName string
-	// Policy version
+	// Policy version.
 	Version string
 }

@@ -32,9 +32,7 @@ policy (evaluate|lock|unlock)
 // UsageExamples produces an example of a valid invocation of the CLI tool.
 func UsageExamples() string {
 	return os.Args[0] + ` health liveness` + "\n" +
-		os.Args[0] + ` policy evaluate --body '{
-      "data": "Id odio aperiam voluptatem molestias corrupti sunt."
-   }' --group "Ipsum nihil quo." --policy-name "Repellat velit omnis." --version "Vitae qui."` + "\n" +
+		os.Args[0] + ` policy evaluate --body "Similique quisquam optio." --group "Repellat velit omnis." --policy-name "Vitae qui." --version "Provident fugiat at cupiditate."` + "\n" +
 		""
 }
 
@@ -58,19 +56,19 @@ func ParseEndpoint(
 
 		policyEvaluateFlags          = flag.NewFlagSet("evaluate", flag.ExitOnError)
 		policyEvaluateBodyFlag       = policyEvaluateFlags.String("body", "REQUIRED", "")
-		policyEvaluateGroupFlag      = policyEvaluateFlags.String("group", "REQUIRED", "Policy group")
-		policyEvaluatePolicyNameFlag = policyEvaluateFlags.String("policy-name", "REQUIRED", "Policy name")
-		policyEvaluateVersionFlag    = policyEvaluateFlags.String("version", "REQUIRED", "Policy version")
+		policyEvaluateGroupFlag      = policyEvaluateFlags.String("group", "REQUIRED", "Policy group.")
+		policyEvaluatePolicyNameFlag = policyEvaluateFlags.String("policy-name", "REQUIRED", "Policy name.")
+		policyEvaluateVersionFlag    = policyEvaluateFlags.String("version", "REQUIRED", "Policy version.")
 
 		policyLockFlags          = flag.NewFlagSet("lock", flag.ExitOnError)
-		policyLockGroupFlag      = policyLockFlags.String("group", "REQUIRED", "Policy group")
-		policyLockPolicyNameFlag = policyLockFlags.String("policy-name", "REQUIRED", "Policy name")
-		policyLockVersionFlag    = policyLockFlags.String("version", "REQUIRED", "Policy version")
+		policyLockGroupFlag      = policyLockFlags.String("group", "REQUIRED", "Policy group.")
+		policyLockPolicyNameFlag = policyLockFlags.String("policy-name", "REQUIRED", "Policy name.")
+		policyLockVersionFlag    = policyLockFlags.String("version", "REQUIRED", "Policy version.")
 
 		policyUnlockFlags          = flag.NewFlagSet("unlock", flag.ExitOnError)
-		policyUnlockGroupFlag      = policyUnlockFlags.String("group", "REQUIRED", "Policy group")
-		policyUnlockPolicyNameFlag = policyUnlockFlags.String("policy-name", "REQUIRED", "Policy name")
-		policyUnlockVersionFlag    = policyUnlockFlags.String("version", "REQUIRED", "Policy version")
+		policyUnlockGroupFlag      = policyUnlockFlags.String("group", "REQUIRED", "Policy group.")
+		policyUnlockPolicyNameFlag = policyUnlockFlags.String("policy-name", "REQUIRED", "Policy name.")
+		policyUnlockVersionFlag    = policyUnlockFlags.String("version", "REQUIRED", "Policy version.")
 	)
 	healthFlags.Usage = healthUsage
 	healthLivenessFlags.Usage = healthLivenessUsage
@@ -244,14 +242,12 @@ func policyEvaluateUsage() {
 
 Evaluate executes a policy with the given 'data' as input.
     -body JSON: 
-    -group STRING: Policy group
-    -policy-name STRING: Policy name
-    -version STRING: Policy version
+    -group STRING: Policy group.
+    -policy-name STRING: Policy name.
+    -version STRING: Policy version.
 
 Example:
-    %[1]s policy evaluate --body '{
-      "data": "Id odio aperiam voluptatem molestias corrupti sunt."
-   }' --group "Ipsum nihil quo." --policy-name "Repellat velit omnis." --version "Vitae qui."
+    %[1]s policy evaluate --body "Similique quisquam optio." --group "Repellat velit omnis." --policy-name "Vitae qui." --version "Provident fugiat at cupiditate."
 `, os.Args[0])
 }
 
@@ -259,12 +255,12 @@ func policyLockUsage() {
 	fmt.Fprintf(os.Stderr, `%[1]s [flags] policy lock -group STRING -policy-name STRING -version STRING
 
 Lock a policy so that it cannot be evaluated.
-    -group STRING: Policy group
-    -policy-name STRING: Policy name
-    -version STRING: Policy version
+    -group STRING: Policy group.
+    -policy-name STRING: Policy name.
+    -version STRING: Policy version.
 
 Example:
-    %[1]s policy lock --group "Repudiandae dolore quod." --policy-name "Aut ut fuga quae eius minus." --version "Architecto quibusdam ab."
+    %[1]s policy lock --group "In illum est et hic." --policy-name "Deleniti non nihil dolor aut sed." --version "Incidunt unde consequatur voluptas dolorem nisi temporibus."
 `, os.Args[0])
 }
 
@@ -272,11 +268,11 @@ func policyUnlockUsage() {
 	fmt.Fprintf(os.Stderr, `%[1]s [flags] policy unlock -group STRING -policy-name STRING -version STRING
 
 Unlock a policy so it can be evaluated again.
-    -group STRING: Policy group
-    -policy-name STRING: Policy name
-    -version STRING: Policy version
+    -group STRING: Policy group.
+    -policy-name STRING: Policy name.
+    -version STRING: Policy version.
 
 Example:
-    %[1]s policy unlock --group "Omnis quasi aut consequuntur." --policy-name "Tempore minus." --version "Quis quos qui earum velit illum."
+    %[1]s policy unlock --group "Aliquam atque voluptatum ut dolorem." --policy-name "Aut facere veniam repudiandae id." --version "Aut minus alias."
 `, os.Args[0])
 }
