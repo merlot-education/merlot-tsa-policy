@@ -2,6 +2,7 @@ package policy
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/open-policy-agent/opa/rego"
 	"go.uber.org/zap"
@@ -28,7 +29,14 @@ func New(storage Storage, logger *zap.Logger) *Service {
 	}
 }
 
-// Evaluate executes a policy with the given 'data' as input.
+// Evaluate executes a policy with the given input.
+//
+// IMPORTANT: The policy must follow a strict convention so that such generic
+// evaluation function could work: package declaration inside the policy must
+// be exactly the same as 'group.policy'. For example:
+// Evaluating the URL: `.../policies/mygroup/example/1.0/evaluation` will
+// return results correctly, only if the package declaration inside the policy is:
+// `package mygroup.example`
 func (s *Service) Evaluate(ctx context.Context, req *policy.EvaluateRequest) (*policy.EvaluateResult, error) {
 	logger := s.logger.With(
 		zap.String("name", req.PolicyName),
@@ -49,33 +57,36 @@ func (s *Service) Evaluate(ctx context.Context, req *policy.EvaluateRequest) (*p
 		return nil, errors.New(errors.Forbidden, "policy is locked")
 	}
 
+	// regoQuery must match both the package declaration inside the policy
+	// and the group and policy name.
+	regoQuery := fmt.Sprintf("data.%s.%s", req.Group, req.PolicyName)
+
 	query, err := rego.New(
 		rego.Module(pol.Filename, pol.Rego),
-		rego.Query("result = data.gaiax.result"),
+		rego.Query(regoQuery),
 	).PrepareForEval(ctx)
 	if err != nil {
 		logger.Error("error preparing rego query", zap.Error(err))
 		return nil, errors.New("error preparing rego query", err)
 	}
 
-	resultSet, err := query.Eval(ctx, rego.EvalInput(req.Data))
+	resultSet, err := query.Eval(ctx, rego.EvalInput(req.Input))
 	if err != nil {
 		logger.Error("error evaluating rego query", zap.Error(err))
 		return nil, errors.New("error evaluating rego query", err)
 	}
 
 	if len(resultSet) == 0 {
-		logger.Error("policy evaluation result set is empty")
-		return nil, errors.New("policy evaluation result set is empty")
+		logger.Error("policy evaluation results are missing")
+		return nil, errors.New("policy evaluation results are missing")
 	}
 
-	result, ok := resultSet[0].Bindings["result"]
-	if !ok {
-		logger.Error("policy result bindings not found")
-		return nil, errors.New("policy result bindings not found")
+	if len(resultSet[0].Expressions) == 0 {
+		logger.Error("policy evaluation result expressions are missing")
+		return nil, errors.New("policy evaluation result expressions are missing")
 	}
 
-	return &policy.EvaluateResult{Result: result}, nil
+	return &policy.EvaluateResult{Result: resultSet[0].Expressions[0].Value}, nil
 }
 
 // Lock a policy so that it cannot be evaluated.

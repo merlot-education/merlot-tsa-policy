@@ -12,24 +12,17 @@ import (
 	"fmt"
 
 	policy "code.vereign.com/gaiax/tsa/policy/gen/policy"
-	goa "goa.design/goa/v3/pkg"
 )
 
 // BuildEvaluatePayload builds the payload for the policy Evaluate endpoint
 // from CLI flags.
 func BuildEvaluatePayload(policyEvaluateBody string, policyEvaluateGroup string, policyEvaluatePolicyName string, policyEvaluateVersion string) (*policy.EvaluateRequest, error) {
 	var err error
-	var body EvaluateRequestBody
+	var body interface{}
 	{
 		err = json.Unmarshal([]byte(policyEvaluateBody), &body)
 		if err != nil {
-			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"data\": \"Id odio aperiam voluptatem molestias corrupti sunt.\"\n   }'")
-		}
-		if body.Data == nil {
-			err = goa.MergeErrors(err, goa.MissingFieldError("data", "body"))
-		}
-		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "\"Similique quisquam optio.\"")
 		}
 	}
 	var group string
@@ -44,14 +37,15 @@ func BuildEvaluatePayload(policyEvaluateBody string, policyEvaluateGroup string,
 	{
 		version = policyEvaluateVersion
 	}
-	v := &policy.EvaluateRequest{
-		Data: body.Data,
+	v := body
+	res := &policy.EvaluateRequest{
+		Input: v,
 	}
-	v.Group = group
-	v.PolicyName = policyName
-	v.Version = version
+	res.Group = group
+	res.PolicyName = policyName
+	res.Version = version
 
-	return v, nil
+	return res, nil
 }
 
 // BuildLockPayload builds the payload for the policy Lock endpoint from CLI

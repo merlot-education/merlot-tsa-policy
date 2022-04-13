@@ -55,7 +55,7 @@ func EncodeEvaluateRequest(encoder func(*http.Request) goahttp.Encoder) func(*ht
 		if !ok {
 			return goahttp.ErrInvalidType("policy", "Evaluate", "*policy.EvaluateRequest", v)
 		}
-		body := NewEvaluateRequestBody(p)
+		body := p.Input
 		if err := encoder(req).Encode(&body); err != nil {
 			return goahttp.ErrEncodingError("policy", "Evaluate", err)
 		}

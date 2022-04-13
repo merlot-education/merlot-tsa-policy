@@ -10,7 +10,7 @@ var _ = API("policy", func() {
 		Description("Policy Server")
 		Host("development", func() {
 			Description("Local development server")
-			URI("http://localhost:8080")
+			URI("http://localhost:8081")
 		})
 	})
 })
@@ -24,6 +24,7 @@ var _ = Service("policy", func() {
 		Result(EvaluateResult)
 		HTTP(func() {
 			POST("/policy/{group}/{policyName}/{version}/evaluation")
+			Body("input")
 			Response(StatusOK)
 		})
 	})

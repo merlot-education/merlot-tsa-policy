@@ -9,15 +9,7 @@ package server
 
 import (
 	policy "code.vereign.com/gaiax/tsa/policy/gen/policy"
-	goa "goa.design/goa/v3/pkg"
 )
-
-// EvaluateRequestBody is the type of the "policy" service "Evaluate" endpoint
-// HTTP request body.
-type EvaluateRequestBody struct {
-	// Data passed as input to the policy execution runtime
-	Data interface{} `form:"data,omitempty" json:"data,omitempty" xml:"data,omitempty"`
-}
 
 // EvaluateResponseBody is the type of the "policy" service "Evaluate" endpoint
 // HTTP response body.
@@ -36,15 +28,16 @@ func NewEvaluateResponseBody(res *policy.EvaluateResult) *EvaluateResponseBody {
 }
 
 // NewEvaluateRequest builds a policy service Evaluate endpoint payload.
-func NewEvaluateRequest(body *EvaluateRequestBody, group string, policyName string, version string) *policy.EvaluateRequest {
-	v := &policy.EvaluateRequest{
-		Data: body.Data,
+func NewEvaluateRequest(body interface{}, group string, policyName string, version string) *policy.EvaluateRequest {
+	v := body
+	res := &policy.EvaluateRequest{
+		Input: v,
 	}
-	v.Group = group
-	v.PolicyName = policyName
-	v.Version = version
+	res.Group = group
+	res.PolicyName = policyName
+	res.Version = version
 
-	return v
+	return res
 }
 
 // NewLockRequest builds a policy service Lock endpoint payload.
@@ -65,13 +58,4 @@ func NewUnlockRequest(group string, policyName string, version string) *policy.U
 	v.Version = version
 
 	return v
-}
-
-// ValidateEvaluateRequestBody runs the validations defined on
-// EvaluateRequestBody
-func ValidateEvaluateRequestBody(body *EvaluateRequestBody) (err error) {
-	if body.Data == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("data", "body"))
-	}
-	return
 }

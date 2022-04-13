@@ -34,7 +34,7 @@ func EncodeEvaluateResponse(encoder func(context.Context, http.ResponseWriter) g
 func DecodeEvaluateRequest(mux goahttp.Muxer, decoder func(*http.Request) goahttp.Decoder) func(*http.Request) (interface{}, error) {
 	return func(r *http.Request) (interface{}, error) {
 		var (
-			body EvaluateRequestBody
+			body interface{}
 			err  error
 		)
 		err = decoder(r).Decode(&body)
@@ -43,10 +43,6 @@ func DecodeEvaluateRequest(mux goahttp.Muxer, decoder func(*http.Request) goahtt
 				return nil, goa.MissingPayloadError()
 			}
 			return nil, goa.DecodePayloadError(err.Error())
-		}
-		err = ValidateEvaluateRequestBody(&body)
-		if err != nil {
-			return nil, err
 		}
 
 		var (
@@ -59,7 +55,7 @@ func DecodeEvaluateRequest(mux goahttp.Muxer, decoder func(*http.Request) goahtt
 		group = params["group"]
 		policyName = params["policyName"]
 		version = params["version"]
-		payload := NewEvaluateRequest(&body, group, policyName, version)
+		payload := NewEvaluateRequest(body, group, policyName, version)
 
 		return payload, nil
 	}
