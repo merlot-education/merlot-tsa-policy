@@ -19,7 +19,6 @@ func TestCacheExt_GetCacheFunc(t *testing.T) {
 		fmt.Fprint(w, expected)
 	}))
 	defer srv.Close()
-	fmt.Println(srv.URL)
 
 	cache := regoext.NewCacheExt(srv.URL)
 

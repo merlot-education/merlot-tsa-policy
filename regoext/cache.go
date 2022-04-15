@@ -29,9 +29,9 @@ func (ce *CacheExt) GetCacheFunc() (*rego.Function, rego.Builtin3) {
 
 			if err := ast.As(a.Value, &key); err != nil {
 				return nil, err
-			} else if ast.As(b.Value, &namespace); err != nil {
+			} else if err = ast.As(b.Value, &namespace); err != nil {
 				return nil, err
-			} else if ast.As(c.Value, &scope); err != nil {
+			} else if err = ast.As(c.Value, &scope); err != nil {
 				return nil, err
 			}
 
