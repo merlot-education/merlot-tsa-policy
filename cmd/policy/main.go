@@ -24,6 +24,7 @@ import (
 	"code.vereign.com/gaiax/tsa/policy/gen/openapi"
 	goapolicy "code.vereign.com/gaiax/tsa/policy/gen/policy"
 	"code.vereign.com/gaiax/tsa/policy/internal/config"
+	"code.vereign.com/gaiax/tsa/policy/internal/regocache"
 	"code.vereign.com/gaiax/tsa/policy/internal/service"
 	"code.vereign.com/gaiax/tsa/policy/internal/service/health"
 	"code.vereign.com/gaiax/tsa/policy/internal/service/policy"
@@ -62,7 +63,13 @@ func main() {
 	defer db.Disconnect(context.Background()) //nolint:errcheck
 
 	// create storage
-	storage := storage.New(db, cfg.Mongo.DB, cfg.Mongo.Collection)
+	storage := storage.New(db, cfg.Mongo.DB, cfg.Mongo.Collection, logger)
+
+	// create rego query cache
+	regocache := regocache.New()
+
+	// subscribe the cache for policy data changes
+	storage.AddPolicyChangeSubscriber(regocache)
 
 	// create services
 	var (
@@ -70,7 +77,7 @@ func main() {
 		healthSvc goahealth.Service
 	)
 	{
-		policySvc = policy.New(storage, logger)
+		policySvc = policy.New(storage, regocache, logger)
 		healthSvc = health.New()
 	}
 
@@ -135,6 +142,13 @@ func main() {
 			return err
 		}
 		return errors.New("server stopped successfully")
+	})
+	g.Go(func() error {
+		if err := storage.ListenPolicyDataChanges(ctx); err != nil {
+			logger.Error("mongo change streams listener stopped", zap.Error(err))
+			return err
+		}
+		return nil
 	})
 	if err := g.Wait(); err != nil {
 		logger.Error("run group stopped", zap.Error(err))

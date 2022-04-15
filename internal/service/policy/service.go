@@ -17,21 +17,28 @@ type Storage interface {
 	SetPolicyLock(ctx context.Context, name, group, version string, lock bool) error
 }
 
+type RegoCache interface {
+	Set(key string, query *rego.PreparedEvalQuery)
+	Get(key string) (query *rego.PreparedEvalQuery, found bool)
+}
+
 type Service struct {
 	storage Storage
+	cache   RegoCache
 	logger  *zap.Logger
 }
 
-func New(storage Storage, logger *zap.Logger) *Service {
+func New(storage Storage, cache RegoCache, logger *zap.Logger) *Service {
 	return &Service{
 		storage: storage,
+		cache:   cache,
 		logger:  logger,
 	}
 }
 
 // Evaluate executes a policy with the given input.
 //
-// IMPORTANT: The policy must follow a strict convention so that such generic
+// Note: The policy must follow strict conventions so that such generic
 // evaluation function could work: package declaration inside the policy must
 // be exactly the same as 'group.policy'. For example:
 // Evaluating the URL: `.../policies/mygroup/example/1.0/evaluation` will
@@ -44,30 +51,10 @@ func (s *Service) Evaluate(ctx context.Context, req *policy.EvaluateRequest) (*p
 		zap.String("version", req.Version),
 	)
 
-	pol, err := s.storage.Policy(ctx, req.PolicyName, req.Group, req.Version)
+	query, err := s.prepareQuery(ctx, req.PolicyName, req.Group, req.Version)
 	if err != nil {
-		logger.Error("error getting policy from storage", zap.Error(err))
-		if errors.Is(errors.NotFound, err) {
-			return nil, err
-		}
+		logger.Error("error getting prepared query", zap.Error(err))
 		return nil, errors.New("error evaluating policy", err)
-	}
-
-	if pol.Locked {
-		return nil, errors.New(errors.Forbidden, "policy is locked")
-	}
-
-	// regoQuery must match both the package declaration inside the policy
-	// and the group and policy name.
-	regoQuery := fmt.Sprintf("data.%s.%s", req.Group, req.PolicyName)
-
-	query, err := rego.New(
-		rego.Module(pol.Filename, pol.Rego),
-		rego.Query(regoQuery),
-	).PrepareForEval(ctx)
-	if err != nil {
-		logger.Error("error preparing rego query", zap.Error(err))
-		return nil, errors.New("error preparing rego query", err)
 	}
 
 	resultSet, err := query.Eval(ctx, rego.EvalInput(req.Input))
@@ -149,4 +136,49 @@ func (s *Service) Unlock(ctx context.Context, req *policy.UnlockRequest) error {
 	logger.Debug("policy is unlocked")
 
 	return nil
+}
+
+// prepareQuery tries to get a prepared query from the regocache.
+// If the cache entry is not found, it will try to prepare a new
+// query and will set it into the cache for future use.
+func (s *Service) prepareQuery(ctx context.Context, policyName, group, version string) (*rego.PreparedEvalQuery, error) {
+	key := s.queryCacheKey(policyName, group, version)
+	query, ok := s.cache.Get(key)
+	if ok {
+		return query, nil
+	}
+
+	// retrieve policy from database storage
+	pol, err := s.storage.Policy(ctx, policyName, group, version)
+	if err != nil {
+		if errors.Is(errors.NotFound, err) {
+			return nil, err
+		}
+		return nil, errors.New("error getting policy from storage", err)
+	}
+
+	// if policy is locked, return an error
+	if pol.Locked {
+		return nil, errors.New(errors.Forbidden, "policy is locked")
+	}
+
+	// regoQuery must match both the package declaration inside the policy
+	// and the group and policy name.
+	regoQuery := fmt.Sprintf("data.%s.%s", group, policyName)
+
+	newQuery, err := rego.New(
+		rego.Module(pol.Filename, pol.Rego),
+		rego.Query(regoQuery),
+	).PrepareForEval(ctx)
+	if err != nil {
+		return nil, errors.New("error preparing rego query", err)
+	}
+
+	s.cache.Set(key, &newQuery)
+
+	return &newQuery, nil
+}
+
+func (s *Service) queryCacheKey(policyName, group, version string) string {
+	return fmt.Sprintf("%s,%s,%s", policyName, group, version)
 }

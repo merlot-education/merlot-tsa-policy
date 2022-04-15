@@ -7,9 +7,14 @@ import (
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.uber.org/zap"
 
 	"code.vereign.com/gaiax/tsa/golib/errors"
 )
+
+type PolicyChangeSubscriber interface {
+	PolicyDataChange()
+}
 
 type Policy struct {
 	Filename   string
@@ -22,12 +27,15 @@ type Policy struct {
 }
 
 type Storage struct {
-	policy *mongo.Collection
+	policy     *mongo.Collection
+	subscriber PolicyChangeSubscriber
+	logger     *zap.Logger
 }
 
-func New(db *mongo.Client, dbname, collection string) *Storage {
+func New(db *mongo.Client, dbname, collection string, logger *zap.Logger) *Storage {
 	return &Storage{
 		policy: db.Database(dbname).Collection(collection),
+		logger: logger,
 	}
 }
 
@@ -69,4 +77,24 @@ func (s *Storage) SetPolicyLock(ctx context.Context, name, group, version string
 		},
 	)
 	return err
+}
+
+func (s *Storage) ListenPolicyDataChanges(ctx context.Context) error {
+	stream, err := s.policy.Watch(ctx, mongo.Pipeline{})
+	if err != nil {
+		return errors.New("cannot subscribe for policy data changes", err)
+	}
+
+	for stream.Next(ctx) {
+		s.logger.Info("mongo policy data changed")
+		if s.subscriber != nil {
+			s.subscriber.PolicyDataChange()
+		}
+	}
+
+	return stream.Err()
+}
+
+func (s *Storage) AddPolicyChangeSubscriber(subscriber PolicyChangeSubscriber) {
+	s.subscriber = subscriber
 }
