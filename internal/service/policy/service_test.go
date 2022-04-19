@@ -160,3 +160,197 @@ func TestService_Evaluate(t *testing.T) {
 		})
 	}
 }
+
+func TestService_Lock(t *testing.T) {
+	// prepare test request to be used in tests
+	testReq := func() *goapolicy.LockRequest {
+		return &goapolicy.LockRequest{
+			Group:      "testgroup",
+			PolicyName: "example",
+			Version:    "1.0",
+		}
+	}
+
+	tests := []struct {
+		name    string
+		req     *goapolicy.LockRequest
+		storage policy.Storage
+
+		errkind errors.Kind
+		errtext string
+	}{
+		{
+			name: "policy is not found",
+			req:  testReq(),
+			storage: &policyfakes.FakeStorage{
+				PolicyStub: func(ctx context.Context, s string, s2 string, s3 string) (*storage.Policy, error) {
+					return nil, errors.New(errors.NotFound)
+				},
+			},
+			errkind: errors.NotFound,
+			errtext: "not found",
+		},
+		{
+			name: "error getting policy from storage",
+			req:  testReq(),
+			storage: &policyfakes.FakeStorage{
+				PolicyStub: func(ctx context.Context, s string, s2 string, s3 string) (*storage.Policy, error) {
+					return nil, errors.New("some error")
+				},
+			},
+			errkind: errors.Unknown,
+			errtext: "some error",
+		},
+		{
+			name: "policy is already locked",
+			req:  testReq(),
+			storage: &policyfakes.FakeStorage{
+				PolicyStub: func(ctx context.Context, s string, s2 string, s3 string) (*storage.Policy, error) {
+					return &storage.Policy{Locked: true}, nil
+				},
+			},
+			errkind: errors.Forbidden,
+			errtext: "policy is already locked",
+		},
+		{
+			name: "fail to lock policy",
+			req:  testReq(),
+			storage: &policyfakes.FakeStorage{
+				PolicyStub: func(ctx context.Context, s string, s2 string, s3 string) (*storage.Policy, error) {
+					return &storage.Policy{Locked: false}, nil
+				},
+				SetPolicyLockStub: func(ctx context.Context, name, group, version string, lock bool) error {
+					return errors.New(errors.Internal, "error locking policy")
+				},
+			},
+			errkind: errors.Internal,
+			errtext: "error locking policy",
+		},
+		{
+			name: "policy is locked successfully",
+			req:  testReq(),
+			storage: &policyfakes.FakeStorage{
+				PolicyStub: func(ctx context.Context, s string, s2 string, s3 string) (*storage.Policy, error) {
+					return &storage.Policy{Locked: false}, nil
+				},
+				SetPolicyLockStub: func(ctx context.Context, name, group, version string, lock bool) error {
+					return nil
+				},
+			},
+			errtext: "",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			svc := policy.New(test.storage, nil, zap.NewNop())
+			err := svc.Lock(context.Background(), test.req)
+			if err == nil {
+				assert.Empty(t, test.errtext)
+			} else {
+				e, ok := err.(*errors.Error)
+				assert.True(t, ok)
+
+				assert.Contains(t, e.Error(), test.errtext)
+				assert.Equal(t, test.errkind, e.Kind)
+			}
+		})
+	}
+}
+
+func TestService_Unlock(t *testing.T) {
+	// prepare test request to be used in tests
+	testReq := func() *goapolicy.UnlockRequest {
+		return &goapolicy.UnlockRequest{
+			Group:      "testgroup",
+			PolicyName: "example",
+			Version:    "1.0",
+		}
+	}
+
+	tests := []struct {
+		name    string
+		req     *goapolicy.UnlockRequest
+		storage policy.Storage
+
+		errkind errors.Kind
+		errtext string
+	}{
+		{
+			name: "policy is not found",
+			req:  testReq(),
+			storage: &policyfakes.FakeStorage{
+				PolicyStub: func(ctx context.Context, s string, s2 string, s3 string) (*storage.Policy, error) {
+					return nil, errors.New(errors.NotFound)
+				},
+			},
+			errkind: errors.NotFound,
+			errtext: "not found",
+		},
+		{
+			name: "error getting policy from storage",
+			req:  testReq(),
+			storage: &policyfakes.FakeStorage{
+				PolicyStub: func(ctx context.Context, s string, s2 string, s3 string) (*storage.Policy, error) {
+					return nil, errors.New("some error")
+				},
+			},
+			errkind: errors.Unknown,
+			errtext: "some error",
+		},
+		{
+			name: "policy is unlocked",
+			req:  testReq(),
+			storage: &policyfakes.FakeStorage{
+				PolicyStub: func(ctx context.Context, s string, s2 string, s3 string) (*storage.Policy, error) {
+					return &storage.Policy{Locked: false}, nil
+				},
+			},
+			errkind: errors.Forbidden,
+			errtext: "policy is unlocked",
+		},
+		{
+			name: "fail to unlock policy",
+			req:  testReq(),
+			storage: &policyfakes.FakeStorage{
+				PolicyStub: func(ctx context.Context, s string, s2 string, s3 string) (*storage.Policy, error) {
+					return &storage.Policy{Locked: true}, nil
+				},
+				SetPolicyLockStub: func(ctx context.Context, name, group, version string, lock bool) error {
+					return errors.New(errors.Internal, "error unlocking policy")
+				},
+			},
+			errkind: errors.Internal,
+			errtext: "error unlocking policy",
+		},
+		{
+			name: "policy is unlocked successfully",
+			req:  testReq(),
+			storage: &policyfakes.FakeStorage{
+				PolicyStub: func(ctx context.Context, s string, s2 string, s3 string) (*storage.Policy, error) {
+					return &storage.Policy{Locked: true}, nil
+				},
+				SetPolicyLockStub: func(ctx context.Context, name, group, version string, lock bool) error {
+					return nil
+				},
+			},
+			errtext: "",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			svc := policy.New(test.storage, nil, zap.NewNop())
+			err := svc.Unlock(context.Background(), test.req)
+			if err == nil {
+				assert.Empty(t, test.errtext)
+			} else {
+				e, ok := err.(*errors.Error)
+				assert.True(t, ok)
+
+				assert.Contains(t, e.Error(), test.errtext)
+				assert.Equal(t, test.errkind, e.Kind)
+			}
+		})
+	}
+}
