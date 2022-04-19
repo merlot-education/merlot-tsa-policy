@@ -12,6 +12,9 @@ import (
 	"code.vereign.com/gaiax/tsa/policy/internal/storage"
 )
 
+//go:generate counterfeiter . Storage
+//go:generate counterfeiter . RegoCache
+
 type Storage interface {
 	Policy(ctx context.Context, name, group, version string) (*storage.Policy, error)
 	SetPolicyLock(ctx context.Context, name, group, version string, lock bool) error

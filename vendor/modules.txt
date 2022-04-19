@@ -5,6 +5,9 @@ code.vereign.com/gaiax/tsa/golib/graceful
 # github.com/OneOfOne/xxhash v1.2.8
 ## explicit; go 1.11
 github.com/OneOfOne/xxhash
+# github.com/davecgh/go-spew v1.1.1
+## explicit
+github.com/davecgh/go-spew/spew
 # github.com/dimfeld/httppath v0.0.0-20170720192232-ee938bf73598
 ## explicit
 github.com/dimfeld/httppath
@@ -120,6 +123,9 @@ github.com/open-policy-agent/opa/version
 # github.com/pkg/errors v0.9.1
 ## explicit
 github.com/pkg/errors
+# github.com/pmezard/go-difflib v1.0.0
+## explicit
+github.com/pmezard/go-difflib/difflib
 # github.com/rcrowley/go-metrics v0.0.0-20200313005456-10cdbea86bc0
 ## explicit
 github.com/rcrowley/go-metrics
@@ -128,6 +134,9 @@ github.com/rcrowley/go-metrics
 github.com/sergi/go-diff/diffmatchpatch
 # github.com/smartystreets/assertions v1.2.1
 ## explicit; go 1.17
+# github.com/stretchr/testify v1.7.0
+## explicit; go 1.13
+github.com/stretchr/testify/assert
 # github.com/xdg-go/pbkdf2 v1.0.0
 ## explicit; go 1.9
 github.com/xdg-go/pbkdf2
@@ -254,3 +263,6 @@ golang.org/x/xerrors/internal
 # gopkg.in/yaml.v2 v2.4.0
 ## explicit; go 1.15
 gopkg.in/yaml.v2
+# gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
+## explicit
+gopkg.in/yaml.v3
