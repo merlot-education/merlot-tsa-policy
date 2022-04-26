@@ -11,6 +11,7 @@ import (
 
 	"code.vereign.com/gaiax/tsa/golib/errors"
 	goapolicy "code.vereign.com/gaiax/tsa/policy/gen/policy"
+	"code.vereign.com/gaiax/tsa/policy/internal/regofunc"
 	"code.vereign.com/gaiax/tsa/policy/internal/service/policy"
 	"code.vereign.com/gaiax/tsa/policy/internal/service/policy/policyfakes"
 	"code.vereign.com/gaiax/tsa/policy/internal/storage"
@@ -19,7 +20,8 @@ import (
 func TestNew(t *testing.T) {
 	storage := &policyfakes.FakeStorage{}
 	regocache := &policyfakes.FakeRegoCache{}
-	svc := policy.New(storage, regocache, zap.NewNop())
+	regofuncs := regofunc.New("https://example.com")
+	svc := policy.New(storage, regocache, regofuncs, zap.NewNop())
 	assert.Implements(t, (*goapolicy.Service)(nil), svc)
 }
 
@@ -52,7 +54,7 @@ func TestService_Evaluate(t *testing.T) {
 		regocache policy.RegoCache
 
 		// expected result
-		res     *goapolicy.EvaluateResult
+		res     interface{}
 		errkind errors.Kind
 		errtext string
 	}{
@@ -65,7 +67,7 @@ func TestService_Evaluate(t *testing.T) {
 					return &q, true
 				},
 			},
-			res: &goapolicy.EvaluateResult{Result: map[string]interface{}{"allow": true}},
+			res: map[string]interface{}{"allow": true},
 		},
 		{
 			name: "policy is not found",
@@ -138,13 +140,14 @@ func TestService_Evaluate(t *testing.T) {
 					}, nil
 				},
 			},
-			res: &goapolicy.EvaluateResult{Result: map[string]interface{}{"allow": true}},
+			res: map[string]interface{}{"allow": true},
 		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			svc := policy.New(test.storage, test.regocache, zap.NewNop())
+			regofuncs := regofunc.New("https://example.com")
+			svc := policy.New(test.storage, test.regocache, regofuncs, zap.NewNop())
 			res, err := svc.Evaluate(context.Background(), test.req)
 			if err == nil {
 				assert.Empty(t, test.errtext)
@@ -243,7 +246,8 @@ func TestService_Lock(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			svc := policy.New(test.storage, nil, zap.NewNop())
+			regofuncs := regofunc.New("https://example.com")
+			svc := policy.New(test.storage, nil, regofuncs, zap.NewNop())
 			err := svc.Lock(context.Background(), test.req)
 			if err == nil {
 				assert.Empty(t, test.errtext)
@@ -340,7 +344,8 @@ func TestService_Unlock(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			svc := policy.New(test.storage, nil, zap.NewNop())
+			regofuncs := regofunc.New("https://example.com")
+			svc := policy.New(test.storage, nil, regofuncs, zap.NewNop())
 			err := svc.Unlock(context.Background(), test.req)
 			if err == nil {
 				assert.Empty(t, test.errtext)

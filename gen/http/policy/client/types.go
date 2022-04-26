@@ -6,34 +6,3 @@
 // $ goa gen code.vereign.com/gaiax/tsa/policy/design
 
 package client
-
-import (
-	policy "code.vereign.com/gaiax/tsa/policy/gen/policy"
-	goa "goa.design/goa/v3/pkg"
-)
-
-// EvaluateResponseBody is the type of the "policy" service "Evaluate" endpoint
-// HTTP response body.
-type EvaluateResponseBody struct {
-	// Arbitrary JSON response.
-	Result interface{} `form:"result,omitempty" json:"result,omitempty" xml:"result,omitempty"`
-}
-
-// NewEvaluateResultOK builds a "policy" service "Evaluate" endpoint result
-// from a HTTP "OK" response.
-func NewEvaluateResultOK(body *EvaluateResponseBody) *policy.EvaluateResult {
-	v := &policy.EvaluateResult{
-		Result: body.Result,
-	}
-
-	return v
-}
-
-// ValidateEvaluateResponseBody runs the validations defined on
-// EvaluateResponseBody
-func ValidateEvaluateResponseBody(body *EvaluateResponseBody) (err error) {
-	if body.Result == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("result", "body"))
-	}
-	return
-}

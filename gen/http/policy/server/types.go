@@ -11,22 +11,6 @@ import (
 	policy "code.vereign.com/gaiax/tsa/policy/gen/policy"
 )
 
-// EvaluateResponseBody is the type of the "policy" service "Evaluate" endpoint
-// HTTP response body.
-type EvaluateResponseBody struct {
-	// Arbitrary JSON response.
-	Result interface{} `form:"result" json:"result" xml:"result"`
-}
-
-// NewEvaluateResponseBody builds the HTTP response body from the result of the
-// "Evaluate" endpoint of the "policy" service.
-func NewEvaluateResponseBody(res *policy.EvaluateResult) *EvaluateResponseBody {
-	body := &EvaluateResponseBody{
-		Result: res.Result,
-	}
-	return body
-}
-
 // NewEvaluateRequest builds a policy service Evaluate endpoint payload.
 func NewEvaluateRequest(body interface{}, group string, policyName string, version string) *policy.EvaluateRequest {
 	v := body

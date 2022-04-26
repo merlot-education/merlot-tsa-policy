@@ -9,6 +9,7 @@ import (
 
 	"code.vereign.com/gaiax/tsa/golib/errors"
 	"code.vereign.com/gaiax/tsa/policy/gen/policy"
+	"code.vereign.com/gaiax/tsa/policy/internal/regofunc"
 	"code.vereign.com/gaiax/tsa/policy/internal/storage"
 )
 
@@ -26,16 +27,18 @@ type RegoCache interface {
 }
 
 type Service struct {
-	storage Storage
-	cache   RegoCache
-	logger  *zap.Logger
+	storage  Storage
+	cache    RegoCache
+	regoFunc *regofunc.RegoFunc
+	logger   *zap.Logger
 }
 
-func New(storage Storage, cache RegoCache, logger *zap.Logger) *Service {
+func New(storage Storage, cache RegoCache, regoFunc *regofunc.RegoFunc, logger *zap.Logger) *Service {
 	return &Service{
-		storage: storage,
-		cache:   cache,
-		logger:  logger,
+		storage:  storage,
+		cache:    cache,
+		regoFunc: regoFunc,
+		logger:   logger,
 	}
 }
 
@@ -47,7 +50,7 @@ func New(storage Storage, cache RegoCache, logger *zap.Logger) *Service {
 // Evaluating the URL: `.../policies/mygroup/example/1.0/evaluation` will
 // return results correctly, only if the package declaration inside the policy is:
 // `package mygroup.example`
-func (s *Service) Evaluate(ctx context.Context, req *policy.EvaluateRequest) (*policy.EvaluateResult, error) {
+func (s *Service) Evaluate(ctx context.Context, req *policy.EvaluateRequest) (interface{}, error) {
 	logger := s.logger.With(
 		zap.String("name", req.PolicyName),
 		zap.String("group", req.Group),
@@ -67,16 +70,16 @@ func (s *Service) Evaluate(ctx context.Context, req *policy.EvaluateRequest) (*p
 	}
 
 	if len(resultSet) == 0 {
-		logger.Error("policy evaluation results are missing")
-		return nil, errors.New("policy evaluation results are missing")
+		logger.Error("policy evaluation results are empty")
+		return nil, errors.New("policy evaluation results are empty")
 	}
 
 	if len(resultSet[0].Expressions) == 0 {
-		logger.Error("policy evaluation result expressions are missing")
-		return nil, errors.New("policy evaluation result expressions are missing")
+		logger.Error("policy evaluation result expressions are empty")
+		return nil, errors.New("policy evaluation result expressions are empty")
 	}
 
-	return &policy.EvaluateResult{Result: resultSet[0].Expressions[0].Value}, nil
+	return resultSet[0].Expressions[0].Value, nil
 }
 
 // Lock a policy so that it cannot be evaluated.
@@ -172,6 +175,9 @@ func (s *Service) prepareQuery(ctx context.Context, policyName, group, version s
 	newQuery, err := rego.New(
 		rego.Module(pol.Filename, pol.Rego),
 		rego.Query(regoQuery),
+		rego.Function3(s.regoFunc.CacheGetFunc()),
+		rego.Function4(s.regoFunc.CacheSetFunc()),
+		rego.StrictBuiltinErrors(true),
 	).PrepareForEval(ctx)
 	if err != nil {
 		return nil, errors.New("error preparing rego query", err)

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"log"
+	"net"
 	"net/http"
 	"time"
 
@@ -25,6 +26,7 @@ import (
 	goapolicy "code.vereign.com/gaiax/tsa/policy/gen/policy"
 	"code.vereign.com/gaiax/tsa/policy/internal/config"
 	"code.vereign.com/gaiax/tsa/policy/internal/regocache"
+	"code.vereign.com/gaiax/tsa/policy/internal/regofunc"
 	"code.vereign.com/gaiax/tsa/policy/internal/service"
 	"code.vereign.com/gaiax/tsa/policy/internal/service/health"
 	"code.vereign.com/gaiax/tsa/policy/internal/service/policy"
@@ -68,6 +70,13 @@ func main() {
 	// create rego query cache
 	regocache := regocache.New()
 
+	// custom rego functions
+	regofuncs := regofunc.New(
+		cfg.Cache.Addr,
+		regofunc.WithHTTPClient(httpClient()),
+		regofunc.WithLogger(logger),
+	)
+
 	// subscribe the cache for policy data changes
 	storage.AddPolicyChangeSubscriber(regocache)
 
@@ -77,7 +86,7 @@ func main() {
 		healthSvc goahealth.Service
 	)
 	{
-		policySvc = policy.New(storage, regocache, logger)
+		policySvc = policy.New(storage, regocache, regofuncs, logger)
 		healthSvc = health.New()
 	}
 
@@ -176,4 +185,20 @@ func createLogger(logLevel string, opts ...zap.Option) (*zap.Logger, error) {
 
 func errFormatter(e error) goahttp.Statuser {
 	return service.NewErrorResponse(e)
+}
+
+func httpClient() *http.Client {
+	return &http.Client{
+		Transport: &http.Transport{
+			Proxy: http.ProxyFromEnvironment,
+			DialContext: (&net.Dialer{
+				Timeout: 30 * time.Second,
+			}).DialContext,
+			MaxIdleConns:        100,
+			MaxIdleConnsPerHost: 100,
+			TLSHandshakeTimeout: 10 * time.Second,
+			IdleConnTimeout:     60 * time.Second,
+		},
+		Timeout: 30 * time.Second,
+	}
 }
