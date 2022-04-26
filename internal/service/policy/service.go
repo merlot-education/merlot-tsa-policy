@@ -173,11 +173,7 @@ func (s *Service) prepareQuery(ctx context.Context, policyName, group, version s
 	regoQuery := fmt.Sprintf("data.%s.%s", group, policyName)
 
 	newQuery, err := rego.New(
-		rego.Module(pol.Filename, pol.Rego),
-		rego.Query(regoQuery),
-		rego.Function3(s.regoFunc.CacheGetFunc()),
-		rego.Function4(s.regoFunc.CacheSetFunc()),
-		rego.StrictBuiltinErrors(true),
+		buildRegoArgs(pol.Filename, pol.Rego, regoQuery)...,
 	).PrepareForEval(ctx)
 	if err != nil {
 		return nil, errors.New("error preparing rego query", err)
@@ -186,6 +182,17 @@ func (s *Service) prepareQuery(ctx context.Context, policyName, group, version s
 	s.cache.Set(key, &newQuery)
 
 	return &newQuery, nil
+}
+
+func buildRegoArgs(filename, regoField, regoQuery string) (availableFuncs []func(*rego.Rego)) {
+	availableFuncs = make([]func(*rego.Rego), 0, 0)
+	availableFuncs[0] = rego.Module(filename, regoField)
+	availableFuncs[1] = rego.Query(regoQuery)
+	extensions := regofunc.FuncList()
+	for k := range availableFuncs {
+		availableFuncs = append(availableFuncs, extensions[k])
+	}
+	return
 }
 
 func (s *Service) queryCacheKey(policyName, group, version string) string {
