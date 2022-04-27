@@ -11,22 +11,23 @@ import (
 
 	"github.com/open-policy-agent/opa/rego"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/zap"
 
 	"code.vereign.com/gaiax/tsa/policy/internal/regofunc"
 )
 
-func TestRegoFunc_CacheGetFunc(t *testing.T) {
+func TestCacheGetFunc(t *testing.T) {
 	expected := `{"taskID":"deadbeef"}`
 	cacheSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		_, _ = fmt.Fprint(w, expected)
 	}))
 	defer cacheSrv.Close()
 
-	regofuncs := regofunc.New(cacheSrv.URL)
+	cacheFuncs := regofunc.NewCacheFuncs(cacheSrv.URL, http.DefaultClient, zap.NewNop())
 
 	r := rego.New(
 		rego.Query(`cache.get("open-policy-agent", "opa", "111")`),
-		rego.Function3(regofuncs.CacheGetFunc()),
+		rego.Function3(cacheFuncs.CacheGetFunc()),
 	)
 	resultSet, err := r.Eval(context.Background())
 	assert.NoError(t, err)
@@ -36,7 +37,7 @@ func TestRegoFunc_CacheGetFunc(t *testing.T) {
 	assert.Equal(t, expected, string(resultBytes))
 }
 
-func TestRegoFunc_CacheSetFuncSuccess(t *testing.T) {
+func TestCacheSetFuncSuccess(t *testing.T) {
 	expected := "success"
 	cacheSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		expectedRequestBody := `{"test":123}`
@@ -52,12 +53,12 @@ func TestRegoFunc_CacheSetFuncSuccess(t *testing.T) {
 	}))
 	defer cacheSrv.Close()
 
-	regofuncs := regofunc.New(cacheSrv.URL)
+	cacheFuncs := regofunc.NewCacheFuncs(cacheSrv.URL, http.DefaultClient, zap.NewNop())
 
 	input := map[string]interface{}{"test": 123}
 	query, err := rego.New(
 		rego.Query(`cache.set("open-policy-agent", "opa", "111", input)`),
-		rego.Function4(regofuncs.CacheSetFunc()),
+		rego.Function4(cacheFuncs.CacheSetFunc()),
 	).PrepareForEval(context.Background())
 	assert.NoError(t, err)
 
@@ -68,7 +69,7 @@ func TestRegoFunc_CacheSetFuncSuccess(t *testing.T) {
 	assert.Equal(t, expected, resultSet[0].Expressions[0].Value)
 }
 
-func TestRegoFunc_CacheSetFuncError(t *testing.T) {
+func TestCacheSetFuncError(t *testing.T) {
 	cacheSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		expectedRequestBody := "test"
 		bodyBytes, err := io.ReadAll(r.Body)
@@ -81,11 +82,11 @@ func TestRegoFunc_CacheSetFuncError(t *testing.T) {
 	}))
 	defer cacheSrv.Close()
 
-	regofuncs := regofunc.New(cacheSrv.URL)
+	cacheFuncs := regofunc.NewCacheFuncs(cacheSrv.URL, http.DefaultClient, zap.NewNop())
 
 	r := rego.New(
 		rego.Query(`cache.set("open-policy-agent", "opa", "111", "test")`),
-		rego.Function4(regofuncs.CacheSetFunc()),
+		rego.Function4(cacheFuncs.CacheSetFunc()),
 	)
 
 	resultSet, err := r.Eval(context.Background())

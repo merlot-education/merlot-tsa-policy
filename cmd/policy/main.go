@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/kelseyhightower/envconfig"
+	"github.com/open-policy-agent/opa/rego"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.uber.org/zap"
@@ -70,12 +71,13 @@ func main() {
 	// create rego query cache
 	regocache := regocache.New()
 
-	// custom rego functions
-	regofuncs := regofunc.New(
-		cfg.Cache.Addr,
-		regofunc.WithHTTPClient(httpClient()),
-		regofunc.WithLogger(logger),
-	)
+	// register rego extension functions
+	{
+		cacheFuncs := regofunc.NewCacheFuncs(cfg.Cache.Addr, httpClient(), logger)
+		regofunc.Register("cacheGet", rego.Function3(cacheFuncs.CacheGetFunc()))
+		regofunc.Register("cacheSet", rego.Function4(cacheFuncs.CacheSetFunc()))
+		regofunc.Register("strictBuiltinErrors", rego.StrictBuiltinErrors(true))
+	}
 
 	// subscribe the cache for policy data changes
 	storage.AddPolicyChangeSubscriber(regocache)
@@ -86,7 +88,7 @@ func main() {
 		healthSvc goahealth.Service
 	)
 	{
-		policySvc = policy.New(storage, regocache, regofuncs, logger)
+		policySvc = policy.New(storage, regocache, logger)
 		healthSvc = health.New()
 	}
 
