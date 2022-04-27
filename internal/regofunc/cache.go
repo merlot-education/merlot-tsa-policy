@@ -12,30 +12,21 @@ import (
 	"go.uber.org/zap"
 )
 
-type CacheRegoFunc struct {
-	RegoFunc
-
-	cacheAddr string
+type CacheFuncs struct {
+	cacheAddr  string
+	httpClient *http.Client
+	logger     *zap.Logger
 }
 
-func NewCache(cacheAddr string, opts ...Option) *CacheRegoFunc {
-	rf := &CacheRegoFunc{
-		RegoFunc: RegoFunc{
-			httpClient: http.DefaultClient,
-			logger:     zap.NewNop(),
-		},
-		cacheAddr: cacheAddr,
+func NewCacheFuncs(cacheAddr string, httpClient *http.Client, logger *zap.Logger) *CacheFuncs {
+	return &CacheFuncs{
+		cacheAddr:  cacheAddr,
+		httpClient: httpClient,
+		logger:     logger,
 	}
-
-	// for _, opt := range opts {
-	// 	opt(rf)
-	// }
-
-	// return rf
-	return rf
 }
 
-func (r *CacheRegoFunc) CacheGetFunc() (*rego.Function, rego.Builtin3) {
+func (cf *CacheFuncs) CacheGetFunc() (*rego.Function, rego.Builtin3) {
 	return &rego.Function{
 			Name:    "cache.get",
 			Decl:    types.NewFunction(types.Args(types.S, types.S, types.S), types.A),
@@ -52,7 +43,7 @@ func (r *CacheRegoFunc) CacheGetFunc() (*rego.Function, rego.Builtin3) {
 				return nil, fmt.Errorf("invalid scope: %s", err)
 			}
 
-			req, err := http.NewRequest("GET", r.cacheAddr+"/v1/cache", nil)
+			req, err := http.NewRequest("GET", cf.cacheAddr+"/v1/cache", nil)
 			req.Header = http.Header{
 				"x-cache-key":       []string{key},
 				"x-cache-namespace": []string{namespace},
@@ -62,7 +53,7 @@ func (r *CacheRegoFunc) CacheGetFunc() (*rego.Function, rego.Builtin3) {
 				return nil, err
 			}
 
-			resp, err := r.httpClient.Do(req.WithContext(bctx.Context))
+			resp, err := cf.httpClient.Do(req.WithContext(bctx.Context))
 			if err != nil {
 				return nil, err
 			}
@@ -81,7 +72,7 @@ func (r *CacheRegoFunc) CacheGetFunc() (*rego.Function, rego.Builtin3) {
 		}
 }
 
-func (r *CacheRegoFunc) CacheSetFunc() (*rego.Function, rego.Builtin4) {
+func (cf *CacheFuncs) CacheSetFunc() (*rego.Function, rego.Builtin4) {
 	return &rego.Function{
 			Name:    "cache.set",
 			Decl:    types.NewFunction(types.Args(types.S, types.S, types.S, types.S), types.A),
@@ -106,7 +97,7 @@ func (r *CacheRegoFunc) CacheSetFunc() (*rego.Function, rego.Builtin4) {
 				return nil, err
 			}
 
-			req, err := http.NewRequest("POST", r.cacheAddr+"/v1/cache", bytes.NewReader(jsonData))
+			req, err := http.NewRequest("POST", cf.cacheAddr+"/v1/cache", bytes.NewReader(jsonData))
 			if err != nil {
 				return nil, err
 			}
@@ -117,7 +108,7 @@ func (r *CacheRegoFunc) CacheSetFunc() (*rego.Function, rego.Builtin4) {
 				"x-cache-scope":     []string{scope},
 			}
 
-			resp, err := r.httpClient.Do(req.WithContext(bctx.Context))
+			resp, err := cf.httpClient.Do(req.WithContext(bctx.Context))
 			if err != nil {
 				return nil, err
 			}

@@ -2,14 +2,3 @@
 // with additional capabilities and built-in functions which can be
 // used when writing and evaluating Rego polices.
 package regofunc
-
-import (
-	"net/http"
-
-	"go.uber.org/zap"
-)
-
-type RegoFunc struct {
-	httpClient *http.Client
-	logger     *zap.Logger
-}
