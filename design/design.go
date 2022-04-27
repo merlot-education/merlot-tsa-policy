@@ -21,7 +21,7 @@ var _ = Service("policy", func() {
 	Method("Evaluate", func() {
 		Description("Evaluate executes a policy with the given 'data' as input.")
 		Payload(EvaluateRequest)
-		Result(EvaluateResult)
+		Result(Any)
 		HTTP(func() {
 			POST("/policy/{group}/{policyName}/{version}/evaluation")
 			Body("input")

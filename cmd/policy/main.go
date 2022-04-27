@@ -4,10 +4,12 @@ import (
 	"context"
 	"errors"
 	"log"
+	"net"
 	"net/http"
 	"time"
 
 	"github.com/kelseyhightower/envconfig"
+	"github.com/open-policy-agent/opa/rego"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.uber.org/zap"
@@ -25,6 +27,7 @@ import (
 	goapolicy "code.vereign.com/gaiax/tsa/policy/gen/policy"
 	"code.vereign.com/gaiax/tsa/policy/internal/config"
 	"code.vereign.com/gaiax/tsa/policy/internal/regocache"
+	"code.vereign.com/gaiax/tsa/policy/internal/regofunc"
 	"code.vereign.com/gaiax/tsa/policy/internal/service"
 	"code.vereign.com/gaiax/tsa/policy/internal/service/health"
 	"code.vereign.com/gaiax/tsa/policy/internal/service/policy"
@@ -67,6 +70,14 @@ func main() {
 
 	// create rego query cache
 	regocache := regocache.New()
+
+	// register rego extension functions
+	{
+		cacheFuncs := regofunc.NewCacheFuncs(cfg.Cache.Addr, httpClient(), logger)
+		regofunc.Register("cacheGet", rego.Function3(cacheFuncs.CacheGetFunc()))
+		regofunc.Register("cacheSet", rego.Function4(cacheFuncs.CacheSetFunc()))
+		regofunc.Register("strictBuiltinErrors", rego.StrictBuiltinErrors(true))
+	}
 
 	// subscribe the cache for policy data changes
 	storage.AddPolicyChangeSubscriber(regocache)
@@ -176,4 +187,20 @@ func createLogger(logLevel string, opts ...zap.Option) (*zap.Logger, error) {
 
 func errFormatter(e error) goahttp.Statuser {
 	return service.NewErrorResponse(e)
+}
+
+func httpClient() *http.Client {
+	return &http.Client{
+		Transport: &http.Transport{
+			Proxy: http.ProxyFromEnvironment,
+			DialContext: (&net.Dialer{
+				Timeout: 30 * time.Second,
+			}).DialContext,
+			MaxIdleConns:        100,
+			MaxIdleConnsPerHost: 100,
+			TLSHandshakeTimeout: 10 * time.Second,
+			IdleConnTimeout:     60 * time.Second,
+		},
+		Timeout: 30 * time.Second,
+	}
 }

@@ -27,7 +27,7 @@ func TestService_Evaluate(t *testing.T) {
 	// prepare test policy source code that will be evaluated
 	testPolicy := `package testgroup.example allow { input.msg == "yes" }`
 
-	// prepare test query that can be retrieved from rego cache
+	// prepare test query that can be retrieved from rego queryCache
 	testQuery, err := rego.New(
 		rego.Module("example.rego", testPolicy),
 		rego.Query("data.testgroup.example"),
@@ -52,12 +52,12 @@ func TestService_Evaluate(t *testing.T) {
 		regocache policy.RegoCache
 
 		// expected result
-		res     *goapolicy.EvaluateResult
+		res     interface{}
 		errkind errors.Kind
 		errtext string
 	}{
 		{
-			name: "prepared query is found in cache",
+			name: "prepared query is found in queryCache",
 			req:  testReq(),
 			regocache: &policyfakes.FakeRegoCache{
 				GetStub: func(key string) (*rego.PreparedEvalQuery, bool) {
@@ -65,7 +65,7 @@ func TestService_Evaluate(t *testing.T) {
 					return &q, true
 				},
 			},
-			res: &goapolicy.EvaluateResult{Result: map[string]interface{}{"allow": true}},
+			res: map[string]interface{}{"allow": true},
 		},
 		{
 			name: "policy is not found",
@@ -138,7 +138,7 @@ func TestService_Evaluate(t *testing.T) {
 					}, nil
 				},
 			},
-			res: &goapolicy.EvaluateResult{Result: map[string]interface{}{"allow": true}},
+			res: map[string]interface{}{"allow": true},
 		},
 	}
 

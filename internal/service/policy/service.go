@@ -9,6 +9,7 @@ import (
 
 	"code.vereign.com/gaiax/tsa/golib/errors"
 	"code.vereign.com/gaiax/tsa/policy/gen/policy"
+	"code.vereign.com/gaiax/tsa/policy/internal/regofunc"
 	"code.vereign.com/gaiax/tsa/policy/internal/storage"
 )
 
@@ -26,16 +27,16 @@ type RegoCache interface {
 }
 
 type Service struct {
-	storage Storage
-	cache   RegoCache
-	logger  *zap.Logger
+	storage    Storage
+	queryCache RegoCache
+	logger     *zap.Logger
 }
 
-func New(storage Storage, cache RegoCache, logger *zap.Logger) *Service {
+func New(storage Storage, queryCache RegoCache, logger *zap.Logger) *Service {
 	return &Service{
-		storage: storage,
-		cache:   cache,
-		logger:  logger,
+		storage:    storage,
+		queryCache: queryCache,
+		logger:     logger,
 	}
 }
 
@@ -47,7 +48,7 @@ func New(storage Storage, cache RegoCache, logger *zap.Logger) *Service {
 // Evaluating the URL: `.../policies/mygroup/example/1.0/evaluation` will
 // return results correctly, only if the package declaration inside the policy is:
 // `package mygroup.example`
-func (s *Service) Evaluate(ctx context.Context, req *policy.EvaluateRequest) (*policy.EvaluateResult, error) {
+func (s *Service) Evaluate(ctx context.Context, req *policy.EvaluateRequest) (interface{}, error) {
 	logger := s.logger.With(
 		zap.String("name", req.PolicyName),
 		zap.String("group", req.Group),
@@ -67,16 +68,16 @@ func (s *Service) Evaluate(ctx context.Context, req *policy.EvaluateRequest) (*p
 	}
 
 	if len(resultSet) == 0 {
-		logger.Error("policy evaluation results are missing")
-		return nil, errors.New("policy evaluation results are missing")
+		logger.Error("policy evaluation results are empty")
+		return nil, errors.New("policy evaluation results are empty")
 	}
 
 	if len(resultSet[0].Expressions) == 0 {
-		logger.Error("policy evaluation result expressions are missing")
-		return nil, errors.New("policy evaluation result expressions are missing")
+		logger.Error("policy evaluation result expressions are empty")
+		return nil, errors.New("policy evaluation result expressions are empty")
 	}
 
-	return &policy.EvaluateResult{Result: resultSet[0].Expressions[0].Value}, nil
+	return resultSet[0].Expressions[0].Value, nil
 }
 
 // Lock a policy so that it cannot be evaluated.
@@ -142,11 +143,11 @@ func (s *Service) Unlock(ctx context.Context, req *policy.UnlockRequest) error {
 }
 
 // prepareQuery tries to get a prepared query from the regocache.
-// If the cache entry is not found, it will try to prepare a new
-// query and will set it into the cache for future use.
+// If the queryCache entry is not found, it will try to prepare a new
+// query and will set it into the queryCache for future use.
 func (s *Service) prepareQuery(ctx context.Context, policyName, group, version string) (*rego.PreparedEvalQuery, error) {
 	key := s.queryCacheKey(policyName, group, version)
-	query, ok := s.cache.Get(key)
+	query, ok := s.queryCache.Get(key)
 	if ok {
 		return query, nil
 	}
@@ -170,16 +171,26 @@ func (s *Service) prepareQuery(ctx context.Context, policyName, group, version s
 	regoQuery := fmt.Sprintf("data.%s.%s", group, policyName)
 
 	newQuery, err := rego.New(
-		rego.Module(pol.Filename, pol.Rego),
-		rego.Query(regoQuery),
+		buildRegoArgs(pol.Filename, pol.Rego, regoQuery)...,
 	).PrepareForEval(ctx)
 	if err != nil {
 		return nil, errors.New("error preparing rego query", err)
 	}
 
-	s.cache.Set(key, &newQuery)
+	s.queryCache.Set(key, &newQuery)
 
 	return &newQuery, nil
+}
+
+func buildRegoArgs(filename, regoPolicy, regoQuery string) (availableFuncs []func(*rego.Rego)) {
+	availableFuncs = make([]func(*rego.Rego), 2)
+	availableFuncs[0] = rego.Module(filename, regoPolicy)
+	availableFuncs[1] = rego.Query(regoQuery)
+	extensions := regofunc.List()
+	for i := range extensions {
+		availableFuncs = append(availableFuncs, extensions[i])
+	}
+	return
 }
 
 func (s *Service) queryCacheKey(policyName, group, version string) string {

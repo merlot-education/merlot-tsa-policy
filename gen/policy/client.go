@@ -30,13 +30,13 @@ func NewClient(evaluate, lock, unlock goa.Endpoint) *Client {
 }
 
 // Evaluate calls the "Evaluate" endpoint of the "policy" service.
-func (c *Client) Evaluate(ctx context.Context, p *EvaluateRequest) (res *EvaluateResult, err error) {
+func (c *Client) Evaluate(ctx context.Context, p *EvaluateRequest) (res interface{}, err error) {
 	var ires interface{}
 	ires, err = c.EvaluateEndpoint(ctx, p)
 	if err != nil {
 		return
 	}
-	return ires.(*EvaluateResult), nil
+	return ires.(interface{}), nil
 }
 
 // Lock calls the "Lock" endpoint of the "policy" service.

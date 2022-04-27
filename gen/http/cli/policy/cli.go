@@ -260,7 +260,7 @@ Lock a policy so that it cannot be evaluated.
     -version STRING: Policy version.
 
 Example:
-    %[1]s policy lock --group "In illum est et hic." --policy-name "Deleniti non nihil dolor aut sed." --version "Incidunt unde consequatur voluptas dolorem nisi temporibus."
+    %[1]s policy lock --group "Deleniti non nihil dolor aut sed." --policy-name "Incidunt unde consequatur voluptas dolorem nisi temporibus." --version "Omnis quasi aut consequuntur."
 `, os.Args[0])
 }
 
@@ -273,6 +273,6 @@ Unlock a policy so it can be evaluated again.
     -version STRING: Policy version.
 
 Example:
-    %[1]s policy unlock --group "Aliquam atque voluptatum ut dolorem." --policy-name "Aut facere veniam repudiandae id." --version "Aut minus alias."
+    %[1]s policy unlock --group "Aut facere veniam repudiandae id." --policy-name "Aut minus alias." --version "At eos facilis molestias in voluptas rem."
 `, os.Args[0])
 }

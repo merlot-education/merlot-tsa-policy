@@ -14,7 +14,7 @@ import (
 // Policy Service provides evaluation of policies through Open Policy Agent.
 type Service interface {
 	// Evaluate executes a policy with the given 'data' as input.
-	Evaluate(context.Context, *EvaluateRequest) (res *EvaluateResult, err error)
+	Evaluate(context.Context, *EvaluateRequest) (res interface{}, err error)
 	// Lock a policy so that it cannot be evaluated.
 	Lock(context.Context, *LockRequest) (err error)
 	// Unlock a policy so it can be evaluated again.
@@ -41,12 +41,6 @@ type EvaluateRequest struct {
 	Version string
 	// Input data passed to the policy execution runtime.
 	Input interface{}
-}
-
-// EvaluateResult is the result type of the policy service Evaluate method.
-type EvaluateResult struct {
-	// Arbitrary JSON response.
-	Result interface{}
 }
 
 // LockRequest is the payload type of the policy service Lock method.

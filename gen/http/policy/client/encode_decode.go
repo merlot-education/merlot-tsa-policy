@@ -83,19 +83,14 @@ func DecodeEvaluateResponse(decoder func(*http.Response) goahttp.Decoder, restor
 		switch resp.StatusCode {
 		case http.StatusOK:
 			var (
-				body EvaluateResponseBody
+				body interface{}
 				err  error
 			)
 			err = decoder(resp).Decode(&body)
 			if err != nil {
 				return nil, goahttp.ErrDecodingError("policy", "Evaluate", err)
 			}
-			err = ValidateEvaluateResponseBody(&body)
-			if err != nil {
-				return nil, goahttp.ErrValidationError("policy", "Evaluate", err)
-			}
-			res := NewEvaluateResultOK(&body)
-			return res, nil
+			return body, nil
 		default:
 			body, _ := ioutil.ReadAll(resp.Body)
 			return nil, goahttp.ErrInvalidResponse("policy", "Evaluate", resp.StatusCode, string(body))
