@@ -11,7 +11,6 @@ import (
 
 	"github.com/open-policy-agent/opa/rego"
 	"github.com/stretchr/testify/assert"
-	"go.uber.org/zap"
 
 	"code.vereign.com/gaiax/tsa/policy/internal/regofunc"
 )
@@ -23,7 +22,7 @@ func TestCacheGetFunc(t *testing.T) {
 	}))
 	defer cacheSrv.Close()
 
-	cacheFuncs := regofunc.NewCacheFuncs(cacheSrv.URL, http.DefaultClient, zap.NewNop())
+	cacheFuncs := regofunc.NewCacheFuncs(cacheSrv.URL, http.DefaultClient)
 
 	r := rego.New(
 		rego.Query(`cache.get("open-policy-agent", "opa", "111")`),
@@ -53,7 +52,7 @@ func TestCacheSetFuncSuccess(t *testing.T) {
 	}))
 	defer cacheSrv.Close()
 
-	cacheFuncs := regofunc.NewCacheFuncs(cacheSrv.URL, http.DefaultClient, zap.NewNop())
+	cacheFuncs := regofunc.NewCacheFuncs(cacheSrv.URL, http.DefaultClient)
 
 	input := map[string]interface{}{"test": 123}
 	query, err := rego.New(
@@ -82,7 +81,7 @@ func TestCacheSetFuncError(t *testing.T) {
 	}))
 	defer cacheSrv.Close()
 
-	cacheFuncs := regofunc.NewCacheFuncs(cacheSrv.URL, http.DefaultClient, zap.NewNop())
+	cacheFuncs := regofunc.NewCacheFuncs(cacheSrv.URL, http.DefaultClient)
 
 	r := rego.New(
 		rego.Query(`cache.set("open-policy-agent", "opa", "111", "test")`),

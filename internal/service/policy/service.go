@@ -17,8 +17,8 @@ import (
 //go:generate counterfeiter . RegoCache
 
 type Storage interface {
-	Policy(ctx context.Context, name, group, version string) (*storage.Policy, error)
-	SetPolicyLock(ctx context.Context, name, group, version string, lock bool) error
+	Policy(ctx context.Context, group, name, version string) (*storage.Policy, error)
+	SetPolicyLock(ctx context.Context, group, name, version string, lock bool) error
 }
 
 type RegoCache interface {
@@ -50,12 +50,12 @@ func New(storage Storage, queryCache RegoCache, logger *zap.Logger) *Service {
 // `package mygroup.example`
 func (s *Service) Evaluate(ctx context.Context, req *policy.EvaluateRequest) (interface{}, error) {
 	logger := s.logger.With(
-		zap.String("name", req.PolicyName),
 		zap.String("group", req.Group),
+		zap.String("name", req.PolicyName),
 		zap.String("version", req.Version),
 	)
 
-	query, err := s.prepareQuery(ctx, req.PolicyName, req.Group, req.Version)
+	query, err := s.prepareQuery(ctx, req.Group, req.PolicyName, req.Version)
 	if err != nil {
 		logger.Error("error getting prepared query", zap.Error(err))
 		return nil, errors.New("error evaluating policy", err)
@@ -83,12 +83,12 @@ func (s *Service) Evaluate(ctx context.Context, req *policy.EvaluateRequest) (in
 // Lock a policy so that it cannot be evaluated.
 func (s *Service) Lock(ctx context.Context, req *policy.LockRequest) error {
 	logger := s.logger.With(
-		zap.String("name", req.PolicyName),
 		zap.String("group", req.Group),
+		zap.String("name", req.PolicyName),
 		zap.String("version", req.Version),
 	)
 
-	pol, err := s.storage.Policy(ctx, req.PolicyName, req.Group, req.Version)
+	pol, err := s.storage.Policy(ctx, req.Group, req.PolicyName, req.Version)
 	if err != nil {
 		logger.Error("error getting policy from storage", zap.Error(err))
 		if errors.Is(errors.NotFound, err) {
@@ -101,7 +101,7 @@ func (s *Service) Lock(ctx context.Context, req *policy.LockRequest) error {
 		return errors.New(errors.Forbidden, "policy is already locked")
 	}
 
-	if err := s.storage.SetPolicyLock(ctx, req.PolicyName, req.Group, req.Version, true); err != nil {
+	if err := s.storage.SetPolicyLock(ctx, req.Group, req.PolicyName, req.Version, true); err != nil {
 		logger.Error("error locking policy", zap.Error(err))
 		return errors.New("error locking policy", err)
 	}
@@ -114,12 +114,12 @@ func (s *Service) Lock(ctx context.Context, req *policy.LockRequest) error {
 // Unlock a policy so it can be evaluated again.
 func (s *Service) Unlock(ctx context.Context, req *policy.UnlockRequest) error {
 	logger := s.logger.With(
-		zap.String("name", req.PolicyName),
 		zap.String("group", req.Group),
+		zap.String("name", req.PolicyName),
 		zap.String("version", req.Version),
 	)
 
-	pol, err := s.storage.Policy(ctx, req.PolicyName, req.Group, req.Version)
+	pol, err := s.storage.Policy(ctx, req.Group, req.PolicyName, req.Version)
 	if err != nil {
 		logger.Error("error getting policy from storage", zap.Error(err))
 		if errors.Is(errors.NotFound, err) {
@@ -132,7 +132,7 @@ func (s *Service) Unlock(ctx context.Context, req *policy.UnlockRequest) error {
 		return errors.New(errors.Forbidden, "policy is unlocked")
 	}
 
-	if err := s.storage.SetPolicyLock(ctx, req.PolicyName, req.Group, req.Version, false); err != nil {
+	if err := s.storage.SetPolicyLock(ctx, req.Group, req.PolicyName, req.Version, false); err != nil {
 		logger.Error("error unlocking policy", zap.Error(err))
 		return errors.New("error unlocking policy", err)
 	}
@@ -145,15 +145,15 @@ func (s *Service) Unlock(ctx context.Context, req *policy.UnlockRequest) error {
 // prepareQuery tries to get a prepared query from the regocache.
 // If the queryCache entry is not found, it will try to prepare a new
 // query and will set it into the queryCache for future use.
-func (s *Service) prepareQuery(ctx context.Context, policyName, group, version string) (*rego.PreparedEvalQuery, error) {
-	key := s.queryCacheKey(policyName, group, version)
+func (s *Service) prepareQuery(ctx context.Context, group, policyName, version string) (*rego.PreparedEvalQuery, error) {
+	key := s.queryCacheKey(group, policyName, version)
 	query, ok := s.queryCache.Get(key)
 	if ok {
 		return query, nil
 	}
 
 	// retrieve policy from database storage
-	pol, err := s.storage.Policy(ctx, policyName, group, version)
+	pol, err := s.storage.Policy(ctx, group, policyName, version)
 	if err != nil {
 		if errors.Is(errors.NotFound, err) {
 			return nil, err
@@ -193,6 +193,6 @@ func buildRegoArgs(filename, regoPolicy, regoQuery string) (availableFuncs []fun
 	return
 }
 
-func (s *Service) queryCacheKey(policyName, group, version string) string {
-	return fmt.Sprintf("%s,%s,%s", policyName, group, version)
+func (s *Service) queryCacheKey(group, policyName, version string) string {
+	return fmt.Sprintf("%s,%s,%s", group, policyName, version)
 }

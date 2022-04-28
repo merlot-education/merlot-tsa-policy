@@ -6,7 +6,6 @@ import (
 
 	"github.com/open-policy-agent/opa/rego"
 	"github.com/stretchr/testify/assert"
-	"go.uber.org/zap"
 
 	"code.vereign.com/gaiax/tsa/policy/internal/regofunc"
 )
@@ -15,7 +14,7 @@ func TestList(t *testing.T) {
 	funcs := regofunc.List()
 	assert.Len(t, funcs, 0)
 
-	cacheFuncs := regofunc.NewCacheFuncs("localhost:8080", http.DefaultClient, zap.NewNop())
+	cacheFuncs := regofunc.NewCacheFuncs("localhost:8080", http.DefaultClient)
 	regofunc.Register("cacheGet", rego.Function3(cacheFuncs.CacheGetFunc()))
 	regofunc.Register("cacheSet", rego.Function3(cacheFuncs.CacheGetFunc()))
 

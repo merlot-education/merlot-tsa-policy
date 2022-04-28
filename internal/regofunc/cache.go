@@ -9,20 +9,17 @@ import (
 	"github.com/open-policy-agent/opa/ast"
 	"github.com/open-policy-agent/opa/rego"
 	"github.com/open-policy-agent/opa/types"
-	"go.uber.org/zap"
 )
 
 type CacheFuncs struct {
 	cacheAddr  string
 	httpClient *http.Client
-	logger     *zap.Logger
 }
 
-func NewCacheFuncs(cacheAddr string, httpClient *http.Client, logger *zap.Logger) *CacheFuncs {
+func NewCacheFuncs(cacheAddr string, httpClient *http.Client) *CacheFuncs {
 	return &CacheFuncs{
 		cacheAddr:  cacheAddr,
 		httpClient: httpClient,
-		logger:     logger,
 	}
 }
 

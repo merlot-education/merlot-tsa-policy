@@ -39,10 +39,10 @@ func New(db *mongo.Client, dbname, collection string, logger *zap.Logger) *Stora
 	}
 }
 
-func (s *Storage) Policy(ctx context.Context, name, group, version string) (*Policy, error) {
+func (s *Storage) Policy(ctx context.Context, group, name, version string) (*Policy, error) {
 	result := s.policy.FindOne(ctx, bson.M{
-		"name":    name,
 		"group":   group,
+		"name":    name,
 		"version": version,
 	})
 
@@ -61,12 +61,12 @@ func (s *Storage) Policy(ctx context.Context, name, group, version string) (*Pol
 	return &policy, nil
 }
 
-func (s *Storage) SetPolicyLock(ctx context.Context, name, group, version string, lock bool) error {
+func (s *Storage) SetPolicyLock(ctx context.Context, group, name, version string, lock bool) error {
 	_, err := s.policy.UpdateOne(
 		ctx,
 		bson.M{
-			"name":    name,
 			"group":   group,
+			"name":    name,
 			"version": version,
 		},
 		bson.M{
