@@ -74,8 +74,10 @@ func main() {
 	// register rego extension functions
 	{
 		cacheFuncs := regofunc.NewCacheFuncs(cfg.Cache.Addr, httpClient())
+		DIDResolverFuncs := regofunc.NewDIDResolverFuncs(cfg.DIDResolver.Addr, httpClient())
 		regofunc.Register("cacheGet", rego.Function3(cacheFuncs.CacheGetFunc()))
 		regofunc.Register("cacheSet", rego.Function4(cacheFuncs.CacheSetFunc()))
+		regofunc.Register("DIDResolve", rego.Function1(DIDResolverFuncs.Resolve()))
 		regofunc.Register("strictBuiltinErrors", rego.StrictBuiltinErrors(true))
 	}
 
