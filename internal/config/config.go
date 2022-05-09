@@ -6,7 +6,7 @@ type Config struct {
 	HTTP        httpConfig
 	Mongo       mongoConfig
 	Cache       cacheConfig
-	DIDResolver DIDResolverConfig
+	DIDResolver didResolverConfig
 
 	LogLevel string `envconfig:"LOG_LEVEL" default:"INFO"`
 }
@@ -23,7 +23,7 @@ type cacheConfig struct {
 	Addr string `envconfig:"CACHE_ADDR" required:"true"`
 }
 
-type DIDResolverConfig struct {
+type didResolverConfig struct {
 	Addr string `envconfig:"DID_RESOLVER_ADDR" required:"true"`
 }
 

@@ -36,7 +36,7 @@ func (dr *DIDResolverFuncs) Resolve() (*rego.Function, rego.Builtin1) {
 				return nil, fmt.Errorf("invalid DID: %s", err)
 			}
 			if DID == "" {
-				return nil, errors.New("DID can not be empty")
+				return nil, errors.New("DID cannot be empty")
 			}
 
 			req, err := http.NewRequest("GET", dr.resolverAddr+"/1.0/identifiers/"+DID, nil)
