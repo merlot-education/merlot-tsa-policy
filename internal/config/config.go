@@ -3,9 +3,10 @@ package config
 import "time"
 
 type Config struct {
-	HTTP  httpConfig
-	Mongo mongoConfig
-	Cache cacheConfig
+	HTTP        httpConfig
+	Mongo       mongoConfig
+	Cache       cacheConfig
+	DIDResolver didResolverConfig
 
 	LogLevel string `envconfig:"LOG_LEVEL" default:"INFO"`
 }
@@ -20,6 +21,10 @@ type httpConfig struct {
 
 type cacheConfig struct {
 	Addr string `envconfig:"CACHE_ADDR" required:"true"`
+}
+
+type didResolverConfig struct {
+	Addr string `envconfig:"DID_RESOLVER_ADDR" required:"true"`
 }
 
 type mongoConfig struct {
