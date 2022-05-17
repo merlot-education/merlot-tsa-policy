@@ -23,7 +23,7 @@ func NewDIDResolverFuncs(resolverAddr string, httpClient *http.Client) *DIDResol
 	}
 }
 
-func (dr *DIDResolverFuncs) Resolve() (*rego.Function, rego.Builtin1) {
+func (dr *DIDResolverFuncs) ResolveFunc() (*rego.Function, rego.Builtin1) {
 	return &rego.Function{
 			Name:    "did.resolve",
 			Decl:    types.NewFunction(types.Args(types.S), types.A),

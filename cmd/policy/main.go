@@ -66,18 +66,24 @@ func main() {
 	defer db.Disconnect(context.Background()) //nolint:errcheck
 
 	// create storage
-	storage := storage.New(db, cfg.Mongo.DB, cfg.Mongo.Collection, logger)
+	storage, err := storage.New(db, cfg.Mongo.DB, cfg.Mongo.Collection, logger)
+	if err != nil {
+		logger.Fatal("error connecting to database", zap.Error(err))
+	}
 
 	// create rego query cache
 	regocache := regocache.New()
 
 	// register rego extension functions
 	{
-		cacheFuncs := regofunc.NewCacheFuncs(cfg.Cache.Addr, httpClient())
-		didResolverFuncs := regofunc.NewDIDResolverFuncs(cfg.DIDResolver.Addr, httpClient())
+		httpClient := httpClient()
+		cacheFuncs := regofunc.NewCacheFuncs(cfg.Cache.Addr, httpClient)
+		didResolverFuncs := regofunc.NewDIDResolverFuncs(cfg.DIDResolver.Addr, httpClient)
+		taskFuncs := regofunc.NewTaskFuncs(cfg.Task.Addr, httpClient)
 		regofunc.Register("cacheGet", rego.Function3(cacheFuncs.CacheGetFunc()))
 		regofunc.Register("cacheSet", rego.Function4(cacheFuncs.CacheSetFunc()))
-		regofunc.Register("didResolve", rego.Function1(didResolverFuncs.Resolve()))
+		regofunc.Register("didResolve", rego.Function1(didResolverFuncs.ResolveFunc()))
+		regofunc.Register("taskCreate", rego.Function2(taskFuncs.CreateTaskFunc()))
 		regofunc.Register("strictBuiltinErrors", rego.StrictBuiltinErrors(true))
 	}
 
