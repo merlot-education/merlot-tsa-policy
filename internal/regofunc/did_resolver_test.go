@@ -25,7 +25,7 @@ func TestResolveFunc(t *testing.T) {
 
 	r := rego.New(
 		rego.Query(`did.resolve("did:indy:idunion:BDrEcHc8Tb4Lb2VyQZWEDE")`),
-		rego.Function1(DIDResolverFuncs.Resolve()),
+		rego.Function1(DIDResolverFuncs.ResolveFunc()),
 	)
 	resultSet, err := r.Eval(context.Background())
 	assert.NoError(t, err)

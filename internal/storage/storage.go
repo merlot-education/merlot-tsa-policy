@@ -32,11 +32,15 @@ type Storage struct {
 	logger     *zap.Logger
 }
 
-func New(db *mongo.Client, dbname, collection string, logger *zap.Logger) *Storage {
+func New(db *mongo.Client, dbname, collection string, logger *zap.Logger) (*Storage, error) {
+	if err := db.Ping(context.Background(), nil); err != nil {
+		return nil, err
+	}
+
 	return &Storage{
 		policy: db.Database(dbname).Collection(collection),
 		logger: logger,
-	}
+	}, nil
 }
 
 func (s *Storage) Policy(ctx context.Context, group, name, version string) (*Policy, error) {
