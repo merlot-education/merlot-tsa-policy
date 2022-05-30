@@ -17,9 +17,7 @@ import (
 )
 
 func TestNew(t *testing.T) {
-	storage := &policyfakes.FakeStorage{}
-	regocache := &policyfakes.FakeRegoCache{}
-	svc := policy.New(storage, regocache, zap.NewNop())
+	svc := policy.New(nil, nil, nil, zap.NewNop())
 	assert.Implements(t, (*goapolicy.Service)(nil), svc)
 }
 
@@ -50,7 +48,7 @@ func TestService_Evaluate(t *testing.T) {
 		req       *goapolicy.EvaluateRequest
 		storage   policy.Storage
 		regocache policy.RegoCache
-
+		cache     policy.Cache
 		// expected result
 		res     interface{}
 		errkind errors.Kind
@@ -63,6 +61,11 @@ func TestService_Evaluate(t *testing.T) {
 				GetStub: func(key string) (*rego.PreparedEvalQuery, bool) {
 					q := testQuery
 					return &q, true
+				},
+			},
+			cache: &policyfakes.FakeCache{
+				SetStub: func(ctx context.Context, s string, s2 string, s3 string, bytes []byte) error {
+					return nil
 				},
 			},
 			res: map[string]interface{}{"allow": true},
@@ -138,17 +141,55 @@ func TestService_Evaluate(t *testing.T) {
 					}, nil
 				},
 			},
+			cache: &policyfakes.FakeCache{
+				SetStub: func(ctx context.Context, s string, s2 string, s3 string, bytes []byte) error {
+					return nil
+				},
+			},
 			res: map[string]interface{}{"allow": true},
+		},
+		{
+			name: "policy is executed successfully, but storing the result in cache fails",
+			req:  testReq(),
+			regocache: &policyfakes.FakeRegoCache{
+				GetStub: func(key string) (*rego.PreparedEvalQuery, bool) {
+					return nil, false
+				},
+			},
+			storage: &policyfakes.FakeStorage{
+				PolicyStub: func(ctx context.Context, s string, s2 string, s3 string) (*storage.Policy, error) {
+					return &storage.Policy{
+						Name:       "example",
+						Group:      "testgroup",
+						Version:    "1.0",
+						Rego:       testPolicy,
+						Locked:     false,
+						LastUpdate: time.Now(),
+					}, nil
+				},
+			},
+			cache: &policyfakes.FakeCache{
+				SetStub: func(ctx context.Context, s string, s2 string, s3 string, bytes []byte) error {
+					return errors.New("some error")
+				},
+			},
+			errkind: errors.Unknown,
+			errtext: "error storing policy result in cache",
 		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			svc := policy.New(test.storage, test.regocache, zap.NewNop())
+			svc := policy.New(test.storage, test.regocache, test.cache, zap.NewNop())
 			res, err := svc.Evaluate(context.Background(), test.req)
 			if err == nil {
 				assert.Empty(t, test.errtext)
-				assert.Equal(t, test.res, res)
+				assert.NotNil(t, res)
+
+				result, ok := res.(map[string]interface{})
+				assert.True(t, ok)
+				assert.Equal(t, test.res, result["result"])
+				assert.NotEmpty(t, result["evaluationID"])
 			} else {
 				e, ok := err.(*errors.Error)
 				assert.True(t, ok)
@@ -243,7 +284,7 @@ func TestService_Lock(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			svc := policy.New(test.storage, nil, zap.NewNop())
+			svc := policy.New(test.storage, nil, nil, zap.NewNop())
 			err := svc.Lock(context.Background(), test.req)
 			if err == nil {
 				assert.Empty(t, test.errtext)
@@ -340,7 +381,7 @@ func TestService_Unlock(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			svc := policy.New(test.storage, nil, zap.NewNop())
+			svc := policy.New(test.storage, nil, nil, zap.NewNop())
 			err := svc.Unlock(context.Background(), test.req)
 			if err == nil {
 				assert.Empty(t, test.errtext)

@@ -32,7 +32,7 @@ policy (evaluate|lock|unlock)
 // UsageExamples produces an example of a valid invocation of the CLI tool.
 func UsageExamples() string {
 	return os.Args[0] + ` health liveness` + "\n" +
-		os.Args[0] + ` policy evaluate --body "Similique quisquam optio." --group "Repellat velit omnis." --policy-name "Vitae qui." --version "Provident fugiat at cupiditate."` + "\n" +
+		os.Args[0] + ` policy evaluate --body "Ab accusamus voluptatem et est." --group "example" --policy-name "example" --version "1.0"` + "\n" +
 		""
 }
 
@@ -247,7 +247,7 @@ Evaluate executes a policy with the given 'data' as input.
     -version STRING: Policy version.
 
 Example:
-    %[1]s policy evaluate --body "Similique quisquam optio." --group "Repellat velit omnis." --policy-name "Vitae qui." --version "Provident fugiat at cupiditate."
+    %[1]s policy evaluate --body "Ab accusamus voluptatem et est." --group "example" --policy-name "example" --version "1.0"
 `, os.Args[0])
 }
 
@@ -260,7 +260,7 @@ Lock a policy so that it cannot be evaluated.
     -version STRING: Policy version.
 
 Example:
-    %[1]s policy lock --group "Deleniti non nihil dolor aut sed." --policy-name "Incidunt unde consequatur voluptas dolorem nisi temporibus." --version "Omnis quasi aut consequuntur."
+    %[1]s policy lock --group "Vitae qui." --policy-name "Provident fugiat at cupiditate." --version "Commodi vitae voluptatem."
 `, os.Args[0])
 }
 
@@ -273,6 +273,6 @@ Unlock a policy so it can be evaluated again.
     -version STRING: Policy version.
 
 Example:
-    %[1]s policy unlock --group "Aut facere veniam repudiandae id." --policy-name "Aut minus alias." --version "At eos facilis molestias in voluptas rem."
+    %[1]s policy unlock --group "Aut ut fuga quae eius minus." --policy-name "Architecto quibusdam ab." --version "In illum est et hic."
 `, os.Args[0])
 }
