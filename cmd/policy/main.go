@@ -25,6 +25,7 @@ import (
 	goapolicysrv "code.vereign.com/gaiax/tsa/policy/gen/http/policy/server"
 	"code.vereign.com/gaiax/tsa/policy/gen/openapi"
 	goapolicy "code.vereign.com/gaiax/tsa/policy/gen/policy"
+	"code.vereign.com/gaiax/tsa/policy/internal/clients/cache"
 	"code.vereign.com/gaiax/tsa/policy/internal/config"
 	"code.vereign.com/gaiax/tsa/policy/internal/regocache"
 	"code.vereign.com/gaiax/tsa/policy/internal/regofunc"
@@ -65,6 +66,8 @@ func main() {
 	}
 	defer db.Disconnect(context.Background()) //nolint:errcheck
 
+	httpClient := httpClient()
+
 	// create storage
 	storage, err := storage.New(db, cfg.Mongo.DB, cfg.Mongo.Collection, logger)
 	if err != nil {
@@ -76,7 +79,6 @@ func main() {
 
 	// register rego extension functions
 	{
-		httpClient := httpClient()
 		cacheFuncs := regofunc.NewCacheFuncs(cfg.Cache.Addr, httpClient)
 		didResolverFuncs := regofunc.NewDIDResolverFuncs(cfg.DIDResolver.Addr, httpClient)
 		taskFuncs := regofunc.NewTaskFuncs(cfg.Task.Addr, httpClient)
@@ -90,13 +92,16 @@ func main() {
 	// subscribe the cache for policy data changes
 	storage.AddPolicyChangeSubscriber(regocache)
 
+	// create cache client
+	cache := cache.New(cfg.Cache.Addr, cache.WithHTTPClient(httpClient))
+
 	// create services
 	var (
 		policySvc goapolicy.Service
 		healthSvc goahealth.Service
 	)
 	{
-		policySvc = policy.New(storage, regocache, logger)
+		policySvc = policy.New(storage, regocache, cache, logger)
 		healthSvc = health.New()
 	}
 

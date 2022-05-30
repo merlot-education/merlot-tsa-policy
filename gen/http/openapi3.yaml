@@ -31,8 +31,8 @@ paths:
         schema:
           type: string
           description: Policy group.
-          example: Sint nam voluptatem ea consequatur similique et.
-        example: Non mollitia nesciunt impedit facere.
+          example: example
+        example: example
       - name: policyName
         in: path
         description: Policy name.
@@ -40,8 +40,8 @@ paths:
         schema:
           type: string
           description: Policy name.
-          example: Ut commodi perspiciatis corporis.
-        example: Accusamus autem sequi.
+          example: example
+        example: example
       - name: version
         in: path
         description: Policy version.
@@ -49,8 +49,8 @@ paths:
         schema:
           type: string
           description: Policy version.
-          example: Et nulla.
-        example: In quis nesciunt autem et.
+          example: "1.0"
+        example: "1.0"
       requestBody:
         description: Input data passed to the policy execution runtime.
         required: true
@@ -59,9 +59,9 @@ paths:
             schema:
               type: string
               description: Input data passed to the policy execution runtime.
-              example: Ab accusantium ut ut aliquid sint animi.
+              example: Deleniti non nihil dolor aut sed.
               format: binary
-            example: Aut voluptas.
+            example: Omnis quasi aut consequuntur.
       responses:
         "200":
           description: OK response.
@@ -69,9 +69,9 @@ paths:
             application/json:
               schema:
                 type: string
-                example: Dolorem cumque laborum quis nesciunt.
+                example: Incidunt unde consequatur voluptas dolorem nisi temporibus.
                 format: binary
-              example: Sunt in et quia cum.
+              example: Tempore minus.
   /policy/{group}/{policyName}/{version}/lock:
     delete:
       tags:
@@ -87,8 +87,8 @@ paths:
         schema:
           type: string
           description: Policy group.
-          example: Accusamus enim.
-        example: Recusandae est rerum corrupti quia.
+          example: Dolorem cumque laborum quis nesciunt.
+        example: Aut voluptas.
       - name: policyName
         in: path
         description: Policy name.
@@ -96,8 +96,8 @@ paths:
         schema:
           type: string
           description: Policy name.
-          example: Quam dolores architecto itaque.
-        example: Voluptas ad corporis adipisci inventore ipsum.
+          example: Sint nam voluptatem ea consequatur similique et.
+        example: Non mollitia nesciunt impedit facere.
       - name: version
         in: path
         description: Policy version.
@@ -105,8 +105,8 @@ paths:
         schema:
           type: string
           description: Policy version.
-          example: Recusandae dolorum nisi distinctio vitae ad.
-        example: Perspiciatis voluptatem.
+          example: Ut commodi perspiciatis corporis.
+        example: Accusamus autem sequi.
       responses:
         "200":
           description: OK response.
@@ -124,8 +124,8 @@ paths:
         schema:
           type: string
           description: Policy group.
-          example: Commodi nemo fugiat id praesentium accusantium expedita.
-        example: Qui non quia.
+          example: Quis quos qui earum velit illum.
+        example: Aliquam atque voluptatum ut dolorem.
       - name: policyName
         in: path
         description: Policy name.
@@ -133,8 +133,8 @@ paths:
         schema:
           type: string
           description: Policy name.
-          example: Error maxime quasi quia non voluptatibus error.
-        example: Optio quia et laborum.
+          example: Aut facere veniam repudiandae id.
+        example: Aut minus alias.
       - name: version
         in: path
         description: Policy version.
@@ -142,8 +142,8 @@ paths:
         schema:
           type: string
           description: Policy version.
-          example: In libero perspiciatis voluptatum ut soluta.
-        example: Ut amet.
+          example: At eos facilis molestias in voluptas rem.
+        example: Ab accusantium ut ut aliquid sint animi.
       responses:
         "200":
           description: OK response.

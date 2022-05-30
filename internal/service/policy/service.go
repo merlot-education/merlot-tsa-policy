@@ -2,8 +2,10 @@ package policy
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
+	"github.com/google/uuid"
 	"github.com/open-policy-agent/opa/rego"
 	"go.uber.org/zap"
 
@@ -13,8 +15,14 @@ import (
 	"code.vereign.com/gaiax/tsa/policy/internal/storage"
 )
 
+//go:generate counterfeiter . Cache
 //go:generate counterfeiter . Storage
 //go:generate counterfeiter . RegoCache
+
+type Cache interface {
+	Set(ctx context.Context, key, namespace, scope string, value []byte) error
+	Get(ctx context.Context, key, namespace, scope string) ([]byte, error)
+}
 
 type Storage interface {
 	Policy(ctx context.Context, group, name, version string) (*storage.Policy, error)
@@ -29,13 +37,15 @@ type RegoCache interface {
 type Service struct {
 	storage    Storage
 	queryCache RegoCache
+	cache      Cache
 	logger     *zap.Logger
 }
 
-func New(storage Storage, queryCache RegoCache, logger *zap.Logger) *Service {
+func New(storage Storage, queryCache RegoCache, cache Cache, logger *zap.Logger) *Service {
 	return &Service{
 		storage:    storage,
 		queryCache: queryCache,
+		cache:      cache,
 		logger:     logger,
 	}
 }
@@ -47,12 +57,14 @@ func New(storage Storage, queryCache RegoCache, logger *zap.Logger) *Service {
 // be exactly the same as 'group.policy'. For example:
 // Evaluating the URL: `.../policies/mygroup/example/1.0/evaluation` will
 // return results correctly, only if the package declaration inside the policy is:
-// `package mygroup.example`
+// `package mygroup.example`.
 func (s *Service) Evaluate(ctx context.Context, req *policy.EvaluateRequest) (interface{}, error) {
+	evaluationID := uuid.NewString()
 	logger := s.logger.With(
 		zap.String("group", req.Group),
 		zap.String("name", req.PolicyName),
 		zap.String("version", req.Version),
+		zap.String("evaluationID", evaluationID),
 	)
 
 	query, err := s.prepareQuery(ctx, req.Group, req.PolicyName, req.Version)
@@ -77,7 +89,23 @@ func (s *Service) Evaluate(ctx context.Context, req *policy.EvaluateRequest) (in
 		return nil, errors.New("policy evaluation result expressions are empty")
 	}
 
-	return resultSet[0].Expressions[0].Value, nil
+	jsonValue, err := json.Marshal(resultSet[0].Expressions[0].Value)
+	if err != nil {
+		logger.Error("error encoding result to json", zap.Error(err))
+		return nil, errors.New("error encoding result to json")
+	}
+
+	if err := s.cache.Set(ctx, evaluationID, "", "", jsonValue); err != nil {
+		logger.Error("error storing policy result in cache", zap.Error(err))
+		return nil, errors.New("error storing policy result in cache")
+	}
+
+	result := map[string]interface{}{
+		"evaluationID": evaluationID,
+		"result":       resultSet[0].Expressions[0].Value,
+	}
+
+	return result, nil
 }
 
 // Lock a policy so that it cannot be evaluated.

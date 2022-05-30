@@ -4,6 +4,7 @@ go 1.17
 
 require (
 	code.vereign.com/gaiax/tsa/golib v0.0.0-20220321093827-5fdf8f34aad9
+	github.com/google/uuid v1.3.0
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/open-policy-agent/opa v0.38.1
 	github.com/stretchr/testify v1.7.0
@@ -22,7 +23,6 @@ require (
 	github.com/go-stack/stack v1.8.0 // indirect
 	github.com/gobwas/glob v0.2.3 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
-	github.com/google/uuid v1.3.0 // indirect
 	github.com/gopherjs/gopherjs v0.0.0-20220221023154-0b2280d3ff96 // indirect
 	github.com/gorilla/websocket v1.5.0 // indirect
 	github.com/jtolds/gls v4.20.0+incompatible // indirect
