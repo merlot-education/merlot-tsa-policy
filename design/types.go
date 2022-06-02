@@ -14,6 +14,7 @@ var EvaluateRequest = Type("EvaluateRequest", func() {
 		Example("1.0")
 	})
 	Field(4, "input", Any, "Input data passed to the policy execution runtime.")
+	Field(5, "evaluationID", String, "Identifier created by external system and passed as parameter to overwrite the randomly generated evaluationID.")
 	Required("group", "policyName", "version", "input")
 })
 

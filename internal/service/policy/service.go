@@ -59,7 +59,13 @@ func New(storage Storage, queryCache RegoCache, cache Cache, logger *zap.Logger)
 // return results correctly, only if the package declaration inside the policy is:
 // `package mygroup.example`.
 func (s *Service) Evaluate(ctx context.Context, req *policy.EvaluateRequest) (interface{}, error) {
-	evaluationID := uuid.NewString()
+	var evaluationID string
+	if req.EvaluationID != nil && *req.EvaluationID != "" {
+		evaluationID = *req.EvaluationID
+	} else {
+		evaluationID = uuid.NewString()
+	}
+
 	logger := s.logger.With(
 		zap.String("group", req.Group),
 		zap.String("name", req.PolicyName),

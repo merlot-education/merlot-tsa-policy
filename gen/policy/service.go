@@ -41,6 +41,9 @@ type EvaluateRequest struct {
 	Version string
 	// Input data passed to the policy execution runtime.
 	Input interface{}
+	// Identifier created by external system and passed as parameter to overwrite
+	// the randomly generated evaluationID.
+	EvaluationID *string
 }
 
 // LockRequest is the payload type of the policy service Lock method.

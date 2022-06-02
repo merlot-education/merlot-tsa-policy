@@ -24,6 +24,9 @@ var _ = Service("policy", func() {
 		Result(Any)
 		HTTP(func() {
 			POST("/policy/{group}/{policyName}/{version}/evaluation")
+			Header("evaluationID:x-evaluation-id", String, "EvaluationID allows overwriting the randomly generated evaluationID", func() {
+				Example("did:web:example.com")
+			})
 			Body("input")
 			Response(StatusOK)
 		})
