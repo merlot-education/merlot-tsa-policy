@@ -47,6 +47,11 @@ paths:
         description: Policy version.
         required: true
         type: string
+      - name: x-evaluation-id
+        in: header
+        description: EvaluationID allows overwriting the randomly generated evaluationID
+        required: false
+        type: string
       - name: any
         in: body
         description: Input data passed to the policy execution runtime.

@@ -45,16 +45,21 @@ func DecodeEvaluateRequest(mux goahttp.Muxer, decoder func(*http.Request) goahtt
 		}
 
 		var (
-			group      string
-			policyName string
-			version    string
+			group        string
+			policyName   string
+			version      string
+			evaluationID *string
 
 			params = mux.Vars(r)
 		)
 		group = params["group"]
 		policyName = params["policyName"]
 		version = params["version"]
-		payload := NewEvaluateRequest(body, group, policyName, version)
+		evaluationIDRaw := r.Header.Get("x-evaluation-id")
+		if evaluationIDRaw != "" {
+			evaluationID = &evaluationIDRaw
+		}
+		payload := NewEvaluateRequest(body, group, policyName, version, evaluationID)
 
 		return payload, nil
 	}

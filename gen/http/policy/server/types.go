@@ -12,7 +12,7 @@ import (
 )
 
 // NewEvaluateRequest builds a policy service Evaluate endpoint payload.
-func NewEvaluateRequest(body interface{}, group string, policyName string, version string) *policy.EvaluateRequest {
+func NewEvaluateRequest(body interface{}, group string, policyName string, version string, evaluationID *string) *policy.EvaluateRequest {
 	v := body
 	res := &policy.EvaluateRequest{
 		Input: v,
@@ -20,6 +20,7 @@ func NewEvaluateRequest(body interface{}, group string, policyName string, versi
 	res.Group = group
 	res.PolicyName = policyName
 	res.Version = version
+	res.EvaluationID = evaluationID
 
 	return res
 }

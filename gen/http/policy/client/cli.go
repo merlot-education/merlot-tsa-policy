@@ -16,13 +16,13 @@ import (
 
 // BuildEvaluatePayload builds the payload for the policy Evaluate endpoint
 // from CLI flags.
-func BuildEvaluatePayload(policyEvaluateBody string, policyEvaluateGroup string, policyEvaluatePolicyName string, policyEvaluateVersion string) (*policy.EvaluateRequest, error) {
+func BuildEvaluatePayload(policyEvaluateBody string, policyEvaluateGroup string, policyEvaluatePolicyName string, policyEvaluateVersion string, policyEvaluateEvaluationID string) (*policy.EvaluateRequest, error) {
 	var err error
 	var body interface{}
 	{
 		err = json.Unmarshal([]byte(policyEvaluateBody), &body)
 		if err != nil {
-			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "\"Ab accusamus voluptatem et est.\"")
+			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "\"Illum ad assumenda consectetur minima voluptatibus.\"")
 		}
 	}
 	var group string
@@ -37,6 +37,12 @@ func BuildEvaluatePayload(policyEvaluateBody string, policyEvaluateGroup string,
 	{
 		version = policyEvaluateVersion
 	}
+	var evaluationID *string
+	{
+		if policyEvaluateEvaluationID != "" {
+			evaluationID = &policyEvaluateEvaluationID
+		}
+	}
 	v := body
 	res := &policy.EvaluateRequest{
 		Input: v,
@@ -44,6 +50,7 @@ func BuildEvaluatePayload(policyEvaluateBody string, policyEvaluateGroup string,
 	res.Group = group
 	res.PolicyName = policyName
 	res.Version = version
+	res.EvaluationID = evaluationID
 
 	return res, nil
 }

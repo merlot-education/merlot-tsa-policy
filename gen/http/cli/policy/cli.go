@@ -32,7 +32,7 @@ policy (evaluate|lock|unlock)
 // UsageExamples produces an example of a valid invocation of the CLI tool.
 func UsageExamples() string {
 	return os.Args[0] + ` health liveness` + "\n" +
-		os.Args[0] + ` policy evaluate --body "Ab accusamus voluptatem et est." --group "example" --policy-name "example" --version "1.0"` + "\n" +
+		os.Args[0] + ` policy evaluate --body "Illum ad assumenda consectetur minima voluptatibus." --group "example" --policy-name "example" --version "1.0" --evaluation-id "Ab accusamus voluptatem et est."` + "\n" +
 		""
 }
 
@@ -54,11 +54,12 @@ func ParseEndpoint(
 
 		policyFlags = flag.NewFlagSet("policy", flag.ContinueOnError)
 
-		policyEvaluateFlags          = flag.NewFlagSet("evaluate", flag.ExitOnError)
-		policyEvaluateBodyFlag       = policyEvaluateFlags.String("body", "REQUIRED", "")
-		policyEvaluateGroupFlag      = policyEvaluateFlags.String("group", "REQUIRED", "Policy group.")
-		policyEvaluatePolicyNameFlag = policyEvaluateFlags.String("policy-name", "REQUIRED", "Policy name.")
-		policyEvaluateVersionFlag    = policyEvaluateFlags.String("version", "REQUIRED", "Policy version.")
+		policyEvaluateFlags            = flag.NewFlagSet("evaluate", flag.ExitOnError)
+		policyEvaluateBodyFlag         = policyEvaluateFlags.String("body", "REQUIRED", "")
+		policyEvaluateGroupFlag        = policyEvaluateFlags.String("group", "REQUIRED", "Policy group.")
+		policyEvaluatePolicyNameFlag   = policyEvaluateFlags.String("policy-name", "REQUIRED", "Policy name.")
+		policyEvaluateVersionFlag      = policyEvaluateFlags.String("version", "REQUIRED", "Policy version.")
+		policyEvaluateEvaluationIDFlag = policyEvaluateFlags.String("evaluation-id", "", "")
 
 		policyLockFlags          = flag.NewFlagSet("lock", flag.ExitOnError)
 		policyLockGroupFlag      = policyLockFlags.String("group", "REQUIRED", "Policy group.")
@@ -171,7 +172,7 @@ func ParseEndpoint(
 			switch epn {
 			case "evaluate":
 				endpoint = c.Evaluate()
-				data, err = policyc.BuildEvaluatePayload(*policyEvaluateBodyFlag, *policyEvaluateGroupFlag, *policyEvaluatePolicyNameFlag, *policyEvaluateVersionFlag)
+				data, err = policyc.BuildEvaluatePayload(*policyEvaluateBodyFlag, *policyEvaluateGroupFlag, *policyEvaluatePolicyNameFlag, *policyEvaluateVersionFlag, *policyEvaluateEvaluationIDFlag)
 			case "lock":
 				endpoint = c.Lock()
 				data, err = policyc.BuildLockPayload(*policyLockGroupFlag, *policyLockPolicyNameFlag, *policyLockVersionFlag)
@@ -238,16 +239,17 @@ Additional help:
 `, os.Args[0])
 }
 func policyEvaluateUsage() {
-	fmt.Fprintf(os.Stderr, `%[1]s [flags] policy evaluate -body JSON -group STRING -policy-name STRING -version STRING
+	fmt.Fprintf(os.Stderr, `%[1]s [flags] policy evaluate -body JSON -group STRING -policy-name STRING -version STRING -evaluation-id STRING
 
 Evaluate executes a policy with the given 'data' as input.
     -body JSON: 
     -group STRING: Policy group.
     -policy-name STRING: Policy name.
     -version STRING: Policy version.
+    -evaluation-id STRING: 
 
 Example:
-    %[1]s policy evaluate --body "Ab accusamus voluptatem et est." --group "example" --policy-name "example" --version "1.0"
+    %[1]s policy evaluate --body "Illum ad assumenda consectetur minima voluptatibus." --group "example" --policy-name "example" --version "1.0" --evaluation-id "Ab accusamus voluptatem et est."
 `, os.Args[0])
 }
 
@@ -260,7 +262,7 @@ Lock a policy so that it cannot be evaluated.
     -version STRING: Policy version.
 
 Example:
-    %[1]s policy lock --group "Vitae qui." --policy-name "Provident fugiat at cupiditate." --version "Commodi vitae voluptatem."
+    %[1]s policy lock --group "Commodi vitae voluptatem." --policy-name "Similique quisquam optio." --version "Explicabo beatae quisquam officiis libero voluptatibus."
 `, os.Args[0])
 }
 
@@ -273,6 +275,6 @@ Unlock a policy so it can be evaluated again.
     -version STRING: Policy version.
 
 Example:
-    %[1]s policy unlock --group "Aut ut fuga quae eius minus." --policy-name "Architecto quibusdam ab." --version "In illum est et hic."
+    %[1]s policy unlock --group "In illum est et hic." --policy-name "Deleniti non nihil dolor aut sed." --version "Incidunt unde consequatur voluptas dolorem nisi temporibus."
 `, os.Args[0])
 }
