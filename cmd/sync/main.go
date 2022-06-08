@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"path"
 	"path/filepath"
 	"strings"
 	"time"
@@ -24,7 +23,8 @@ import (
 
 const (
 	repoFolder       = "policies"
-	policyFileExt    = ".rego"
+	policyFilename   = "policy.rego"
+	dataFilename     = "data.json"
 	policyDatabase   = "policy"
 	policyCollection = "policies"
 )
@@ -36,6 +36,7 @@ type Policy struct {
 	Version    string
 	Rego       string
 	Locked     bool
+	Data       interface{}
 	LastUpdate time.Time
 }
 
@@ -138,7 +139,7 @@ func iterateRepo() (map[string]*Policy, error) {
 		if err != nil {
 			return err
 		}
-		if !d.IsDir() && filepath.Ext(d.Name()) == policyFileExt {
+		if !d.IsDir() && d.Name() == policyFilename {
 			policy, err := createPolicy(p, d)
 			if err != nil {
 				return err
@@ -153,19 +154,29 @@ func iterateRepo() (map[string]*Policy, error) {
 
 // createPolicy instantiates a Policy struct out of a policy file on given path
 func createPolicy(p string, d os.DirEntry) (*Policy, error) {
-	filename := d.Name()
-	group := path.Base(path.Dir(p))
-	ss := strings.Split(strings.TrimSuffix(filename, policyFileExt), "_")
-	if len(ss) < 2 {
-		return nil, fmt.Errorf("failed to get policy name and version out of policy filename: %s", filename)
+	// path to Rego policy must be {group}/{name}/{version}/policy.rego
+	// strings.Split on the path give us an array containing at least group, name, version and filename
+	ss := strings.Split(p, "/")
+	if len(ss) < 4 {
+		return nil, fmt.Errorf("failed to get policy filename, name, version and group out of policy path: %s", p)
 	}
-	name := ss[0]
-	version := ss[1]
+
+	filename := ss[len(ss)-1] // last element in the array is filename
+	version := ss[len(ss)-2]  // second last element is the version
+	name := ss[len(ss)-3]     // third last element is the policy name
+	group := ss[len(ss)-4]    // fourth last element is the policy group
 	bytes, err := os.ReadFile(p)
 	if err != nil {
 		return nil, err
 	}
 	regoSrc := string(bytes)
+
+	// check if there is a data.json file in the same folder as the policy
+	dataBytes, err := os.ReadFile(strings.TrimSuffix(p, policyFilename) + dataFilename)
+	if err != nil && !strings.Contains(err.Error(), "no such file or directory") {
+		return nil, err
+	}
+	data := string(dataBytes)
 
 	return &Policy{
 		Filename: filename,
@@ -173,6 +184,7 @@ func createPolicy(p string, d os.DirEntry) (*Policy, error) {
 		Group:    group,
 		Version:  version,
 		Rego:     regoSrc,
+		Data:     data,
 		Locked:   false,
 	}, nil
 }
@@ -264,6 +276,7 @@ func upsert(ctx context.Context, policies []*Policy, db *mongo.Collection) error
 				"filename":   policy.Filename,
 				"locked":     policy.Locked,
 				"rego":       policy.Rego,
+				"data":       policy.Data,
 				"lastUpdate": time.Now(),
 			},
 		})
@@ -281,6 +294,7 @@ func upsert(ctx context.Context, policies []*Policy, db *mongo.Collection) error
 
 func (p1 *Policy) equals(p2 *Policy) bool {
 	if p1.Rego == p2.Rego &&
+		p1.Data == p2.Data &&
 		p1.Name == p2.Name &&
 		p1.Version == p2.Version &&
 		p1.Filename == p2.Filename &&
