@@ -1,9 +1,19 @@
-stages:
-  - test
+variables:
+  APP_HELM_NAME: policy
+  DOCKER_FILE: deployment/ci/Dockerfile
+  GOOGLE_IMAGE: ${GOOGLE_LIGHT_REGISTRY_URL}/gaiax/$CI_PROJECT_NAME:$CI_COMMIT_REF_NAME
 
-before_script:
-  - ln -s /builds /go/src/code.vereign.com
-  - cd /go/src/code.vereign.com/${CI_PROJECT_PATH}
+stages:
+  - compile
+  - test
+  - build
+  - manifest
+  - deploy
+
+include:
+  - project: 'gaiax/tsa/ci-helpers'
+    file: 'docker-build.yml'
+  - template: 'Workflows/Branch-Pipelines.gitlab-ci.yml'
 
 lint:
   image: golangci/golangci-lint:v1.44.2
@@ -13,15 +23,32 @@ lint:
   script:
     - golangci-lint --version
     - golangci-lint run
-    - cd cmd/sync
-    - golangci-lint run
+  before_script:
+    - ln -s /builds /go/src/code.vereign.com
+    - cd /go/src/code.vereign.com/${CI_PROJECT_PATH}
 
 unit tests:
-  image: golang:1.17.8
+  image: golang:1.17.7
+  extends: .gotest
   stage: test
   tags:
     - amd64-docker
-  script:
-    - go version
-    - go test -race ./... -coverprofile=coverage.out
-    - go tool cover -func=coverage.out
+  before_script: []
+
+amd64:
+  extends: .docker-build
+  stage: build
+  tags:
+    - amd64-docker
+
+manifest:
+  extends: .manifest-amd64
+  stage: manifest
+
+cloud:
+  extends: .manifest-cloud
+  stage: manifest
+
+release:
+  extends: .manifest-release
+  stage: manifest
