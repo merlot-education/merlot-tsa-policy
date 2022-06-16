@@ -7,6 +7,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/open-policy-agent/opa/rego"
+	"github.com/open-policy-agent/opa/storage/inmem"
 	"go.uber.org/zap"
 
 	"code.vereign.com/gaiax/tsa/golib/errors"
@@ -204,8 +205,14 @@ func (s *Service) prepareQuery(ctx context.Context, group, policyName, version s
 	// and the group and policy name.
 	regoQuery := fmt.Sprintf("data.%s.%s", group, policyName)
 
+	// regoArgs contains all rego functions passed to evaluation runtime
+	regoArgs, err := s.buildRegoArgs(pol.Filename, pol.Rego, regoQuery, pol.Data)
+	if err != nil {
+		return nil, errors.New("error building rego runtime functions", err)
+	}
+
 	newQuery, err := rego.New(
-		buildRegoArgs(pol.Filename, pol.Rego, regoQuery)...,
+		regoArgs...,
 	).PrepareForEval(ctx)
 	if err != nil {
 		return nil, errors.New("error preparing rego query", err)
@@ -216,7 +223,7 @@ func (s *Service) prepareQuery(ctx context.Context, group, policyName, version s
 	return &newQuery, nil
 }
 
-func buildRegoArgs(filename, regoPolicy, regoQuery string) (availableFuncs []func(*rego.Rego)) {
+func (s *Service) buildRegoArgs(filename, regoPolicy, regoQuery, regoData string) (availableFuncs []func(*rego.Rego), err error) {
 	availableFuncs = make([]func(*rego.Rego), 2)
 	availableFuncs[0] = rego.Module(filename, regoPolicy)
 	availableFuncs[1] = rego.Query(regoQuery)
@@ -224,7 +231,20 @@ func buildRegoArgs(filename, regoPolicy, regoQuery string) (availableFuncs []fun
 	for i := range extensions {
 		availableFuncs = append(availableFuncs, extensions[i])
 	}
-	return
+
+	// add static data to evaluation runtime
+	if regoData != "" {
+		var data map[string]interface{}
+		err := json.Unmarshal([]byte(regoData), &data)
+		if err != nil {
+			return nil, err
+		}
+
+		store := inmem.NewFromObject(data)
+		availableFuncs = append(availableFuncs, rego.Store(store))
+	}
+
+	return availableFuncs, nil
 }
 
 func (s *Service) queryCacheKey(group, policyName, version string) string {

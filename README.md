@@ -95,9 +95,9 @@ code files in an external Git server.
 flowchart LR
 	A[Policy\nDeveloper] --git push/merge--> B[Git branch]
 	subgraph Git Server
-		B --> C[example_1.0.rego]
-		B --> D[example_2.0.rego]
-		B --> G[example_3.0.rego]
+		B --> C[example/1.0/policy.rego]
+		B --> D[example/2.0/policy.rego]
+		B --> G[example/3.0/policy.rego]
 	end
 	C --> E[Sync]
 	D --> E[Sync]
@@ -117,9 +117,11 @@ for detailed overview of Rego and OPA capabilities.
 **Some conventions *must* be followed when writing policies.**
 
 1. The filename of the policy *must* follow rules for the naming and directory structure:
-the `group` is a directory inside the Git repo, while the policy name and version are used
-for naming the file. For example: `/gaiax/example_1.0.rego`.
-2. The policy package name inside the policy source code file *must* exactly match
+the `group`, `policy name` and `version` are directories inside the Git repo and policy file *must* be named
+`policy.rego`.  For example: `/gaiax/example/1.0/policy.rego`.
+2. In the same directory there could be a data file containing static json, which is later passed to the
+policy evaluation runtime. The file *must* be named `data.json`. Example: `/gaiax/example/1.0/data.json`
+3. The policy package name inside the policy source code file *must* exactly match
 the `group` and `policy` (name) of the policy.
 
 *What does all this mean?*
@@ -133,19 +135,32 @@ allow {
 }
 ```
 
-Next, the filename must be `/gaiax/example_1.0.rego`. When such file is synchronized
+Next, the filename must be `/gaiax/example/1.0/policy.rego`. When such file is synchronized
 with the policy service (storage), the naming convention allows the service to understand
 which part is the policy group, which part is policy name and which part is version.
 
-If we create the above policy and store it in the Git repo as `/gaiax/example_1.0.rego`, 
+If we create the above policy and store it in the Git repo as `/gaiax/example/1.0/policy.rego`,
 after the Git server is synchronized with the Policy Storage, the policy service will
 automatically expose URLs for working with the policy at:
 ```
 http://localhost:8081/policy/gaiax/example/1.0/evaluation
 http://localhost:8081/policy/gaiax/example/1.0/lock
 ```
+The 2nd rule for static data file naming is to make sure that file `/gaiax/example/1.0/data.json`
+is passed and is available to the evaluation runtime when a policy is evaluated at URL:
+```
+http://localhost:8081/policy/gaiax/example/1.0/evaluation
+```
+Static data is accessed within the Rego policy with `data.someKey`.
+Example: If the `/gaiax/example/1.0/data.json` file is:
+```json
+{
+  "name": "some name"
+}
+```
+one could access the data using `data.name` within the Rego source code.
 
-The 2nd rule for package naming is needed so that a generic evaluation function 
+The 3rd rule for package naming is needed so that a generic evaluation function
 can be mapped and used for evaluating all kinds of different policies. Without a 
 package naming rule, there's no way the service can automatically generate HTTP 
 endpoints for working with arbitrary dynamically uploaded policies.
