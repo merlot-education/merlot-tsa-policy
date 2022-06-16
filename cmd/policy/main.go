@@ -86,6 +86,7 @@ func main() {
 		regofunc.Register("cacheSet", rego.Function4(cacheFuncs.CacheSetFunc()))
 		regofunc.Register("didResolve", rego.Function1(didResolverFuncs.ResolveFunc()))
 		regofunc.Register("taskCreate", rego.Function2(taskFuncs.CreateTaskFunc()))
+		regofunc.Register("taskListCreate", rego.Function2(taskFuncs.CreateTaskListFunc()))
 		regofunc.Register("strictBuiltinErrors", rego.StrictBuiltinErrors(true))
 	}
 
