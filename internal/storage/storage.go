@@ -22,6 +22,7 @@ type Policy struct {
 	Group      string
 	Version    string
 	Rego       string
+	Data       string
 	Locked     bool
 	LastUpdate time.Time
 }
