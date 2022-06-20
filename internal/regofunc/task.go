@@ -79,7 +79,7 @@ func (t *TaskFuncs) CreateTaskFunc() (*rego.Function, rego.Builtin2) {
 // CreateTaskListFunc returns a rego function for creating task lists.
 func (t *TaskFuncs) CreateTaskListFunc() (*rego.Function, rego.Builtin2) {
 	return &rego.Function{
-			Name:    "task_list.create",
+			Name:    "tasklist.create",
 			Decl:    types.NewFunction(types.Args(types.S, types.S), types.A),
 			Memoize: true,
 		},

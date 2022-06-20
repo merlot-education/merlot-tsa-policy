@@ -102,7 +102,7 @@ func TestTaskFuncs_CreateTaskList(t *testing.T) {
 				w.WriteHeader(http.StatusNotFound)
 				_, _ = w.Write([]byte(`{"error":"taskList not found"}`))
 			},
-			errtext: "task_list.create: unexpected response code: 404",
+			errtext: "tasklist.create: unexpected response code: 404",
 		},
 		{
 			name:  "task service returns error",
@@ -110,7 +110,7 @@ func TestTaskFuncs_CreateTaskList(t *testing.T) {
 			taskHandler: func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(http.StatusInternalServerError)
 			},
-			errtext: "task_list.create: unexpected response code: 500",
+			errtext: "tasklist.create: unexpected response code: 500",
 		},
 		{
 			name:  "task service returns invalid JSON response",
@@ -120,7 +120,7 @@ func TestTaskFuncs_CreateTaskList(t *testing.T) {
 				_, _ = w.Write([]byte("boom"))
 			},
 			response: nil,
-			errtext:  "task_list.create: invalid character",
+			errtext:  "tasklist.create: invalid character",
 		},
 		{
 			name:  "taskList is created successfully",
@@ -139,7 +139,7 @@ func TestTaskFuncs_CreateTaskList(t *testing.T) {
 		taskFuncs := regofunc.NewTaskFuncs(srv.URL, http.DefaultClient)
 
 		query, err := rego.New(
-			rego.Query(`task_list.create("taskListName", input)`),
+			rego.Query(`tasklist.create("taskListName", input)`),
 			rego.Function2(taskFuncs.CreateTaskListFunc()),
 			rego.StrictBuiltinErrors(true),
 		).PrepareForEval(context.Background())
