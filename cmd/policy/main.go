@@ -56,11 +56,7 @@ func main() {
 	// connect to mongo db
 	db, err := mongo.Connect(
 		context.Background(),
-		options.Client().ApplyURI(cfg.Mongo.Addr).SetAuth(options.Credential{
-			Username: cfg.Mongo.User,
-			Password: cfg.Mongo.Pass,
-		}),
-	)
+		options.Client().ApplyURI(cfg.Mongo.Addr))
 	if err != nil {
 		logger.Fatal("error connecting to mongodb", zap.Error(err))
 	}
