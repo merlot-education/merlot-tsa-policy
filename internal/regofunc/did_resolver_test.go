@@ -26,6 +26,7 @@ func TestResolveFunc(t *testing.T) {
 	r := rego.New(
 		rego.Query(`did.resolve("did:indy:idunion:BDrEcHc8Tb4Lb2VyQZWEDE")`),
 		rego.Function1(DIDResolverFuncs.ResolveFunc()),
+		rego.StrictBuiltinErrors(true),
 	)
 	resultSet, err := r.Eval(context.Background())
 	assert.NoError(t, err)
