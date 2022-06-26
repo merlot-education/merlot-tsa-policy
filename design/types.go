@@ -20,7 +20,8 @@ var EvaluateRequest = Type("EvaluateRequest", func() {
 
 var EvaluateResult = Type("EvaluateResult", func() {
 	Field(1, "result", Any, "Arbitrary JSON response.")
-	Required("result")
+	Field(2, "ETag", String, "ETag contains unique identifier of the policy evaluation and can be used to later retrieve the results from Cache.")
+	Required("result", "ETag")
 })
 
 var LockRequest = Type("LockRequest", func() {

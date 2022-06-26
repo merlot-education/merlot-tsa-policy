@@ -59,7 +59,7 @@ func New(storage Storage, queryCache RegoCache, cache Cache, logger *zap.Logger)
 // Evaluating the URL: `.../policies/mygroup/example/1.0/evaluation` will
 // return results correctly, only if the package declaration inside the policy is:
 // `package mygroup.example`.
-func (s *Service) Evaluate(ctx context.Context, req *policy.EvaluateRequest) (interface{}, error) {
+func (s *Service) Evaluate(ctx context.Context, req *policy.EvaluateRequest) (*policy.EvaluateResult, error) {
 	var evaluationID string
 	if req.EvaluationID != nil && *req.EvaluationID != "" {
 		evaluationID = *req.EvaluationID
@@ -107,12 +107,24 @@ func (s *Service) Evaluate(ctx context.Context, req *policy.EvaluateRequest) (in
 		return nil, errors.New("error storing policy result in cache")
 	}
 
-	result := map[string]interface{}{
-		"evaluationID": evaluationID,
-		"result":       resultSet[0].Expressions[0].Value,
+	// If there is only a single result from the policy evaluation and it was assigned to an empty
+	// variable, then we'll return a custom response containing only the value of the empty variable
+	// without any mapping.
+	result := resultSet[0].Expressions[0].Value
+	if resultMap, ok := result.(map[string]interface{}); ok {
+		if len(resultMap) == 1 {
+			for k, v := range resultMap {
+				if k == "$0" {
+					result = v
+				}
+			}
+		}
 	}
 
-	return result, nil
+	return &policy.EvaluateResult{
+		Result: result,
+		ETag:   evaluationID,
+	}, nil
 }
 
 // Lock a policy so that it cannot be evaluated.

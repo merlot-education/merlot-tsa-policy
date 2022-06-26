@@ -14,7 +14,7 @@ import (
 // Policy Service provides evaluation of policies through Open Policy Agent.
 type Service interface {
 	// Evaluate executes a policy with the given 'data' as input.
-	Evaluate(context.Context, *EvaluateRequest) (res interface{}, err error)
+	Evaluate(context.Context, *EvaluateRequest) (res *EvaluateResult, err error)
 	// Lock a policy so that it cannot be evaluated.
 	Lock(context.Context, *LockRequest) (err error)
 	// Unlock a policy so it can be evaluated again.
@@ -44,6 +44,15 @@ type EvaluateRequest struct {
 	// Identifier created by external system and passed as parameter to overwrite
 	// the randomly generated evaluationID.
 	EvaluationID *string
+}
+
+// EvaluateResult is the result type of the policy service Evaluate method.
+type EvaluateResult struct {
+	// Arbitrary JSON response.
+	Result interface{}
+	// ETag contains unique identifier of the policy evaluation and can be used to
+	// later retrieve the results from Cache.
+	ETag string
 }
 
 // LockRequest is the payload type of the policy service Lock method.

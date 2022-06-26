@@ -21,14 +21,17 @@ var _ = Service("policy", func() {
 	Method("Evaluate", func() {
 		Description("Evaluate executes a policy with the given 'data' as input.")
 		Payload(EvaluateRequest)
-		Result(Any)
+		Result(EvaluateResult)
 		HTTP(func() {
 			POST("/policy/{group}/{policyName}/{version}/evaluation")
 			Header("evaluationID:x-evaluation-id", String, "EvaluationID allows overwriting the randomly generated evaluationID", func() {
 				Example("did:web:example.com")
 			})
 			Body("input")
-			Response(StatusOK)
+			Response(StatusOK, func() {
+				Body("result")
+				Header("ETag")
+			})
 		})
 	})
 

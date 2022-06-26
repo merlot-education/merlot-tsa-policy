@@ -16,6 +16,7 @@ import (
 
 	policy "code.vereign.com/gaiax/tsa/policy/gen/policy"
 	goahttp "goa.design/goa/v3/http"
+	goa "goa.design/goa/v3/pkg"
 )
 
 // BuildEvaluateRequest instantiates a HTTP request object with method and path
@@ -94,7 +95,19 @@ func DecodeEvaluateResponse(decoder func(*http.Response) goahttp.Decoder, restor
 			if err != nil {
 				return nil, goahttp.ErrDecodingError("policy", "Evaluate", err)
 			}
-			return body, nil
+			var (
+				eTag string
+			)
+			eTagRaw := resp.Header.Get("Etag")
+			if eTagRaw == "" {
+				err = goa.MergeErrors(err, goa.MissingFieldError("ETag", "header"))
+			}
+			eTag = eTagRaw
+			if err != nil {
+				return nil, goahttp.ErrValidationError("policy", "Evaluate", err)
+			}
+			res := NewEvaluateResultOK(body, eTag)
+			return res, nil
 		default:
 			body, _ := ioutil.ReadAll(resp.Body)
 			return nil, goahttp.ErrInvalidResponse("policy", "Evaluate", resp.StatusCode, string(body))

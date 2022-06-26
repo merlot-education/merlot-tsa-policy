@@ -23,12 +23,17 @@ func TestNew(t *testing.T) {
 
 func TestService_Evaluate(t *testing.T) {
 	// prepare test policy source code that will be evaluated
-	testPolicy := `package testgroup.example allow { input.msg == "yes" }`
+	testPolicy := `package testgroup.example default allow = false allow { input.msg == "yes" }`
+
+	// prepare test policy source code for the case when policy result must contain only the
+	// value of a blank variable assignment
+	testPolicyBlankAssignment := `package testgroup.example _ = {"hello":"world"}`
 
 	// prepare test query that can be retrieved from rego queryCache
 	testQuery, err := rego.New(
 		rego.Module("example.rego", testPolicy),
 		rego.Query("data.testgroup.example"),
+		rego.StrictBuiltinErrors(true),
 	).PrepareForEval(context.Background())
 	assert.NoError(t, err)
 
@@ -50,7 +55,7 @@ func TestService_Evaluate(t *testing.T) {
 		regocache policy.RegoCache
 		cache     policy.Cache
 		// expected result
-		res     interface{}
+		res     *goapolicy.EvaluateResult
 		errkind errors.Kind
 		errtext string
 	}{
@@ -68,7 +73,9 @@ func TestService_Evaluate(t *testing.T) {
 					return nil
 				},
 			},
-			res: map[string]interface{}{"allow": true},
+			res: &goapolicy.EvaluateResult{
+				Result: map[string]interface{}{"allow": true},
+			},
 		},
 		{
 			name: "policy is not found",
@@ -146,7 +153,9 @@ func TestService_Evaluate(t *testing.T) {
 					return nil
 				},
 			},
-			res: map[string]interface{}{"allow": true},
+			res: &goapolicy.EvaluateResult{
+				Result: map[string]interface{}{"allow": true},
+			},
 		},
 		{
 			name: "policy is executed successfully, but storing the result in cache fails",
@@ -176,6 +185,35 @@ func TestService_Evaluate(t *testing.T) {
 			errkind: errors.Unknown,
 			errtext: "error storing policy result in cache",
 		},
+		{
+			name: "policy with blank variable assignment is evaluated successfully",
+			req:  testReq(),
+			regocache: &policyfakes.FakeRegoCache{
+				GetStub: func(key string) (*rego.PreparedEvalQuery, bool) {
+					return nil, false
+				},
+			},
+			storage: &policyfakes.FakeStorage{
+				PolicyStub: func(ctx context.Context, s string, s2 string, s3 string) (*storage.Policy, error) {
+					return &storage.Policy{
+						Name:       "example",
+						Group:      "testgroup",
+						Version:    "1.0",
+						Rego:       testPolicyBlankAssignment,
+						Locked:     false,
+						LastUpdate: time.Now(),
+					}, nil
+				},
+			},
+			cache: &policyfakes.FakeCache{
+				SetStub: func(ctx context.Context, s string, s2 string, s3 string, bytes []byte) error {
+					return nil
+				},
+			},
+			res: &goapolicy.EvaluateResult{
+				Result: map[string]interface{}{"hello": "world"},
+			},
+		},
 	}
 
 	for _, test := range tests {
@@ -186,10 +224,8 @@ func TestService_Evaluate(t *testing.T) {
 				assert.Empty(t, test.errtext)
 				assert.NotNil(t, res)
 
-				result, ok := res.(map[string]interface{})
-				assert.True(t, ok)
-				assert.Equal(t, test.res, result["result"])
-				assert.NotEmpty(t, result["evaluationID"])
+				assert.Equal(t, test.res.Result, res.Result)
+				assert.NotEmpty(t, res.ETag)
 			} else {
 				e, ok := err.(*errors.Error)
 				assert.True(t, ok)
