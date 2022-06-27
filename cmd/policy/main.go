@@ -78,11 +78,14 @@ func main() {
 		cacheFuncs := regofunc.NewCacheFuncs(cfg.Cache.Addr, httpClient)
 		didResolverFuncs := regofunc.NewDIDResolverFuncs(cfg.DIDResolver.Addr, httpClient)
 		taskFuncs := regofunc.NewTaskFuncs(cfg.Task.Addr, httpClient)
+		keysFuncs := regofunc.NewPubkeyFuncs(cfg.Signer.Addr, httpClient)
 		regofunc.Register("cacheGet", rego.Function3(cacheFuncs.CacheGetFunc()))
 		regofunc.Register("cacheSet", rego.Function4(cacheFuncs.CacheSetFunc()))
 		regofunc.Register("didResolve", rego.Function1(didResolverFuncs.ResolveFunc()))
 		regofunc.Register("taskCreate", rego.Function2(taskFuncs.CreateTaskFunc()))
 		regofunc.Register("taskListCreate", rego.Function2(taskFuncs.CreateTaskListFunc()))
+		regofunc.Register("getKey", rego.Function1(keysFuncs.GetKeyFunc()))
+		regofunc.Register("getAllKeys", rego.FunctionDyn(keysFuncs.GetAllKeysFunc()))
 		regofunc.Register("strictBuiltinErrors", rego.StrictBuiltinErrors(true))
 	}
 

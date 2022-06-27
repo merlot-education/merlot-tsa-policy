@@ -224,9 +224,10 @@ func (s *Service) prepareQuery(ctx context.Context, group, policyName, version s
 }
 
 func (s *Service) buildRegoArgs(filename, regoPolicy, regoQuery, regoData string) (availableFuncs []func(*rego.Rego), err error) {
-	availableFuncs = make([]func(*rego.Rego), 2)
+	availableFuncs = make([]func(*rego.Rego), 3)
 	availableFuncs[0] = rego.Module(filename, regoPolicy)
 	availableFuncs[1] = rego.Query(regoQuery)
+	availableFuncs[2] = rego.StrictBuiltinErrors(true)
 	extensions := regofunc.List()
 	for i := range extensions {
 		availableFuncs = append(availableFuncs, extensions[i])

@@ -7,6 +7,7 @@ type Config struct {
 	Mongo       mongoConfig
 	Cache       cacheConfig
 	Task        taskConfig
+	Signer      signerConfig
 	DIDResolver didResolverConfig
 
 	LogLevel string `envconfig:"LOG_LEVEL" default:"INFO"`
@@ -26,6 +27,10 @@ type cacheConfig struct {
 
 type taskConfig struct {
 	Addr string `envconfig:"TASK_ADDR" required:"true"`
+}
+
+type signerConfig struct {
+	Addr string `envconfig:"SIGNER_ADDR" required:"true"`
 }
 
 type didResolverConfig struct {
