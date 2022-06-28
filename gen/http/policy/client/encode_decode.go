@@ -37,7 +37,7 @@ func (c *Client) BuildEvaluateRequest(ctx context.Context, v interface{}) (*http
 		version = p.Version
 	}
 	u := &url.URL{Scheme: c.scheme, Host: c.host, Path: EvaluatePolicyPath(group, policyName, version)}
-	req, err := http.NewRequest("POST", u.String(), nil)
+	req, err := http.NewRequest("GET", u.String(), nil)
 	if err != nil {
 		return nil, goahttp.ErrInvalidURL("policy", "Evaluate", u.String(), err)
 	}

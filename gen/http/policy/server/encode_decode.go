@@ -41,9 +41,10 @@ func DecodeEvaluateRequest(mux goahttp.Muxer, decoder func(*http.Request) goahtt
 		err = decoder(r).Decode(&body)
 		if err != nil {
 			if err == io.EOF {
-				return nil, goa.MissingPayloadError()
+				err = nil
+			} else {
+				return nil, goa.DecodePayloadError(err.Error())
 			}
-			return nil, goa.DecodePayloadError(err.Error())
 		}
 
 		var (

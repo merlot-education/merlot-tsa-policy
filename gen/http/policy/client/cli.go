@@ -45,7 +45,7 @@ func BuildEvaluatePayload(policyEvaluateBody string, policyEvaluateGroup string,
 	}
 	v := body
 	res := &policy.EvaluateRequest{
-		Input: v,
+		Input: &v,
 	}
 	res.Group = group
 	res.PolicyName = policyName

@@ -23,6 +23,7 @@ var _ = Service("policy", func() {
 		Payload(EvaluateRequest)
 		Result(EvaluateResult)
 		HTTP(func() {
+			GET("/policy/{group}/{policyName}/{version}/evaluation")
 			POST("/policy/{group}/{policyName}/{version}/evaluation")
 			Header("evaluationID:x-evaluation-id", String, "EvaluationID allows overwriting the randomly generated evaluationID", func() {
 				Example("did:web:example.com")
