@@ -16,6 +16,11 @@ func EvaluatePolicyPath(group string, policyName string, version string) string 
 	return fmt.Sprintf("/policy/%v/%v/%v/evaluation", group, policyName, version)
 }
 
+// EvaluatePolicyPath2 returns the URL path to the policy service Evaluate HTTP endpoint.
+func EvaluatePolicyPath2(group string, policyName string, version string) string {
+	return fmt.Sprintf("/policy/%v/%v/%v/evaluation", group, policyName, version)
+}
+
 // LockPolicyPath returns the URL path to the policy service Lock HTTP endpoint.
 func LockPolicyPath(group string, policyName string, version string) string {
 	return fmt.Sprintf("/policy/%v/%v/%v/lock", group, policyName, version)

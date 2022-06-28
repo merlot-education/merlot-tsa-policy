@@ -15,7 +15,7 @@ import (
 func NewEvaluateRequest(body interface{}, group string, policyName string, version string, evaluationID *string) *policy.EvaluateRequest {
 	v := body
 	res := &policy.EvaluateRequest{
-		Input: v,
+		Input: &v,
 	}
 	res.Group = group
 	res.PolicyName = policyName
