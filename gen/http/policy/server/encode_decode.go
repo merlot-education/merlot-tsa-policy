@@ -12,6 +12,7 @@ import (
 	"io"
 	"net/http"
 
+	policy "code.vereign.com/gaiax/tsa/policy/gen/policy"
 	goahttp "goa.design/goa/v3/http"
 	goa "goa.design/goa/v3/pkg"
 )
@@ -20,9 +21,10 @@ import (
 // policy Evaluate endpoint.
 func EncodeEvaluateResponse(encoder func(context.Context, http.ResponseWriter) goahttp.Encoder) func(context.Context, http.ResponseWriter, interface{}) error {
 	return func(ctx context.Context, w http.ResponseWriter, v interface{}) error {
-		res, _ := v.(interface{})
+		res, _ := v.(*policy.EvaluateResult)
 		enc := encoder(ctx, w)
-		body := res
+		body := res.Result
+		w.Header().Set("Etag", res.ETag)
 		w.WriteHeader(http.StatusOK)
 		return enc.Encode(body)
 	}

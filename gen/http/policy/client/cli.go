@@ -22,7 +22,7 @@ func BuildEvaluatePayload(policyEvaluateBody string, policyEvaluateGroup string,
 	{
 		err = json.Unmarshal([]byte(policyEvaluateBody), &body)
 		if err != nil {
-			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "\"Illum ad assumenda consectetur minima voluptatibus.\"")
+			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "\"Id odio aperiam voluptatem molestias corrupti sunt.\"")
 		}
 	}
 	var group string

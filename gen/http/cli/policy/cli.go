@@ -32,7 +32,7 @@ policy (evaluate|lock|unlock)
 // UsageExamples produces an example of a valid invocation of the CLI tool.
 func UsageExamples() string {
 	return os.Args[0] + ` health liveness` + "\n" +
-		os.Args[0] + ` policy evaluate --body "Illum ad assumenda consectetur minima voluptatibus." --group "example" --policy-name "example" --version "1.0" --evaluation-id "Ab accusamus voluptatem et est."` + "\n" +
+		os.Args[0] + ` policy evaluate --body "Id odio aperiam voluptatem molestias corrupti sunt." --group "example" --policy-name "example" --version "1.0" --evaluation-id "Et voluptates."` + "\n" +
 		""
 }
 
@@ -249,7 +249,7 @@ Evaluate executes a policy with the given 'data' as input.
     -evaluation-id STRING: 
 
 Example:
-    %[1]s policy evaluate --body "Illum ad assumenda consectetur minima voluptatibus." --group "example" --policy-name "example" --version "1.0" --evaluation-id "Ab accusamus voluptatem et est."
+    %[1]s policy evaluate --body "Id odio aperiam voluptatem molestias corrupti sunt." --group "example" --policy-name "example" --version "1.0" --evaluation-id "Et voluptates."
 `, os.Args[0])
 }
 
@@ -262,7 +262,7 @@ Lock a policy so that it cannot be evaluated.
     -version STRING: Policy version.
 
 Example:
-    %[1]s policy lock --group "Commodi vitae voluptatem." --policy-name "Similique quisquam optio." --version "Explicabo beatae quisquam officiis libero voluptatibus."
+    %[1]s policy lock --group "Explicabo beatae quisquam officiis libero voluptatibus." --policy-name "Repudiandae dolore quod." --version "Aut ut fuga quae eius minus."
 `, os.Args[0])
 }
 
@@ -275,6 +275,6 @@ Unlock a policy so it can be evaluated again.
     -version STRING: Policy version.
 
 Example:
-    %[1]s policy unlock --group "In illum est et hic." --policy-name "Deleniti non nihil dolor aut sed." --version "Incidunt unde consequatur voluptas dolorem nisi temporibus."
+    %[1]s policy unlock --group "Incidunt unde consequatur voluptas dolorem nisi temporibus." --policy-name "Omnis quasi aut consequuntur." --version "Tempore minus."
 `, os.Args[0])
 }
