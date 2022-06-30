@@ -90,7 +90,8 @@ func main() {
 		regofunc.Register("taskListCreate", rego.Function2(taskFuncs.CreateTaskListFunc()))
 		regofunc.Register("getKey", rego.Function1(keysFuncs.GetKeyFunc()))
 		regofunc.Register("getAllKeys", rego.FunctionDyn(keysFuncs.GetAllKeysFunc()))
-		regofunc.Register("strictBuiltinErrors", rego.StrictBuiltinErrors(true))
+		regofunc.Register("getAllKeys", rego.FunctionDyn(keysFuncs.GetAllKeysFunc()))
+		regofunc.Register("issuer", rego.FunctionDyn(keysFuncs.IssuerDID()))
 	}
 
 	// subscribe the cache for policy data changes

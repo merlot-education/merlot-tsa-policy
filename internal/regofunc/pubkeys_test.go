@@ -75,3 +75,24 @@ func TestGetAllKeysFunc(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, expected, string(resultBytes))
 }
+
+func TestIssuerDID(t *testing.T) {
+	expected := `{"did":"did:web:123"}`
+	signerSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, _ = fmt.Fprint(w, expected)
+	}))
+	defer signerSrv.Close()
+
+	keysFuncs := regofunc.NewPubkeyFuncs(signerSrv.URL, http.DefaultClient)
+	r := rego.New(
+		rego.Query(`issuer()`),
+		rego.FunctionDyn(keysFuncs.IssuerDID()),
+		rego.StrictBuiltinErrors(true),
+	)
+	resultSet, err := r.Eval(context.Background())
+	assert.NoError(t, err)
+
+	resultBytes, err := json.Marshal(resultSet[0].Expressions[0].Value)
+	assert.NoError(t, err)
+	assert.Equal(t, expected, string(resultBytes))
+}
