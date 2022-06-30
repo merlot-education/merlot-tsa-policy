@@ -103,3 +103,39 @@ func (pf *PubkeyFuncs) GetAllKeysFunc() (*rego.Function, rego.BuiltinDyn) {
 			return ast.NewTerm(v), nil
 		}
 }
+
+func (pf *PubkeyFuncs) IssuerDID() (*rego.Function, rego.BuiltinDyn) {
+	return &rego.Function{
+			Name:    "issuer",
+			Decl:    types.NewFunction(nil, types.A),
+			Memoize: true,
+		},
+		func(bctx rego.BuiltinContext, terms []*ast.Term) (*ast.Term, error) {
+			uri, err := url.ParseRequestURI(pf.signerAddr + "/v1/issuerDID")
+			if err != nil {
+				return nil, err
+			}
+
+			req, err := http.NewRequest("GET", uri.String(), nil)
+			if err != nil {
+				return nil, err
+			}
+
+			resp, err := pf.httpClient.Do(req.WithContext(bctx.Context))
+			if err != nil {
+				return nil, err
+			}
+			defer resp.Body.Close() // nolint:errcheck
+
+			if resp.StatusCode != http.StatusOK {
+				return nil, fmt.Errorf("unexpected response from signer: %s", resp.Status)
+			}
+
+			v, err := ast.ValueFromReader(resp.Body)
+			if err != nil {
+				return nil, err
+			}
+
+			return ast.NewTerm(v), nil
+		}
+}

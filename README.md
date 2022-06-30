@@ -30,7 +30,7 @@ flowchart LR
 The policy service exposes HTTP endpoints to evaluate/execute policies.
 The endpoint interface is conformant to the TSA requirements document.
 
-To evaluate a policy a POST request is sent to the evaluation URL.
+To evaluate a policy a GET or POST request is sent to the evaluation URL.
 The example URL below is given for the local docker-compose environment. 
 The `host` and `port` parts will be different for the different environments.
 
@@ -48,10 +48,11 @@ are also important during policy development (see below) as `group`
 and `policy` **must** be used as package name inside the policy 
 source code file.
 
-The body of the POST request **must** be JSON and it is passed directly
-to the policy execution runtime. Inside the policy it is accessed with
-the global variable name `input`. For example, if you pass to the evaluation
-endpoint the following JSON, it will be accessible by `input.message`:
+The body of the POST request can be empty, but if it's not empty, it 
+**must** be JSON. It is passed directly to the policy execution runtime. 
+Inside the policy it is accessed with the global variable name `input`. 
+For example, if you pass to the evaluation endpoint the following JSON, 
+it will be accessible by `input.message`:
 ```json
 {
   "message": "hello world"
