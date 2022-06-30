@@ -166,7 +166,10 @@ can be mapped and used for evaluating all kinds of different policies. Without a
 package naming rule, there's no way the service can automatically generate HTTP 
 endpoints for working with arbitrary dynamically uploaded policies.
 
+## Dependencies
+
+[Dependencies](go.mod)
+
 ## License
-<hr/>
 
 [Apache 2.0 license](LICENSE)
