@@ -57,6 +57,7 @@ func New(
 ) *Server {
 	return &Server{
 		Mounts: []*MountPoint{
+			{"Evaluate", "GET", "/policy/{group}/{policyName}/{version}/evaluation/did.json"},
 			{"Evaluate", "GET", "/policy/{group}/{policyName}/{version}/evaluation"},
 			{"Evaluate", "POST", "/policy/{group}/{policyName}/{version}/evaluation"},
 			{"Lock", "POST", "/policy/{group}/{policyName}/{version}/lock"},
@@ -99,6 +100,7 @@ func MountEvaluateHandler(mux goahttp.Muxer, h http.Handler) {
 			h.ServeHTTP(w, r)
 		}
 	}
+	mux.Handle("GET", "/policy/{group}/{policyName}/{version}/evaluation/did.json", f)
 	mux.Handle("GET", "/policy/{group}/{policyName}/{version}/evaluation", f)
 	mux.Handle("POST", "/policy/{group}/{policyName}/{version}/evaluation", f)
 }

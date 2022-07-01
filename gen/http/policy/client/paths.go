@@ -13,11 +13,16 @@ import (
 
 // EvaluatePolicyPath returns the URL path to the policy service Evaluate HTTP endpoint.
 func EvaluatePolicyPath(group string, policyName string, version string) string {
-	return fmt.Sprintf("/policy/%v/%v/%v/evaluation", group, policyName, version)
+	return fmt.Sprintf("/policy/%v/%v/%v/evaluation/did.json", group, policyName, version)
 }
 
 // EvaluatePolicyPath2 returns the URL path to the policy service Evaluate HTTP endpoint.
 func EvaluatePolicyPath2(group string, policyName string, version string) string {
+	return fmt.Sprintf("/policy/%v/%v/%v/evaluation", group, policyName, version)
+}
+
+// EvaluatePolicyPath3 returns the URL path to the policy service Evaluate HTTP endpoint.
+func EvaluatePolicyPath3(group string, policyName string, version string) string {
 	return fmt.Sprintf("/policy/%v/%v/%v/evaluation", group, policyName, version)
 }
 
