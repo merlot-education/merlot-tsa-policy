@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log"
 	"net"
 	"net/http"
@@ -10,6 +11,7 @@ import (
 
 	"github.com/kelseyhightower/envconfig"
 	"github.com/open-policy-agent/opa/rego"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.uber.org/zap"
@@ -155,6 +157,9 @@ func main() {
 	goahealthsrv.Mount(mux, healthServer)
 	goaopenapisrv.Mount(mux, openapiServer)
 
+	// expose metrics
+	go exposeMetrics(cfg.Metrics.Addr, logger)
+
 	var handler http.Handler = mux
 	srv := &http.Server{
 		Addr:         cfg.HTTP.Host + ":" + cfg.HTTP.Port,
@@ -220,5 +225,14 @@ func httpClient() *http.Client {
 			IdleConnTimeout:     60 * time.Second,
 		},
 		Timeout: 30 * time.Second,
+	}
+}
+
+func exposeMetrics(addr string, logger *zap.Logger) {
+	promMux := http.NewServeMux()
+	promMux.Handle("/metrics", promhttp.Handler())
+	logger.Info(fmt.Sprintf("exposing prometheus metrics at %s/metrics", addr))
+	if err := http.ListenAndServe(addr, promMux); err != nil {
+		logger.Error("error exposing prometheus metrics", zap.Error(err))
 	}
 }

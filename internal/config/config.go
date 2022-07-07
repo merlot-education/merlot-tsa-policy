@@ -9,6 +9,7 @@ type Config struct {
 	Task        taskConfig
 	Signer      signerConfig
 	DIDResolver didResolverConfig
+	Metrics     metricsConfig
 
 	LogLevel string `envconfig:"LOG_LEVEL" default:"INFO"`
 }
@@ -43,4 +44,8 @@ type mongoConfig struct {
 	Pass       string `envconfig:"MONGO_PASS" required:"true"`
 	DB         string `envconfig:"MONGO_DBNAME" default:"policy"`
 	Collection string `envconfig:"MONGO_COLLECTION" default:"policies"`
+}
+
+type metricsConfig struct {
+	Addr string `envconfig:"METRICS_ADDR" default:":2112"`
 }
