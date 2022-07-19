@@ -161,10 +161,9 @@ func createPolicy(p string, d os.DirEntry) (*Policy, error) {
 		return nil, fmt.Errorf("failed to get policy filename, name, version and group out of policy path: %s", p)
 	}
 
-	filename := ss[len(ss)-1] // last element in the array is filename
-	version := ss[len(ss)-2]  // second last element is the version
-	name := ss[len(ss)-3]     // third last element is the policy name
-	group := ss[len(ss)-4]    // fourth last element is the policy group
+	version := ss[len(ss)-2] // second last element is the version
+	name := ss[len(ss)-3]    // third last element is the policy name
+	group := ss[len(ss)-4]   // fourth last element is the policy group
 	bytes, err := os.ReadFile(p)
 	if err != nil {
 		return nil, err
@@ -178,8 +177,11 @@ func createPolicy(p string, d os.DirEntry) (*Policy, error) {
 	}
 	data := string(dataBytes)
 
+	// generate filename for DB from pattern {group}/{name}/{version}/policy.rego
+	dbFilename := group + "/" + name + "/" + version + "/" + policyFilename
+
 	return &Policy{
-		Filename: filename,
+		Filename: dbFilename,
 		Name:     name,
 		Group:    group,
 		Version:  version,
