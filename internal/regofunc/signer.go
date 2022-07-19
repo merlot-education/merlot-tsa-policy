@@ -191,7 +191,7 @@ func (sf *SignerFuncs) CreateProof() (*rego.Function, rego.Builtin1) {
 			defer resp.Body.Close() // nolint:errcheck
 
 			if resp.StatusCode != http.StatusOK {
-				return nil, fmt.Errorf("unexpected response from signer: %d", resp.StatusCode)
+				return nil, fmt.Errorf("unexpected response from signer: %s", resp.Status)
 			}
 
 			v, err := ast.ValueFromReader(resp.Body)
@@ -256,7 +256,7 @@ func (sf *SignerFuncs) VerifyProof() (*rego.Function, rego.Builtin1) {
 			defer resp.Body.Close() // nolint:errcheck
 
 			if resp.StatusCode != http.StatusOK {
-				return nil, fmt.Errorf("unexpected response from signer: %d", resp.StatusCode)
+				return nil, fmt.Errorf("unexpected response from signer: %s", resp.Status)
 			}
 
 			var result struct {
