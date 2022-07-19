@@ -21,7 +21,7 @@ func TestGetKeyFunc(t *testing.T) {
 	}))
 	defer signerSrv.Close()
 
-	keysFuncs := regofunc.NewPubkeyFuncs(signerSrv.URL, http.DefaultClient)
+	keysFuncs := regofunc.NewSignerFuncs(signerSrv.URL, http.DefaultClient)
 	r := rego.New(
 		rego.Query(`keys.get("key1")`),
 		rego.Function1(keysFuncs.GetKeyFunc()),
@@ -41,7 +41,7 @@ func TestGetKeyFuncError(t *testing.T) {
 	}))
 	defer signerSrv.Close()
 
-	keysFuncs := regofunc.NewPubkeyFuncs(signerSrv.URL, http.DefaultClient)
+	keysFuncs := regofunc.NewSignerFuncs(signerSrv.URL, http.DefaultClient)
 	r := rego.New(
 		rego.Query(`keys.get("key1")`),
 		rego.Function1(keysFuncs.GetKeyFunc()),
@@ -62,7 +62,7 @@ func TestGetAllKeysFunc(t *testing.T) {
 	}))
 	defer signerSrv.Close()
 
-	keysFuncs := regofunc.NewPubkeyFuncs(signerSrv.URL, http.DefaultClient)
+	keysFuncs := regofunc.NewSignerFuncs(signerSrv.URL, http.DefaultClient)
 	r := rego.New(
 		rego.Query(`keys.getAll()`),
 		rego.FunctionDyn(keysFuncs.GetAllKeysFunc()),
@@ -83,7 +83,7 @@ func TestIssuerDID(t *testing.T) {
 	}))
 	defer signerSrv.Close()
 
-	keysFuncs := regofunc.NewPubkeyFuncs(signerSrv.URL, http.DefaultClient)
+	keysFuncs := regofunc.NewSignerFuncs(signerSrv.URL, http.DefaultClient)
 	r := rego.New(
 		rego.Query(`issuer()`),
 		rego.FunctionDyn(keysFuncs.IssuerDID()),
