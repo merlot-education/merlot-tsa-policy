@@ -24,6 +24,7 @@ const (
 	NotFound                 // NotFound specifies that a resource does not exist.
 	Timeout                  // Timeout of request.
 	Internal                 // Internal error or inconsistency.
+	ServiceUnavailable
 )
 
 type Error struct {
@@ -58,6 +59,8 @@ func (k Kind) String() string {
 		return "timeout"
 	case Internal:
 		return "internal error"
+	case ServiceUnavailable:
+		return "service unavailable"
 	}
 
 	return "unknown error kind"
@@ -196,6 +199,8 @@ func (e *Error) StatusCode() int {
 		return http.StatusRequestTimeout
 	case Internal:
 		return http.StatusInternalServerError
+	case ServiceUnavailable:
+		return http.StatusServiceUnavailable
 	default:
 		return http.StatusInternalServerError
 	}
@@ -283,6 +288,8 @@ func GetKind(statusCode int) Kind {
 		return Timeout
 	case http.StatusInternalServerError:
 		return Internal
+	case http.StatusServiceUnavailable:
+		return ServiceUnavailable
 	default:
 		return Unknown
 	}

@@ -3,7 +3,7 @@ module code.vereign.com/gaiax/tsa/policy
 go 1.17
 
 require (
-	code.vereign.com/gaiax/tsa/golib v0.0.0-20220321093827-5fdf8f34aad9
+	code.vereign.com/gaiax/tsa/golib v1.0.0-rc.0.20220720095726-810b020cd50e
 	github.com/google/uuid v1.3.0
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/open-policy-agent/opa v0.38.1
@@ -11,7 +11,7 @@ require (
 	github.com/stretchr/testify v1.7.0
 	go.mongodb.org/mongo-driver v1.8.4
 	go.uber.org/zap v1.21.0
-	goa.design/goa/v3 v3.7.0
+	goa.design/goa/v3 v3.7.6
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 )
 
@@ -53,11 +53,11 @@ require (
 	go.uber.org/multierr v1.6.0 // indirect
 	golang.org/x/crypto v0.0.0-20210921155107-089bfa567519 // indirect
 	golang.org/x/mod v0.6.0-dev.0.20220106191415-9b9b3d81d5e3 // indirect
-	golang.org/x/sys v0.0.0-20220317061510-51cd9980dadf // indirect
+	golang.org/x/sys v0.0.0-20220520151302-bc2c85ada10a // indirect
 	golang.org/x/text v0.3.7 // indirect
 	golang.org/x/tools v0.1.10 // indirect
-	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
-	google.golang.org/protobuf v1.27.1 // indirect
+	golang.org/x/xerrors v0.0.0-20220517211312-f3a8303e98df // indirect
+	google.golang.org/protobuf v1.28.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
-	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
+	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

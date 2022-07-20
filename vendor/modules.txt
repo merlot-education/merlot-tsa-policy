@@ -1,7 +1,8 @@
-# code.vereign.com/gaiax/tsa/golib v0.0.0-20220321093827-5fdf8f34aad9
+# code.vereign.com/gaiax/tsa/golib v1.0.0-rc.0.20220720095726-810b020cd50e
 ## explicit; go 1.17
 code.vereign.com/gaiax/tsa/golib/errors
 code.vereign.com/gaiax/tsa/golib/graceful
+code.vereign.com/gaiax/tsa/golib/ocm
 # github.com/OneOfOne/xxhash v1.2.8
 ## explicit; go 1.11
 github.com/OneOfOne/xxhash
@@ -245,7 +246,7 @@ go.uber.org/zap/internal/bufferpool
 go.uber.org/zap/internal/color
 go.uber.org/zap/internal/exit
 go.uber.org/zap/zapcore
-# goa.design/goa/v3 v3.7.0
+# goa.design/goa/v3 v3.7.6
 ## explicit; go 1.17
 goa.design/goa/v3/dsl
 goa.design/goa/v3/eval
@@ -264,7 +265,7 @@ golang.org/x/mod/semver
 # golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 ## explicit
 golang.org/x/sync/errgroup
-# golang.org/x/sys v0.0.0-20220317061510-51cd9980dadf
+# golang.org/x/sys v0.0.0-20220520151302-bc2c85ada10a
 ## explicit; go 1.17
 golang.org/x/sys/execabs
 golang.org/x/sys/internal/unsafeheader
@@ -293,12 +294,12 @@ golang.org/x/tools/internal/imports
 golang.org/x/tools/internal/packagesinternal
 golang.org/x/tools/internal/typeparams
 golang.org/x/tools/internal/typesinternal
-# golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1
-## explicit; go 1.11
+# golang.org/x/xerrors v0.0.0-20220517211312-f3a8303e98df
+## explicit; go 1.17
 golang.org/x/xerrors
 golang.org/x/xerrors/internal
-# google.golang.org/protobuf v1.27.1
-## explicit; go 1.9
+# google.golang.org/protobuf v1.28.0
+## explicit; go 1.11
 google.golang.org/protobuf/encoding/prototext
 google.golang.org/protobuf/encoding/protowire
 google.golang.org/protobuf/internal/descfmt
@@ -332,6 +333,6 @@ google.golang.org/protobuf/types/known/timestamppb
 # gopkg.in/yaml.v2 v2.4.0
 ## explicit; go 1.15
 gopkg.in/yaml.v2
-# gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
+# gopkg.in/yaml.v3 v3.0.1
 ## explicit
 gopkg.in/yaml.v3
