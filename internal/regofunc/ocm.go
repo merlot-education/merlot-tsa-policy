@@ -41,12 +41,12 @@ func (of *OcmFuncs) GetLoginProofInvitation() (*rego.Function, rego.Builtin1) {
 
 			type result struct {
 				Link      string `json:"link"`
-				RequestId string `json:"requestId"`
+				RequestID string `json:"requestId"`
 			}
 			var val ast.Value
 			val, err = ast.InterfaceToValue(result{
 				Link:      res.Data.PresentationMessage,
-				RequestId: res.Data.PresentationID,
+				RequestID: res.Data.PresentationID,
 			})
 			if err != nil {
 				return nil, err
@@ -63,13 +63,13 @@ func (of *OcmFuncs) GetLoginProofResult() (*rego.Function, rego.Builtin1) {
 			Memoize: true,
 		},
 		func(bctx rego.BuiltinContext, id *ast.Term) (*ast.Term, error) {
-			var presentationId string
+			var presentationID string
 
-			if err := ast.As(id.Value, &presentationId); err != nil {
+			if err := ast.As(id.Value, &presentationID); err != nil {
 				return nil, fmt.Errorf("invalid presentationId: %s", err)
 			}
 
-			res, err := of.client.GetLoginProofResult(bctx.Context, presentationId)
+			res, err := of.client.GetLoginProofResult(bctx.Context, presentationID)
 			if err != nil {
 				return nil, err
 			}
