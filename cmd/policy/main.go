@@ -85,6 +85,7 @@ func main() {
 		didResolverFuncs := regofunc.NewDIDResolverFuncs(cfg.DIDResolver.Addr, httpClient)
 		taskFuncs := regofunc.NewTaskFuncs(cfg.Task.Addr, httpClient)
 		keysFuncs := regofunc.NewPubkeyFuncs(cfg.Signer.Addr, httpClient)
+		ocmFuncs := regofunc.NewOcmFuncs(cfg.Ocm.Addr, httpClient)
 		regofunc.Register("cacheGet", rego.Function3(cacheFuncs.CacheGetFunc()))
 		regofunc.Register("cacheSet", rego.Function4(cacheFuncs.CacheSetFunc()))
 		regofunc.Register("didResolve", rego.Function1(didResolverFuncs.ResolveFunc()))
@@ -92,8 +93,9 @@ func main() {
 		regofunc.Register("taskListCreate", rego.Function2(taskFuncs.CreateTaskListFunc()))
 		regofunc.Register("getKey", rego.Function1(keysFuncs.GetKeyFunc()))
 		regofunc.Register("getAllKeys", rego.FunctionDyn(keysFuncs.GetAllKeysFunc()))
-		regofunc.Register("getAllKeys", rego.FunctionDyn(keysFuncs.GetAllKeysFunc()))
 		regofunc.Register("issuer", rego.FunctionDyn(keysFuncs.IssuerDID()))
+		regofunc.Register("ocmLoginProofInvitation", rego.Function1(ocmFuncs.GetLoginProofInvitation()))
+		regofunc.Register("ocmLoginProofResult", rego.Function1(ocmFuncs.GetLoginProofResult()))
 	}
 
 	// subscribe the cache for policy data changes
