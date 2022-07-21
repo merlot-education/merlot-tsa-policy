@@ -10,6 +10,7 @@ type Config struct {
 	Signer      signerConfig
 	DIDResolver didResolverConfig
 	Metrics     metricsConfig
+	OCM         ocmConfig
 
 	LogLevel string `envconfig:"LOG_LEVEL" default:"INFO"`
 }
@@ -48,4 +49,8 @@ type mongoConfig struct {
 
 type metricsConfig struct {
 	Addr string `envconfig:"METRICS_ADDR" default:":2112"`
+}
+
+type ocmConfig struct {
+	Addr string `envconfig:"OCM_ADDR" required:"true"`
 }
