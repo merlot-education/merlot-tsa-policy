@@ -84,7 +84,7 @@ func main() {
 		cacheFuncs := regofunc.NewCacheFuncs(cfg.Cache.Addr, httpClient)
 		didResolverFuncs := regofunc.NewDIDResolverFuncs(cfg.DIDResolver.Addr, httpClient)
 		taskFuncs := regofunc.NewTaskFuncs(cfg.Task.Addr, httpClient)
-		ocmFuncs := regofunc.NewOcmFuncs(cfg.Ocm.Addr, httpClient)
+		ocmFuncs := regofunc.NewOcmFuncs(cfg.OCM.Addr, httpClient)
 		signerFuncs := regofunc.NewSignerFuncs(cfg.Signer.Addr, httpClient)
 		regofunc.Register("cacheGet", rego.Function3(cacheFuncs.CacheGetFunc()))
 		regofunc.Register("cacheSet", rego.Function4(cacheFuncs.CacheSetFunc()))

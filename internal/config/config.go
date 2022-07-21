@@ -10,7 +10,7 @@ type Config struct {
 	Signer      signerConfig
 	DIDResolver didResolverConfig
 	Metrics     metricsConfig
-	Ocm         ocmConfig
+	OCM         ocmConfig
 
 	LogLevel string `envconfig:"LOG_LEVEL" default:"INFO"`
 }
