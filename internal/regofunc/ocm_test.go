@@ -70,12 +70,20 @@ func TestGetLoginProofResult(t *testing.T) {
 	expected := `{"family_name":"Doe","name":"John"}`
 	ocmResponse := `{
 		"statusCode": 200,
-		"message": "Proof presentation fetch successfully",
 		"data": {
-			"credentialSubject": {
-				"name":"John",
-				"family_name":"Doe"
-			}
+			"state": "done",
+			"data": [
+				{
+					"credentialSubject": {
+						"family_name":"Doe"
+					}
+				},
+				{
+					"credentialSubject": {
+						"name":"John"
+					}
+				}
+			]
 		}
 	}`
 
