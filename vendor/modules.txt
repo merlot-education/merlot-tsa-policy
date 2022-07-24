@@ -1,4 +1,4 @@
-# code.vereign.com/gaiax/tsa/golib v1.0.0-rc.0.20220720095726-810b020cd50e
+# code.vereign.com/gaiax/tsa/golib v1.1.1-0.20220724081734-3d943a98ddda
 ## explicit; go 1.17
 code.vereign.com/gaiax/tsa/golib/errors
 code.vereign.com/gaiax/tsa/golib/graceful

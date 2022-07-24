@@ -18,7 +18,11 @@ type LoginProofResultResponse struct {
 }
 
 type LoginProofResultResponseData struct {
-	State     string                 `json:"state"`
+	State string       `json:"state"`
+	Data  []Credential `json:"data"`
+}
+
+type Credential struct {
 	SchemaID  string                 `json:"schemaId"`
 	CredDefID string                 `json:"credDefId"`
 	Claims    map[string]interface{} `json:"credentialSubject"`
