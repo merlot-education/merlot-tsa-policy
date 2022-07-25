@@ -74,8 +74,15 @@ func (of *OcmFuncs) GetLoginProofResult() (*rego.Function, rego.Builtin1) {
 				return nil, err
 			}
 
+			claims := map[string]interface{}{}
+			for _, cred := range res.Data.Data {
+				for cName, cValue := range cred.Claims {
+					claims[cName] = cValue
+				}
+			}
+
 			var val ast.Value
-			val, err = ast.InterfaceToValue(res.Data.Claims)
+			val, err = ast.InterfaceToValue(claims)
 			if err != nil {
 				return nil, err
 			}

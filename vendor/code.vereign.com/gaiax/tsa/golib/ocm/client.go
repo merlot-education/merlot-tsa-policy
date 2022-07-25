@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strings"
 )
 
 const (
@@ -43,9 +44,7 @@ func (c *Client) GetLoginProofInvitation(ctx context.Context, credTypes []string
 	}
 
 	v := url.Values{}
-	for _, t := range credTypes {
-		v.Add("type", t)
-	}
+	v.Add("type", strings.Join(credTypes, ","))
 	req.URL.RawQuery = v.Encode()
 
 	resp, err := c.httpClient.Do(req)
