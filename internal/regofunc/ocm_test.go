@@ -33,8 +33,8 @@ func TestGetLoginProofInvitationSuccess(t *testing.T) {
 	ocmFuncs := regofunc.NewOcmFuncs(ocmSrv.URL, http.DefaultClient)
 
 	r := rego.New(
-		rego.Query(`ocm.getLoginProofInvitation(["openid", "profile"])`),
-		rego.Function1(ocmFuncs.GetLoginProofInvitation()),
+		rego.Query(`ocm.getLoginProofInvitation(["openid", "profile"], {"openid": "credType1", "profile": "credType2"})`),
+		rego.Function2(ocmFuncs.GetLoginProofInvitation()),
 		rego.StrictBuiltinErrors(true),
 	)
 
@@ -54,16 +54,29 @@ func TestGetLoginProofInvitationErr(t *testing.T) {
 
 	ocmFuncs := regofunc.NewOcmFuncs(ocmSrv.URL, http.DefaultClient)
 
+	// invalid scopes array
 	r := rego.New(
-		rego.Query(`ocm.getLoginProofInvitation("openid")`),
-		rego.Function1(ocmFuncs.GetLoginProofInvitation()),
+		rego.Query(`ocm.getLoginProofInvitation("openid", {"openid": "credType1", "profile": "credType2"})`),
+		rego.Function2(ocmFuncs.GetLoginProofInvitation()),
 		rego.StrictBuiltinErrors(true),
 	)
 
 	resultSet, err := r.Eval(context.Background())
 	assert.Error(t, err)
 	assert.Empty(t, resultSet)
-	assert.Contains(t, err.Error(), "cannot unmarshal string into Go value of type []string")
+	assert.Contains(t, err.Error(), "invalid scopes array")
+
+	// invalid "scope to credential type" map
+	r = rego.New(
+		rego.Query(`ocm.getLoginProofInvitation(["openid", "profile"], "map")`),
+		rego.Function2(ocmFuncs.GetLoginProofInvitation()),
+		rego.StrictBuiltinErrors(true),
+	)
+
+	resultSet, err = r.Eval(context.Background())
+	assert.Error(t, err)
+	assert.Empty(t, resultSet)
+	assert.Contains(t, err.Error(), "invalid scope to credential type map")
 }
 
 func TestGetLoginProofResult(t *testing.T) {

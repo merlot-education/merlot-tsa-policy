@@ -96,7 +96,7 @@ func main() {
 		regofunc.Register("issuer", rego.FunctionDyn(signerFuncs.IssuerDID()))
 		regofunc.Register("createProof", rego.Function1(signerFuncs.CreateProof()))
 		regofunc.Register("verifyProof", rego.Function1(signerFuncs.VerifyProof()))
-		regofunc.Register("ocmLoginProofInvitation", rego.Function1(ocmFuncs.GetLoginProofInvitation()))
+		regofunc.Register("ocmLoginProofInvitation", rego.Function2(ocmFuncs.GetLoginProofInvitation()))
 		regofunc.Register("ocmLoginProofResult", rego.Function1(ocmFuncs.GetLoginProofResult()))
 	}
 
