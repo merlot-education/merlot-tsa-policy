@@ -21,17 +21,29 @@ func NewOcmFuncs(ocmAddr string, httpClient *http.Client) *OcmFuncs {
 	return &OcmFuncs{client: ocmClient}
 }
 
-func (of *OcmFuncs) GetLoginProofInvitation() (*rego.Function, rego.Builtin1) {
+func (of *OcmFuncs) GetLoginProofInvitation() (*rego.Function, rego.Builtin2) {
 	return &rego.Function{
 			Name:    "ocm.getLoginProofInvitation",
-			Decl:    types.NewFunction(types.Args(types.A), types.A),
+			Decl:    types.NewFunction(types.Args(types.A, types.A), types.A),
 			Memoize: true,
 		},
-		func(bctx rego.BuiltinContext, types *ast.Term) (*ast.Term, error) {
-			var credTypes []string
+		func(bctx rego.BuiltinContext, rScopes *ast.Term, scopesMap *ast.Term) (*ast.Term, error) {
+			var scopes []string
+			var scopeToType map[string]string
 
-			if err := ast.As(types.Value, &credTypes); err != nil {
-				return nil, fmt.Errorf("invalid credential types array: %s", err)
+			if err := ast.As(rScopes.Value, &scopes); err != nil {
+				return nil, fmt.Errorf("invalid scopes array: %s", err)
+			} else if err = ast.As(scopesMap.Value, &scopeToType); err != nil {
+				return nil, fmt.Errorf("invalid scope to credential type map: %s", err)
+			}
+
+			var credTypes []string
+			for _, scope := range scopes {
+				credType, ok := scopeToType[scope]
+				if !ok {
+					return nil, fmt.Errorf("scope not found in scope to type map: %s", scope)
+				}
+				credTypes = append(credTypes, credType)
 			}
 
 			res, err := of.client.GetLoginProofInvitation(bctx.Context, credTypes)
