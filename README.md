@@ -111,6 +111,8 @@ flowchart LR
 
 ### Policy Development
 
+* [Policy Extensions Functions](./doc/policy_development.md)
+
 Policies are written in the [Rego](https://www.openpolicyagent.org/docs/latest/policy-language/) 
 language. Please refer to the [OPA documentation](https://www.openpolicyagent.org/docs/latest/)
 for detailed overview of Rego and OPA capabilities.
@@ -120,12 +122,13 @@ for detailed overview of Rego and OPA capabilities.
 1. The filename of the policy *must* follow rules for the naming and directory structure:
 the `group`, `policy name` and `version` are directories inside the Git repo and policy file *must* be named
 `policy.rego`.  For example: `/gaiax/example/1.0/policy.rego`.
-2. In the same directory there could be a data file containing static json, which is later passed to the
-policy evaluation runtime. The file *must* be named `data.json`. Example: `/gaiax/example/1.0/data.json`
+2. In the same directory there could be a data file containing static JSON, which is automatically 
+available for use during policy evaluation by using the `data` variable. The file *must* be named `data.json`. 
+Example: `/gaiax/example/1.0/data.json`
 3. The policy package name inside the policy source code file *must* exactly match
 the `group` and `policy` (name) of the policy.
 
-*What does all this mean?*
+*What does it mean?*
 
 Let's see an example for the 1st convention.
 ```
@@ -166,14 +169,24 @@ can be mapped and used for evaluating all kinds of different policies. Without a
 package naming rule, there's no way the service can automatically generate HTTP 
 endpoints for working with arbitrary dynamically uploaded policies.
 
-## GDPR
+### Policy Extensions Functions
+
+A brief documentation for the available Rego extensions functions
+which can be used during policy development.
+
+[Policy Extensions Functions](./doc/policy_development.md)
+
+You can also look at the source code in package [`regofunc`](./internal/regofunc) to understand the
+inner-working and capabilities of the extension functions.
+
+### GDPR
 
 [GDPR](GDPR.md)
 
-## Dependencies
+### Dependencies
 
 [Dependencies](go.mod)
 
-## License
+### License
 
 [Apache 2.0 license](LICENSE)
