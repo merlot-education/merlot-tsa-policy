@@ -310,3 +310,71 @@ Result:
   "valid": true
 }
 ```
+
+#### ocm.getLoginProofInvitation
+
+Get a Proof Invitation URL from OCM's "out-of-band" endpoint.
+This function accepts two arguments. The first argument is an array of scopes used to identify
+credential types in OCM. The second argument is a map between scopes and credential types
+which is statically defined in a `data.json` file.
+
+Example request body:
+```json
+{
+  "scope": ["openid", "email"]
+}
+```
+
+Example `data.json` file containing "scope-to-credential-type" map:
+```json
+{
+  "scopes": {
+    "openid": "principalMemberCredential",
+    "email": "universityCert"
+  }
+}
+```
+
+Example policy:
+
+```rego
+package example.GetLoginProofInvitation
+
+_ = ocm.getLoginProofInvitation(input.scope, data.scopes)
+```
+
+Result:
+
+```json
+{
+    "link": "https://ocm:443/didcomm/?d_m=eyJAdHlwZSI6Imh0dHBzOi8vZGlkY29tbS5vc9tbSJ9fQ",
+    "requestId": "851076fa-da78-444a-9127-e636c5102f40"
+}
+```
+
+#### ocm.GetLoginProofResult
+
+Get a Proof Invitation result from OCM containing a flattened list of claims.
+This function accepts one argument which is the `resuestId` from the
+`ocm.getLoginProofInvitation` result.
+
+Example policy:
+
+```rego
+package example.GetLoginProofResult
+
+_ = ocm.getLoginProofResult(input.requestId)
+```
+
+Result:
+```json
+{
+    "name": "John Doe",
+    "given_name": "John",
+    "family_name": "Doe",
+    "email": "example@example.com",
+    "email_verified": true,
+    "preferred_username": "john",
+    "gender": "NA"
+}
+```
