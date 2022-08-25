@@ -29,6 +29,9 @@ func TestService_Evaluate(t *testing.T) {
 	// value of a blank variable assignment
 	testPolicyBlankAssignment := `package testgroup.example _ = {"hello":"world"}`
 
+	// prepare test policy using static json data during evaluation
+	testPolicyWithStaticData := `package testgroup.example default allow = false allow { data.msg == "hello world" }`
+
 	// prepare test query that can be retrieved from rego queryCache
 	testQuery, err := rego.New(
 		rego.Module("example.rego", testPolicy),
@@ -212,6 +215,36 @@ func TestService_Evaluate(t *testing.T) {
 			},
 			res: &goapolicy.EvaluateResult{
 				Result: map[string]interface{}{"hello": "world"},
+			},
+		},
+		{
+			name: "policy using static json data is evaluated successfully",
+			req:  testReq(),
+			regocache: &policyfakes.FakeRegoCache{
+				GetStub: func(key string) (*rego.PreparedEvalQuery, bool) {
+					return nil, false
+				},
+			},
+			storage: &policyfakes.FakeStorage{
+				PolicyStub: func(ctx context.Context, s string, s2 string, s3 string) (*storage.Policy, error) {
+					return &storage.Policy{
+						Name:       "example",
+						Group:      "testgroup",
+						Version:    "1.0",
+						Rego:       testPolicyWithStaticData,
+						Data:       `{"msg": "hello world"}`,
+						Locked:     false,
+						LastUpdate: time.Now(),
+					}, nil
+				},
+			},
+			cache: &policyfakes.FakeCache{
+				SetStub: func(ctx context.Context, s string, s2 string, s3 string, bytes []byte) error {
+					return nil
+				},
+			},
+			res: &goapolicy.EvaluateResult{
+				Result: map[string]interface{}{"allow": true},
 			},
 		},
 	}
