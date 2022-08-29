@@ -85,7 +85,7 @@ func TestGetLoginProofResult(t *testing.T) {
 		"statusCode": 200,
 		"data": {
 			"state": "done",
-			"data": [
+			"presentations": [
 				{
 					"credentialSubject": {
 						"family_name":"Doe"
