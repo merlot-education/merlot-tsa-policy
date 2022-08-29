@@ -3,7 +3,7 @@ module code.vereign.com/gaiax/tsa/policy
 go 1.17
 
 require (
-	code.vereign.com/gaiax/tsa/golib v1.1.1-0.20220724081734-3d943a98ddda
+	code.vereign.com/gaiax/tsa/golib v1.1.1-0.20220829085303-0ce9287f5482
 	github.com/google/uuid v1.3.0
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/open-policy-agent/opa v0.38.1
