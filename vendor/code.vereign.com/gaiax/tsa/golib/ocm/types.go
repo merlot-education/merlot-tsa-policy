@@ -19,7 +19,7 @@ type LoginProofResultResponse struct {
 
 type LoginProofResultResponseData struct {
 	State string       `json:"state"`
-	Data  []Credential `json:"data"`
+	Data  []Credential `json:"presentations"`
 }
 
 type Credential struct {
