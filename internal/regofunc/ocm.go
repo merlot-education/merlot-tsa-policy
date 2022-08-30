@@ -38,12 +38,20 @@ func (of *OcmFuncs) GetLoginProofInvitation() (*rego.Function, rego.Builtin2) {
 			}
 
 			var credTypes []string
+			distinctTypes := make(map[string]bool, len(scopeToType))
 			for _, scope := range scopes {
 				credType, ok := scopeToType[scope]
 				if !ok {
 					return nil, fmt.Errorf("scope not found in scope to type map: %s", scope)
 				}
-				credTypes = append(credTypes, credType)
+				if credType != "" && !distinctTypes[credType] {
+					credTypes = append(credTypes, credType)
+				}
+				distinctTypes[credType] = true
+			}
+
+			if len(credTypes) == 0 {
+				return nil, fmt.Errorf("no credential types found in the scope to type map: %s", scopeToType)
 			}
 
 			res, err := of.client.GetLoginProofInvitation(bctx.Context, credTypes)
