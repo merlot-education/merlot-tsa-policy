@@ -44,6 +44,20 @@ func TestGetLoginProofInvitationSuccess(t *testing.T) {
 	resultBytes, err := json.Marshal(resultSet[0].Expressions[0].Value)
 	assert.NoError(t, err)
 	assert.Equal(t, expected, string(resultBytes))
+
+	// "scope to credential type" map with duplicate and empty credential types
+	r = rego.New(
+		rego.Query(`ocm.getLoginProofInvitation(["openid", "profile", "email"], {"openid": "credType1", "profile": "credType1", "email": ""})`),
+		rego.Function2(ocmFuncs.GetLoginProofInvitation()),
+		rego.StrictBuiltinErrors(true),
+	)
+
+	resultSet, err = r.Eval(context.Background())
+	assert.NoError(t, err)
+
+	resultBytes, err = json.Marshal(resultSet[0].Expressions[0].Value)
+	assert.NoError(t, err)
+	assert.Equal(t, expected, string(resultBytes))
 }
 
 func TestGetLoginProofInvitationErr(t *testing.T) {
@@ -77,6 +91,19 @@ func TestGetLoginProofInvitationErr(t *testing.T) {
 	assert.Error(t, err)
 	assert.Empty(t, resultSet)
 	assert.Contains(t, err.Error(), "invalid scope to credential type map")
+
+	// empty types in "scope to credential type" map
+	r = rego.New(
+		rego.Query(`ocm.getLoginProofInvitation(["openid", "profile"], {"openid": "", "profile": ""})`),
+		rego.Function2(ocmFuncs.GetLoginProofInvitation()),
+		rego.StrictBuiltinErrors(true),
+	)
+
+	resultSet, err = r.Eval(context.Background())
+	assert.Error(t, err)
+	assert.Empty(t, resultSet)
+	assert.Contains(t, err.Error(), "no credential types found in the scope to type map")
+
 }
 
 func TestGetLoginProofResult(t *testing.T) {
