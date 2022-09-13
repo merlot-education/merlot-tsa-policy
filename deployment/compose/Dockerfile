@@ -1,4 +1,4 @@
-FROM golang:1.17.8
+FROM golang:1.19
 
 ENV GO111MODULE=on
 ENV GOPRIVATE=code.vereign.com

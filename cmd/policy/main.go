@@ -166,11 +166,12 @@ func main() {
 
 	var handler http.Handler = mux
 	srv := &http.Server{
-		Addr:         cfg.HTTP.Host + ":" + cfg.HTTP.Port,
-		Handler:      handler,
-		IdleTimeout:  cfg.HTTP.IdleTimeout,
-		ReadTimeout:  cfg.HTTP.ReadTimeout,
-		WriteTimeout: cfg.HTTP.WriteTimeout,
+		Addr:              cfg.HTTP.Host + ":" + cfg.HTTP.Port,
+		Handler:           handler,
+		ReadHeaderTimeout: cfg.HTTP.ReadTimeout,
+		IdleTimeout:       cfg.HTTP.IdleTimeout,
+		ReadTimeout:       cfg.HTTP.ReadTimeout,
+		WriteTimeout:      cfg.HTTP.WriteTimeout,
 	}
 
 	g, ctx := errgroup.WithContext(context.Background())
@@ -236,7 +237,7 @@ func exposeMetrics(addr string, logger *zap.Logger) {
 	promMux := http.NewServeMux()
 	promMux.Handle("/metrics", promhttp.Handler())
 	logger.Info(fmt.Sprintf("exposing prometheus metrics at %s/metrics", addr))
-	if err := http.ListenAndServe(addr, promMux); err != nil {
+	if err := http.ListenAndServe(addr, promMux); err != nil { //nolint:gosec
 		logger.Error("error exposing prometheus metrics", zap.Error(err))
 	}
 }
