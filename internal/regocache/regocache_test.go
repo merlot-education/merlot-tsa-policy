@@ -7,8 +7,8 @@ import (
 	"github.com/open-policy-agent/opa/rego"
 	"github.com/stretchr/testify/assert"
 
-	"code.vereign.com/gaiax/tsa/policy/internal/regocache"
-	"code.vereign.com/gaiax/tsa/policy/internal/service/policy"
+	"gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/policy/internal/regocache"
+	"gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/policy/internal/service/policy"
 )
 
 const regoPolicy = `

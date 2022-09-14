@@ -7,7 +7,7 @@ import (
 	"io"
 	"net/http"
 
-	"code.vereign.com/gaiax/tsa/golib/errors"
+	"gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/golib/errors"
 )
 
 // Client for the Cache service.

@@ -5,7 +5,7 @@ import (
 	"context"
 	"sync"
 
-	"code.vereign.com/gaiax/tsa/policy/internal/service/policy"
+	"gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/policy/internal/service/policy"
 )
 
 type FakeCache struct {

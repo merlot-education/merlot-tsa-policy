@@ -1,10 +1,8 @@
 FROM golang:1.19-alpine3.15 as builder
 
-ENV GOPRIVATE=code.vereign.com
-
 RUN apk add git
 
-WORKDIR /go/src/code.vereign.com/gaiax/tsa/policy
+WORKDIR /go/src/gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/policy
 
 ADD . .
 

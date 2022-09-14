@@ -9,7 +9,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.uber.org/zap"
 
-	"code.vereign.com/gaiax/tsa/golib/errors"
+	"gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/golib/errors"
 )
 
 type PolicyChangeSubscriber interface {

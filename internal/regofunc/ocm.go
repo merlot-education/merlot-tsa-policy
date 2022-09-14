@@ -8,7 +8,7 @@ import (
 	"github.com/open-policy-agent/opa/rego"
 	"github.com/open-policy-agent/opa/types"
 
-	"code.vereign.com/gaiax/tsa/golib/ocm"
+	"gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/golib/ocm"
 )
 
 type OcmFuncs struct {
