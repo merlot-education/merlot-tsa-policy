@@ -10,10 +10,10 @@ import (
 	"github.com/open-policy-agent/opa/storage/inmem"
 	"go.uber.org/zap"
 
-	"code.vereign.com/gaiax/tsa/golib/errors"
-	"code.vereign.com/gaiax/tsa/policy/gen/policy"
-	"code.vereign.com/gaiax/tsa/policy/internal/regofunc"
-	"code.vereign.com/gaiax/tsa/policy/internal/storage"
+	"gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/golib/errors"
+	"gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/policy/gen/policy"
+	"gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/policy/internal/regofunc"
+	"gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/policy/internal/storage"
 )
 
 //go:generate counterfeiter . Cache

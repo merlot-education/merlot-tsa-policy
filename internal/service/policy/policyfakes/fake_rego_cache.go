@@ -4,7 +4,7 @@ package policyfakes
 import (
 	"sync"
 
-	"code.vereign.com/gaiax/tsa/policy/internal/service/policy"
+	"gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/policy/internal/service/policy"
 	"github.com/open-policy-agent/opa/rego"
 )
 

@@ -4,7 +4,7 @@ import (
 	goahttp "goa.design/goa/v3/http"
 	goa "goa.design/goa/v3/pkg"
 
-	"code.vereign.com/gaiax/tsa/golib/errors"
+	"gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/golib/errors"
 )
 
 func NewErrorResponse(err error) goahttp.Statuser {

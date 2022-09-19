@@ -9,11 +9,11 @@ import (
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
 
-	"code.vereign.com/gaiax/tsa/golib/errors"
-	goapolicy "code.vereign.com/gaiax/tsa/policy/gen/policy"
-	"code.vereign.com/gaiax/tsa/policy/internal/service/policy"
-	"code.vereign.com/gaiax/tsa/policy/internal/service/policy/policyfakes"
-	"code.vereign.com/gaiax/tsa/policy/internal/storage"
+	"gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/golib/errors"
+	goapolicy "gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/policy/gen/policy"
+	"gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/policy/internal/service/policy"
+	"gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/policy/internal/service/policy/policyfakes"
+	"gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/policy/internal/storage"
 )
 
 func TestNew(t *testing.T) {

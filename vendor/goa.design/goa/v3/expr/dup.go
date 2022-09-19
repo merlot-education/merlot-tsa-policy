@@ -9,7 +9,14 @@ func Dup(d DataType) DataType {
 
 // DupAtt creates a copy of the given attribute.
 func DupAtt(att *AttributeExpr) *AttributeExpr {
-	return newDupper().DupAttribute(att)
+	dupper := newDupper()
+	duppedBases := make([]DataType, len(att.Bases))
+	for i, b := range att.Bases {
+		duppedBases[i] = dupper.DupType(b)
+	}
+	res := dupper.DupAttribute(att)
+	res.Bases = duppedBases
+	return res
 }
 
 // dupper implements recursive and cycle safe copy of data types.
@@ -50,6 +57,7 @@ func (d *dupper) DupAttribute(att *AttributeExpr) *AttributeExpr {
 		ZeroValue:    att.ZeroValue,
 		DSLFunc:      att.DSLFunc,
 		UserExamples: att.UserExamples,
+		finalized:    att.finalized,
 	}
 	d.ats[&dup] = struct{}{}
 	return &dup

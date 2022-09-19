@@ -11,7 +11,7 @@ import (
 	"github.com/open-policy-agent/opa/rego"
 	"github.com/stretchr/testify/assert"
 
-	"code.vereign.com/gaiax/tsa/policy/internal/regofunc"
+	"gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/policy/internal/regofunc"
 )
 
 func TestGetKeyFunc(t *testing.T) {

@@ -1,16 +1,13 @@
 FROM golang:1.19
 
-ENV GO111MODULE=on
-ENV GOPRIVATE=code.vereign.com
-
 RUN go install github.com/canthefason/go-watcher/cmd/watcher@v0.2.4
 
-ADD . /go/src/code.vereign.com/gaiax/tsa/policy
+ADD . /go/src/gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/policy
 
-WORKDIR /go/src/code.vereign.com/gaiax/tsa/policy
+WORKDIR /go/src/gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/policy
 
 RUN go install -mod=vendor ./cmd/policy/...
 
 EXPOSE 8080
 
-ENTRYPOINT ["sh", "-c", "/go/bin/watcher -run code.vereign.com/gaiax/tsa/policy/cmd/policy -watch code.vereign.com/gaiax/tsa/policy"]
+ENTRYPOINT ["sh", "-c", "/go/bin/watcher -run gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/policy/cmd/policy -watch gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/policy"]

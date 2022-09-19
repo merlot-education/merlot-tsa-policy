@@ -9,7 +9,7 @@ STORED_GOFLAGS=$(go env GOFLAGS)
 go env -w GOFLAGS=-mod=mod
 
 # execute goa code generation
-goa gen code.vereign.com/gaiax/tsa/policy/design
+goa gen gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/policy/design
 
 # restore the value of GOFLAGS
 go env -w GOFLAGS=$STORED_GOFLAGS

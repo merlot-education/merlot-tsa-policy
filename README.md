@@ -1,5 +1,5 @@
-[![pipeline status](https://code.vereign.com/gaiax/tsa/policy/badges/main/pipeline.svg)](https://code.vereign.com/gaiax/tsa/policy/-/commits/main)
-[![coverage report](https://code.vereign.com/gaiax/tsa/policy/badges/main/coverage.svg)](https://code.vereign.com/gaiax/tsa/policy/-/commits/main)
+[![pipeline status](https://gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/policy/badges/main/pipeline.svg)](https://gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/policy/-/commits/main)
+[![coverage report](https://gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/policy/badges/main/coverage.svg)](https://gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/policy/-/commits/main)
 
 # Policy Service
 
