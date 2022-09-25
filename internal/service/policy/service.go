@@ -96,17 +96,6 @@ func (s *Service) Evaluate(ctx context.Context, req *policy.EvaluateRequest) (*p
 		return nil, errors.New("policy evaluation result expressions are empty")
 	}
 
-	jsonValue, err := json.Marshal(resultSet[0].Expressions[0].Value)
-	if err != nil {
-		logger.Error("error encoding result to json", zap.Error(err))
-		return nil, errors.New("error encoding result to json")
-	}
-
-	if err := s.cache.Set(ctx, evaluationID, "", "", jsonValue); err != nil {
-		logger.Error("error storing policy result in cache", zap.Error(err))
-		return nil, errors.New("error storing policy result in cache")
-	}
-
 	// If there is only a single result from the policy evaluation and it was assigned to an empty
 	// variable, then we'll return a custom response containing only the value of the empty variable
 	// without any mapping.
@@ -119,6 +108,17 @@ func (s *Service) Evaluate(ctx context.Context, req *policy.EvaluateRequest) (*p
 				}
 			}
 		}
+	}
+
+	jsonValue, err := json.Marshal(result)
+	if err != nil {
+		logger.Error("error encoding result to json", zap.Error(err))
+		return nil, errors.New("error encoding result to json")
+	}
+
+	if err := s.cache.Set(ctx, evaluationID, "", "", jsonValue); err != nil {
+		logger.Error("error storing policy result in cache", zap.Error(err))
+		return nil, errors.New("error storing policy result in cache")
 	}
 
 	return &policy.EvaluateResult{
