@@ -12,6 +12,7 @@ import (
 	"context"
 	"io"
 	"net/http"
+	"strconv"
 
 	policy "gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/policy/gen/policy"
 	goahttp "goa.design/goa/v3/http"
@@ -53,6 +54,7 @@ func DecodeEvaluateRequest(mux goahttp.Muxer, decoder func(*http.Request) goahtt
 			policyName   string
 			version      string
 			evaluationID *string
+			ttl          *int
 
 			params = mux.Vars(r)
 		)
@@ -63,7 +65,21 @@ func DecodeEvaluateRequest(mux goahttp.Muxer, decoder func(*http.Request) goahtt
 		if evaluationIDRaw != "" {
 			evaluationID = &evaluationIDRaw
 		}
-		payload := NewEvaluateRequest(body, group, policyName, version, evaluationID)
+		{
+			ttlRaw := r.Header.Get("x-cache-ttl")
+			if ttlRaw != "" {
+				v, err2 := strconv.ParseInt(ttlRaw, 10, strconv.IntSize)
+				if err2 != nil {
+					err = goa.MergeErrors(err, goa.InvalidFieldTypeError("ttl", ttlRaw, "integer"))
+				}
+				pv := int(v)
+				ttl = &pv
+			}
+		}
+		if err != nil {
+			return nil, err
+		}
+		payload := NewEvaluateRequest(body, group, policyName, version, evaluationID, ttl)
 
 		return payload, nil
 	}

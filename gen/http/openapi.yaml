@@ -52,6 +52,11 @@ paths:
                   description: EvaluationID allows overwriting the randomly generated evaluationID
                   required: false
                   type: string
+                - name: x-cache-ttl
+                  in: header
+                  description: Policy result cache TTL in seconds
+                  required: false
+                  type: integer
                 - name: any
                   in: body
                   description: Input data passed to the policy execution runtime.
@@ -98,6 +103,11 @@ paths:
                   description: EvaluationID allows overwriting the randomly generated evaluationID
                   required: false
                   type: string
+                - name: x-cache-ttl
+                  in: header
+                  description: Policy result cache TTL in seconds
+                  required: false
+                  type: integer
                 - name: any
                   in: body
                   description: Input data passed to the policy execution runtime.
@@ -145,6 +155,11 @@ paths:
                   description: EvaluationID allows overwriting the randomly generated evaluationID
                   required: false
                   type: string
+                - name: x-cache-ttl
+                  in: header
+                  description: Policy result cache TTL in seconds
+                  required: false
+                  type: integer
                 - name: any
                   in: body
                   description: Input data passed to the policy execution runtime.

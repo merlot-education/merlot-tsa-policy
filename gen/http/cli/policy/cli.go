@@ -32,7 +32,7 @@ policy (evaluate|lock|unlock)
 // UsageExamples produces an example of a valid invocation of the CLI tool.
 func UsageExamples() string {
 	return os.Args[0] + ` health liveness` + "\n" +
-		os.Args[0] + ` policy evaluate --body "Id odio aperiam voluptatem molestias corrupti sunt." --group "example" --policy-name "example" --version "1.0" --evaluation-id "Et voluptates."` + "\n" +
+		os.Args[0] + ` policy evaluate --body "Ipsum nihil quo." --group "example" --policy-name "example" --version "1.0" --evaluation-id "Aut id odio." --ttl 1804438149079407927` + "\n" +
 		""
 }
 
@@ -60,6 +60,7 @@ func ParseEndpoint(
 		policyEvaluatePolicyNameFlag   = policyEvaluateFlags.String("policy-name", "REQUIRED", "Policy name.")
 		policyEvaluateVersionFlag      = policyEvaluateFlags.String("version", "REQUIRED", "Policy version.")
 		policyEvaluateEvaluationIDFlag = policyEvaluateFlags.String("evaluation-id", "", "")
+		policyEvaluateTTLFlag          = policyEvaluateFlags.String("ttl", "", "")
 
 		policyLockFlags          = flag.NewFlagSet("lock", flag.ExitOnError)
 		policyLockGroupFlag      = policyLockFlags.String("group", "REQUIRED", "Policy group.")
@@ -172,7 +173,7 @@ func ParseEndpoint(
 			switch epn {
 			case "evaluate":
 				endpoint = c.Evaluate()
-				data, err = policyc.BuildEvaluatePayload(*policyEvaluateBodyFlag, *policyEvaluateGroupFlag, *policyEvaluatePolicyNameFlag, *policyEvaluateVersionFlag, *policyEvaluateEvaluationIDFlag)
+				data, err = policyc.BuildEvaluatePayload(*policyEvaluateBodyFlag, *policyEvaluateGroupFlag, *policyEvaluatePolicyNameFlag, *policyEvaluateVersionFlag, *policyEvaluateEvaluationIDFlag, *policyEvaluateTTLFlag)
 			case "lock":
 				endpoint = c.Lock()
 				data, err = policyc.BuildLockPayload(*policyLockGroupFlag, *policyLockPolicyNameFlag, *policyLockVersionFlag)
@@ -239,7 +240,7 @@ Additional help:
 `, os.Args[0])
 }
 func policyEvaluateUsage() {
-	fmt.Fprintf(os.Stderr, `%[1]s [flags] policy evaluate -body JSON -group STRING -policy-name STRING -version STRING -evaluation-id STRING
+	fmt.Fprintf(os.Stderr, `%[1]s [flags] policy evaluate -body JSON -group STRING -policy-name STRING -version STRING -evaluation-id STRING -ttl INT
 
 Evaluate executes a policy with the given 'data' as input.
     -body JSON: 
@@ -247,9 +248,10 @@ Evaluate executes a policy with the given 'data' as input.
     -policy-name STRING: Policy name.
     -version STRING: Policy version.
     -evaluation-id STRING: 
+    -ttl INT: 
 
 Example:
-    %[1]s policy evaluate --body "Id odio aperiam voluptatem molestias corrupti sunt." --group "example" --policy-name "example" --version "1.0" --evaluation-id "Et voluptates."
+    %[1]s policy evaluate --body "Ipsum nihil quo." --group "example" --policy-name "example" --version "1.0" --evaluation-id "Aut id odio." --ttl 1804438149079407927
 `, os.Args[0])
 }
 
@@ -262,7 +264,7 @@ Lock a policy so that it cannot be evaluated.
     -version STRING: Policy version.
 
 Example:
-    %[1]s policy lock --group "Explicabo beatae quisquam officiis libero voluptatibus." --policy-name "Repudiandae dolore quod." --version "Aut ut fuga quae eius minus."
+    %[1]s policy lock --group "Repudiandae dolore quod." --policy-name "Aut ut fuga quae eius minus." --version "Architecto quibusdam ab."
 `, os.Args[0])
 }
 
@@ -275,6 +277,6 @@ Unlock a policy so it can be evaluated again.
     -version STRING: Policy version.
 
 Example:
-    %[1]s policy unlock --group "Incidunt unde consequatur voluptas dolorem nisi temporibus." --policy-name "Omnis quasi aut consequuntur." --version "Tempore minus."
+    %[1]s policy unlock --group "Omnis quasi aut consequuntur." --policy-name "Tempore minus." --version "Quis quos qui earum velit illum."
 `, os.Args[0])
 }

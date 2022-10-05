@@ -11,19 +11,20 @@ package client
 import (
 	"encoding/json"
 	"fmt"
+	"strconv"
 
 	policy "gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/policy/gen/policy"
 )
 
 // BuildEvaluatePayload builds the payload for the policy Evaluate endpoint
 // from CLI flags.
-func BuildEvaluatePayload(policyEvaluateBody string, policyEvaluateGroup string, policyEvaluatePolicyName string, policyEvaluateVersion string, policyEvaluateEvaluationID string) (*policy.EvaluateRequest, error) {
+func BuildEvaluatePayload(policyEvaluateBody string, policyEvaluateGroup string, policyEvaluatePolicyName string, policyEvaluateVersion string, policyEvaluateEvaluationID string, policyEvaluateTTL string) (*policy.EvaluateRequest, error) {
 	var err error
 	var body interface{}
 	{
 		err = json.Unmarshal([]byte(policyEvaluateBody), &body)
 		if err != nil {
-			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "\"Id odio aperiam voluptatem molestias corrupti sunt.\"")
+			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "\"Ipsum nihil quo.\"")
 		}
 	}
 	var group string
@@ -44,6 +45,18 @@ func BuildEvaluatePayload(policyEvaluateBody string, policyEvaluateGroup string,
 			evaluationID = &policyEvaluateEvaluationID
 		}
 	}
+	var ttl *int
+	{
+		if policyEvaluateTTL != "" {
+			var v int64
+			v, err = strconv.ParseInt(policyEvaluateTTL, 10, strconv.IntSize)
+			val := int(v)
+			ttl = &val
+			if err != nil {
+				return nil, fmt.Errorf("invalid value for ttl, must be INT")
+			}
+		}
+	}
 	v := body
 	res := &policy.EvaluateRequest{
 		Input: &v,
@@ -52,6 +65,7 @@ func BuildEvaluatePayload(policyEvaluateBody string, policyEvaluateGroup string,
 	res.PolicyName = policyName
 	res.Version = version
 	res.EvaluationID = evaluationID
+	res.TTL = ttl
 
 	return res, nil
 }

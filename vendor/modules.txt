@@ -214,6 +214,7 @@ github.com/zach-klippenstein/goregen
 gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/golib/errors
 gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/golib/graceful
 gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/golib/ocm
+gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/golib/ptr
 # go.mongodb.org/mongo-driver v1.10.2
 ## explicit; go 1.10
 go.mongodb.org/mongo-driver/bson
