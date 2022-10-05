@@ -29,6 +29,9 @@ var _ = Service("policy", func() {
 			Header("evaluationID:x-evaluation-id", String, "EvaluationID allows overwriting the randomly generated evaluationID", func() {
 				Example("did:web:example.com")
 			})
+			Header("ttl:x-cache-ttl", Int, "Policy result cache TTL in seconds", func() {
+				Example(60)
+			})
 			Body("input")
 			Response(StatusOK, func() {
 				Body("result")

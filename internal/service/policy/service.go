@@ -21,7 +21,7 @@ import (
 //go:generate counterfeiter . RegoCache
 
 type Cache interface {
-	Set(ctx context.Context, key, namespace, scope string, value []byte) error
+	Set(ctx context.Context, key, namespace, scope string, value []byte, ttl int) error
 	Get(ctx context.Context, key, namespace, scope string) ([]byte, error)
 }
 
@@ -116,7 +116,11 @@ func (s *Service) Evaluate(ctx context.Context, req *policy.EvaluateRequest) (*p
 		return nil, errors.New("error encoding result to json")
 	}
 
-	if err := s.cache.Set(ctx, evaluationID, "", "", jsonValue); err != nil {
+	var ttl int
+	if req.TTL != nil {
+		ttl = *req.TTL
+	}
+	if err := s.cache.Set(ctx, evaluationID, "", "", jsonValue, ttl); err != nil {
 		logger.Error("error storing policy result in cache", zap.Error(err))
 		return nil, errors.New("error storing policy result in cache")
 	}

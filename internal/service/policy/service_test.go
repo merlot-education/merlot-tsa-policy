@@ -10,6 +10,7 @@ import (
 	"go.uber.org/zap"
 
 	"gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/golib/errors"
+	"gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/golib/ptr"
 	goapolicy "gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/policy/gen/policy"
 	"gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/policy/internal/service/policy"
 	"gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/policy/internal/service/policy/policyfakes"
@@ -72,7 +73,7 @@ func TestService_Evaluate(t *testing.T) {
 				},
 			},
 			cache: &policyfakes.FakeCache{
-				SetStub: func(ctx context.Context, s string, s2 string, s3 string, bytes []byte) error {
+				SetStub: func(ctx context.Context, s string, s2 string, s3 string, bytes []byte, i int) error {
 					return nil
 				},
 			},
@@ -152,7 +153,7 @@ func TestService_Evaluate(t *testing.T) {
 				},
 			},
 			cache: &policyfakes.FakeCache{
-				SetStub: func(ctx context.Context, s string, s2 string, s3 string, bytes []byte) error {
+				SetStub: func(ctx context.Context, s string, s2 string, s3 string, bytes []byte, i int) error {
 					return nil
 				},
 			},
@@ -181,7 +182,7 @@ func TestService_Evaluate(t *testing.T) {
 				},
 			},
 			cache: &policyfakes.FakeCache{
-				SetStub: func(ctx context.Context, s string, s2 string, s3 string, bytes []byte) error {
+				SetStub: func(ctx context.Context, s string, s2 string, s3 string, bytes []byte, i int) error {
 					return errors.New("some error")
 				},
 			},
@@ -209,7 +210,42 @@ func TestService_Evaluate(t *testing.T) {
 				},
 			},
 			cache: &policyfakes.FakeCache{
-				SetStub: func(ctx context.Context, s string, s2 string, s3 string, bytes []byte) error {
+				SetStub: func(ctx context.Context, s string, s2 string, s3 string, bytes []byte, i int) error {
+					return nil
+				},
+			},
+			res: &goapolicy.EvaluateResult{
+				Result: map[string]interface{}{"hello": "world"},
+			},
+		},
+		{
+			name: "policy is evaluated successfully with TTL sent in the request headers",
+			req: &goapolicy.EvaluateRequest{
+				Group:      "testgroup",
+				PolicyName: "example",
+				Version:    "1.0",
+				Input:      map[string]interface{}{"msg": "yes"},
+				TTL:        ptr.Int(30),
+			},
+			regocache: &policyfakes.FakeRegoCache{
+				GetStub: func(key string) (*rego.PreparedEvalQuery, bool) {
+					return nil, false
+				},
+			},
+			storage: &policyfakes.FakeStorage{
+				PolicyStub: func(ctx context.Context, s string, s2 string, s3 string) (*storage.Policy, error) {
+					return &storage.Policy{
+						Name:       "example",
+						Group:      "testgroup",
+						Version:    "1.0",
+						Rego:       testPolicyBlankAssignment,
+						Locked:     false,
+						LastUpdate: time.Now(),
+					}, nil
+				},
+			},
+			cache: &policyfakes.FakeCache{
+				SetStub: func(ctx context.Context, s string, s2 string, s3 string, bytes []byte, i int) error {
 					return nil
 				},
 			},
@@ -239,7 +275,7 @@ func TestService_Evaluate(t *testing.T) {
 				},
 			},
 			cache: &policyfakes.FakeCache{
-				SetStub: func(ctx context.Context, s string, s2 string, s3 string, bytes []byte) error {
+				SetStub: func(ctx context.Context, s string, s2 string, s3 string, bytes []byte, i int) error {
 					return nil
 				},
 			},
