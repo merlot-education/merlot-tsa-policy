@@ -14,6 +14,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strconv"
 
 	policy "gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/policy/gen/policy"
 	goahttp "goa.design/goa/v3/http"
@@ -60,6 +61,11 @@ func EncodeEvaluateRequest(encoder func(*http.Request) goahttp.Encoder) func(*ht
 		if p.EvaluationID != nil {
 			head := *p.EvaluationID
 			req.Header.Set("x-evaluation-id", head)
+		}
+		if p.TTL != nil {
+			head := *p.TTL
+			headStr := strconv.Itoa(head)
+			req.Header.Set("x-cache-ttl", headStr)
 		}
 		body := p.Input
 		if err := encoder(req).Encode(&body); err != nil {

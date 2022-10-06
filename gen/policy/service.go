@@ -45,6 +45,8 @@ type EvaluateRequest struct {
 	// Identifier created by external system and passed as parameter to overwrite
 	// the randomly generated evaluationID.
 	EvaluationID *string
+	// Cache TTL for storing policy result in cache
+	TTL *int
 }
 
 // EvaluateResult is the result type of the policy service Evaluate method.

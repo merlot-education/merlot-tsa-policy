@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strconv"
 
 	"gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/golib/errors"
 )
@@ -29,7 +30,7 @@ func New(addr string, opts ...Option) *Client {
 	return c
 }
 
-func (c *Client) Set(ctx context.Context, key, namespace, scope string, value []byte) error {
+func (c *Client) Set(ctx context.Context, key, namespace, scope string, value []byte, ttl int) error {
 	req, err := http.NewRequestWithContext(ctx, "POST", c.addr+"/v1/cache", bytes.NewReader(value))
 	if err != nil {
 		return err
@@ -39,6 +40,9 @@ func (c *Client) Set(ctx context.Context, key, namespace, scope string, value []
 		"x-cache-key":       []string{key},
 		"x-cache-namespace": []string{namespace},
 		"x-cache-scope":     []string{scope},
+	}
+	if ttl != 0 {
+		req.Header.Add("x-cache-ttl", strconv.Itoa(ttl))
 	}
 
 	resp, err := c.httpClient.Do(req)

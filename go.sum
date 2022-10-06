@@ -290,8 +290,6 @@ github.com/yuin/goldmark v1.1.27/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9de
 github.com/yuin/goldmark v1.1.32/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
 github.com/zach-klippenstein/goregen v0.0.0-20160303162051-795b5e3961ea h1:CyhwejzVGvZ3Q2PSbQ4NRRYn+ZWv5eS1vlaEusT+bAI=
 github.com/zach-klippenstein/goregen v0.0.0-20160303162051-795b5e3961ea/go.mod h1:eNr558nEUjP8acGw8FFjTeWvSgU1stO7FAO6eknhHe4=
-gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/golib v0.0.0-20220913103832-19b72aa5e623 h1:VuWLKBdO5bTGimppwkk6v+cJZ6onc2J16hBXHf048GU=
-gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/golib v0.0.0-20220913103832-19b72aa5e623/go.mod h1:5BPRkziGjdCI9xVfJBGY+7Ea51gtiEEs7+rbYeC8lnY=
 gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/golib v0.0.0-20220914094252-e40da1dc603b h1:H6PS64kBP+oNZbYFUQYpLGyek3cC9hwWL+rrwhx+0lM=
 gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/golib v0.0.0-20220914094252-e40da1dc603b/go.mod h1:5BPRkziGjdCI9xVfJBGY+7Ea51gtiEEs7+rbYeC8lnY=
 go.mongodb.org/mongo-driver v1.10.2 h1:4Wk3cnqOrQCn0P92L3/mmurMxzdvWWs5J9jinAVKD+k=

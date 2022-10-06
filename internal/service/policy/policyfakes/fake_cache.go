@@ -25,7 +25,7 @@ type FakeCache struct {
 		result1 []byte
 		result2 error
 	}
-	SetStub        func(context.Context, string, string, string, []byte) error
+	SetStub        func(context.Context, string, string, string, []byte, int) error
 	setMutex       sync.RWMutex
 	setArgsForCall []struct {
 		arg1 context.Context
@@ -33,6 +33,7 @@ type FakeCache struct {
 		arg3 string
 		arg4 string
 		arg5 []byte
+		arg6 int
 	}
 	setReturns struct {
 		result1 error
@@ -111,7 +112,7 @@ func (fake *FakeCache) GetReturnsOnCall(i int, result1 []byte, result2 error) {
 	}{result1, result2}
 }
 
-func (fake *FakeCache) Set(arg1 context.Context, arg2 string, arg3 string, arg4 string, arg5 []byte) error {
+func (fake *FakeCache) Set(arg1 context.Context, arg2 string, arg3 string, arg4 string, arg5 []byte, arg6 int) error {
 	var arg5Copy []byte
 	if arg5 != nil {
 		arg5Copy = make([]byte, len(arg5))
@@ -125,13 +126,14 @@ func (fake *FakeCache) Set(arg1 context.Context, arg2 string, arg3 string, arg4 
 		arg3 string
 		arg4 string
 		arg5 []byte
-	}{arg1, arg2, arg3, arg4, arg5Copy})
+		arg6 int
+	}{arg1, arg2, arg3, arg4, arg5Copy, arg6})
 	stub := fake.SetStub
 	fakeReturns := fake.setReturns
-	fake.recordInvocation("Set", []interface{}{arg1, arg2, arg3, arg4, arg5Copy})
+	fake.recordInvocation("Set", []interface{}{arg1, arg2, arg3, arg4, arg5Copy, arg6})
 	fake.setMutex.Unlock()
 	if stub != nil {
-		return stub(arg1, arg2, arg3, arg4, arg5)
+		return stub(arg1, arg2, arg3, arg4, arg5, arg6)
 	}
 	if specificReturn {
 		return ret.result1
@@ -145,17 +147,17 @@ func (fake *FakeCache) SetCallCount() int {
 	return len(fake.setArgsForCall)
 }
 
-func (fake *FakeCache) SetCalls(stub func(context.Context, string, string, string, []byte) error) {
+func (fake *FakeCache) SetCalls(stub func(context.Context, string, string, string, []byte, int) error) {
 	fake.setMutex.Lock()
 	defer fake.setMutex.Unlock()
 	fake.SetStub = stub
 }
 
-func (fake *FakeCache) SetArgsForCall(i int) (context.Context, string, string, string, []byte) {
+func (fake *FakeCache) SetArgsForCall(i int) (context.Context, string, string, string, []byte, int) {
 	fake.setMutex.RLock()
 	defer fake.setMutex.RUnlock()
 	argsForCall := fake.setArgsForCall[i]
-	return argsForCall.arg1, argsForCall.arg2, argsForCall.arg3, argsForCall.arg4, argsForCall.arg5
+	return argsForCall.arg1, argsForCall.arg2, argsForCall.arg3, argsForCall.arg4, argsForCall.arg5, argsForCall.arg6
 }
 
 func (fake *FakeCache) SetReturns(result1 error) {
