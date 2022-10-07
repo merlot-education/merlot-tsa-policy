@@ -1,7 +1,7 @@
 variables:
+  HELPERS_FILE: docker-build.yml
   APP_HELM_NAME: policy
   DOCKER_FILE: deployment/ci/Dockerfile
-  GOOGLE_IMAGE: ${GOOGLE_LIGHT_REGISTRY_URL}/gaiax/$CI_PROJECT_NAME:$CI_COMMIT_REF_NAME
 
 stages:
   - compile
@@ -11,8 +11,8 @@ stages:
   - deploy
 
 include:
-  - project: 'gaiax/tsa/ci-helpers'
-    file: 'docker-build.yml'
+  - project: '${HELPERS_PATH}'
+    file: '${HELPERS_FILE}'
   - template: 'Workflows/Branch-Pipelines.gitlab-ci.yml'
 
 lint:
