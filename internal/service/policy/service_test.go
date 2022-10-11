@@ -33,6 +33,9 @@ func TestService_Evaluate(t *testing.T) {
 	// prepare test policy using static json data during evaluation
 	testPolicyWithStaticData := `package testgroup.example default allow = false allow { data.msg == "hello world" }`
 
+	// prepare test policy accessing headers during evaluation
+	testPolicyAccessingHeaders := `package testgroup.example token := input.headers["Authorization"]`
+
 	// prepare test query that can be retrieved from rego queryCache
 	testQuery, err := rego.New(
 		rego.Module("example.rego", testPolicy),
@@ -54,6 +57,7 @@ func TestService_Evaluate(t *testing.T) {
 	tests := []struct {
 		// test input
 		name      string
+		ctx       context.Context
 		req       *goapolicy.EvaluateRequest
 		storage   policy.Storage
 		regocache policy.RegoCache
@@ -131,6 +135,35 @@ func TestService_Evaluate(t *testing.T) {
 			res:     nil,
 			errkind: errors.Forbidden,
 			errtext: "policy is locked",
+		},
+		{
+			name: "policy is found in storage but request body contains forbidden key",
+			req: &goapolicy.EvaluateRequest{
+				Group:      "testgroup",
+				PolicyName: "example",
+				Version:    "1.0",
+				Input:      map[string]interface{}{"msg": "yes", policy.HeadersKey: "baz"},
+			},
+			regocache: &policyfakes.FakeRegoCache{
+				GetStub: func(key string) (*rego.PreparedEvalQuery, bool) {
+					return nil, false
+				},
+			},
+			storage: &policyfakes.FakeStorage{
+				PolicyStub: func(ctx context.Context, s string, s2 string, s3 string) (*storage.Policy, error) {
+					return &storage.Policy{
+						Name:       "example",
+						Group:      "testgroup",
+						Version:    "1.0",
+						Rego:       testPolicy,
+						Locked:     false,
+						LastUpdate: time.Now(),
+					}, nil
+				},
+			},
+			res:     nil,
+			errkind: errors.BadRequest,
+			errtext: "error adding headers to evaluate input",
 		},
 		{
 			name: "policy is found in storage and isn't locked",
@@ -283,12 +316,46 @@ func TestService_Evaluate(t *testing.T) {
 				Result: map[string]interface{}{"allow": true},
 			},
 		},
+		{
+			name: "policy accessing headers is evaluated successfully",
+			ctx:  context.WithValue(context.Background(), policy.HeadersKey, map[string]interface{}{"Authorization": "my-token"}),
+			req:  testReq(),
+			regocache: &policyfakes.FakeRegoCache{
+				GetStub: func(key string) (*rego.PreparedEvalQuery, bool) {
+					return nil, false
+				},
+			},
+			storage: &policyfakes.FakeStorage{
+				PolicyStub: func(ctx context.Context, s string, s2 string, s3 string) (*storage.Policy, error) {
+					return &storage.Policy{
+						Name:       "example",
+						Group:      "testgroup",
+						Version:    "1.0",
+						Rego:       testPolicyAccessingHeaders,
+						Locked:     false,
+						LastUpdate: time.Now(),
+					}, nil
+				},
+			},
+			cache: &policyfakes.FakeCache{
+				SetStub: func(ctx context.Context, s string, s2 string, s3 string, bytes []byte, i int) error {
+					return nil
+				},
+			},
+			res: &goapolicy.EvaluateResult{
+				Result: map[string]interface{}{"token": "my-token"},
+			},
+		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			svc := policy.New(test.storage, test.regocache, test.cache, zap.NewNop())
-			res, err := svc.Evaluate(context.Background(), test.req)
+			ctx := context.Background()
+			if test.ctx != nil {
+				ctx = test.ctx
+			}
+			res, err := svc.Evaluate(ctx, test.req)
 			if err == nil {
 				assert.Empty(t, test.errtext)
 				assert.NotNil(t, res)

@@ -156,6 +156,9 @@ func main() {
 		openapiServer = goaopenapisrv.New(openapiEndpoints, mux, dec, enc, nil, errFormatter, nil, nil)
 	}
 
+	// Apply middlewares on the servers
+	policyServer.Evaluate = policy.HeadersMiddleware()(policyServer.Evaluate)
+
 	// Configure the mux.
 	goapolicysrv.Mount(mux, policyServer)
 	goahealthsrv.Mount(mux, healthServer)

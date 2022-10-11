@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
 
 	"github.com/google/uuid"
 	"github.com/open-policy-agent/opa/rego"
@@ -19,6 +20,8 @@ import (
 //go:generate counterfeiter . Cache
 //go:generate counterfeiter . Storage
 //go:generate counterfeiter . RegoCache
+
+const HeadersKey = "headers"
 
 type Cache interface {
 	Set(ctx context.Context, key, namespace, scope string, value []byte, ttl int) error
@@ -80,7 +83,14 @@ func (s *Service) Evaluate(ctx context.Context, req *policy.EvaluateRequest) (*p
 		return nil, errors.New("error evaluating policy", err)
 	}
 
-	resultSet, err := query.Eval(ctx, rego.EvalInput(req.Input))
+	// add headers to the request input
+	input, err := s.addHeadersToEvaluateInput(ctx, req)
+	if err != nil {
+		logger.Error("error adding headers to evaluate input", zap.Error(err))
+		return nil, errors.New("error adding headers to evaluate input", err)
+	}
+
+	resultSet, err := query.Eval(ctx, rego.EvalInput(input))
 	if err != nil {
 		logger.Error("error evaluating rego query", zap.Error(err))
 		return nil, errors.New("error evaluating rego query", err)
@@ -266,4 +276,44 @@ func (s *Service) buildRegoArgs(filename, regoPolicy, regoQuery, regoData string
 
 func (s *Service) queryCacheKey(group, policyName, version string) string {
 	return fmt.Sprintf("%s,%s,%s", group, policyName, version)
+}
+
+// HeadersMiddleware is an HTTP server middleware that gets all HTTP headers
+// and adds them to a request context value.
+func HeadersMiddleware() func(http.Handler) http.Handler {
+	return func(h http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			req := r
+			headers := map[string]string{}
+
+			// get all http headers and add them to a newly initialized request context.
+			for name := range r.Header {
+				headers[name] = r.Header.Get(name)
+			}
+			ctx := context.WithValue(r.Context(), HeadersKey, headers)
+			req = r.WithContext(ctx)
+
+			// call initial handler.
+			h.ServeHTTP(w, req)
+		})
+	}
+}
+
+func (s *Service) addHeadersToEvaluateInput(ctx context.Context, req *policy.EvaluateRequest) (interface{}, error) {
+	bytes, err := json.Marshal(req.Input)
+	if err != nil {
+		return nil, err
+	}
+
+	var input map[string]interface{}
+	if err := json.Unmarshal(bytes, &input); err != nil {
+		return nil, err
+	}
+
+	if _, ok := input[HeadersKey]; ok {
+		return nil, errors.New(errors.BadRequest, fmt.Sprintf("key `%s` is not allowed in the request body", HeadersKey))
+	}
+	input[HeadersKey] = ctx.Value(HeadersKey)
+
+	return input, err
 }
