@@ -21,7 +21,7 @@ import (
 //go:generate counterfeiter . Storage
 //go:generate counterfeiter . RegoCache
 
-const HeadersKey = "headers"
+const HeadersKey = "header"
 
 type Cache interface {
 	Set(ctx context.Context, key, namespace, scope string, value []byte, ttl int) error

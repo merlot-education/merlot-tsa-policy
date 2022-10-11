@@ -169,6 +169,15 @@ can be mapped and used for evaluating all kinds of different policies. Without a
 package naming rule, there's no way the service can automatically generate HTTP 
 endpoints for working with arbitrary dynamically uploaded policies.
 
+### Access HTTP Headers inside a policy
+
+HTTP Request Headers are passed to the evaluation runtime on each request. One could access any header by name within
+the Rego source code using `input.header.name` or `input.header["name"]`.
+
+##### **Important:**
+The key `header` is forbidden for request body on the `evaluation` endpoint. Sending a `header` key in
+the request body results in `400 Bad Request` response status code and the server will not process the request.
+
 ### Policy Extensions Functions
 
 A brief documentation for the available Rego extensions functions
