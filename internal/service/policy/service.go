@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"net/http"
 
 	"github.com/google/uuid"
 	"github.com/open-policy-agent/opa/rego"
@@ -13,6 +12,7 @@ import (
 
 	"gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/golib/errors"
 	"gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/policy/gen/policy"
+	header2 "gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/policy/internal/middleware"
 	"gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/policy/internal/regofunc"
 	"gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/policy/internal/storage"
 )
@@ -21,7 +21,7 @@ import (
 //go:generate counterfeiter . Storage
 //go:generate counterfeiter . RegoCache
 
-const HeadersKey = "header"
+const HeaderKey = "header"
 
 type Cache interface {
 	Set(ctx context.Context, key, namespace, scope string, value []byte, ttl int) error
@@ -278,41 +278,23 @@ func (s *Service) queryCacheKey(group, policyName, version string) string {
 	return fmt.Sprintf("%s,%s,%s", group, policyName, version)
 }
 
-// HeadersMiddleware is an HTTP server middleware that gets all HTTP headers
-// and adds them to a request context value.
-func HeadersMiddleware() func(http.Handler) http.Handler {
-	return func(h http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			headers := map[string]string{}
-
-			// get all http headers and add them to a newly initialized request context.
-			for name := range r.Header {
-				headers[name] = r.Header.Get(name)
-			}
-			ctx := context.WithValue(r.Context(), HeadersKey, headers) //nolint:all
-			req := r.WithContext(ctx)
-
-			// call initial handler.
-			h.ServeHTTP(w, req)
-		})
-	}
-}
-
-func (s *Service) addHeadersToEvaluateInput(ctx context.Context, req *policy.EvaluateRequest) (interface{}, error) {
-	bytes, err := json.Marshal(req.Input)
-	if err != nil {
-		return nil, err
+func (s *Service) addHeadersToEvaluateInput(ctx context.Context, req *policy.EvaluateRequest) (map[string]interface{}, error) {
+	i, ok := req.Input.(*interface{})
+	if !ok {
+		return nil, errors.New("unexpected request body: unsuccessful casting to interface")
 	}
 
-	var input map[string]interface{}
-	if err := json.Unmarshal(bytes, &input); err != nil {
-		return nil, err
+	i2 := *i
+	input, ok := i2.(map[string]interface{})
+	if !ok {
+		return nil, errors.New("unexpected request body: unsuccessful casting to map")
 	}
 
-	if _, ok := input[HeadersKey]; ok {
-		return nil, errors.New(errors.BadRequest, fmt.Sprintf("key `%s` is not allowed in the request body", HeadersKey))
+	header, ok := header2.FromContext(ctx)
+	if !ok {
+		return nil, errors.New("error getting headers from context")
 	}
-	input[HeadersKey] = ctx.Value(HeadersKey)
+	input[HeaderKey] = header
 
-	return input, err
+	return input, nil
 }

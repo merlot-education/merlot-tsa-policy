@@ -2,6 +2,8 @@ package policy_test
 
 import (
 	"context"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 	"time"
 
@@ -12,6 +14,7 @@ import (
 	"gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/golib/errors"
 	"gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/golib/ptr"
 	goapolicy "gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/policy/gen/policy"
+	header "gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/policy/internal/middleware"
 	"gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/policy/internal/service/policy"
 	"gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/policy/internal/service/policy/policyfakes"
 	"gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/policy/internal/storage"
@@ -46,12 +49,29 @@ func TestService_Evaluate(t *testing.T) {
 
 	// prepare test request to be used in tests
 	testReq := func() *goapolicy.EvaluateRequest {
+		input := map[string]interface{}{"msg": "yes"}
+		var body interface{} = input
+
 		return &goapolicy.EvaluateRequest{
 			Group:      "testgroup",
 			PolicyName: "example",
 			Version:    "1.0",
-			Input:      map[string]interface{}{"msg": "yes"},
+			Input:      &body,
+			TTL:        ptr.Int(30),
 		}
+	}
+
+	// prepare http.Request for tests
+	httpReq := func() *http.Request {
+		req := httptest.NewRequest("GET", "/", nil)
+		req.Header.Set("Authorization", "my-token")
+		return req
+	}
+
+	// prepare context containing headers
+	ctxWithHeaders := func() context.Context {
+		ctx := header.ToContext(context.Background(), httpReq())
+		return ctx
 	}
 
 	tests := []struct {
@@ -69,6 +89,7 @@ func TestService_Evaluate(t *testing.T) {
 	}{
 		{
 			name: "prepared query is found in queryCache",
+			ctx:  ctxWithHeaders(),
 			req:  testReq(),
 			regocache: &policyfakes.FakeRegoCache{
 				GetStub: func(key string) (*rego.PreparedEvalQuery, bool) {
@@ -137,36 +158,8 @@ func TestService_Evaluate(t *testing.T) {
 			errtext: "policy is locked",
 		},
 		{
-			name: "policy is found in storage but request body contains forbidden key",
-			req: &goapolicy.EvaluateRequest{
-				Group:      "testgroup",
-				PolicyName: "example",
-				Version:    "1.0",
-				Input:      map[string]interface{}{"msg": "yes", policy.HeadersKey: "baz"},
-			},
-			regocache: &policyfakes.FakeRegoCache{
-				GetStub: func(key string) (*rego.PreparedEvalQuery, bool) {
-					return nil, false
-				},
-			},
-			storage: &policyfakes.FakeStorage{
-				PolicyStub: func(ctx context.Context, s string, s2 string, s3 string) (*storage.Policy, error) {
-					return &storage.Policy{
-						Name:       "example",
-						Group:      "testgroup",
-						Version:    "1.0",
-						Rego:       testPolicy,
-						Locked:     false,
-						LastUpdate: time.Now(),
-					}, nil
-				},
-			},
-			res:     nil,
-			errkind: errors.BadRequest,
-			errtext: "error adding headers to evaluate input",
-		},
-		{
 			name: "policy is found in storage and isn't locked",
+			ctx:  ctxWithHeaders(),
 			req:  testReq(),
 			regocache: &policyfakes.FakeRegoCache{
 				GetStub: func(key string) (*rego.PreparedEvalQuery, bool) {
@@ -196,6 +189,7 @@ func TestService_Evaluate(t *testing.T) {
 		},
 		{
 			name: "policy is executed successfully, but storing the result in cache fails",
+			ctx:  ctxWithHeaders(),
 			req:  testReq(),
 			regocache: &policyfakes.FakeRegoCache{
 				GetStub: func(key string) (*rego.PreparedEvalQuery, bool) {
@@ -224,6 +218,7 @@ func TestService_Evaluate(t *testing.T) {
 		},
 		{
 			name: "policy with blank variable assignment is evaluated successfully",
+			ctx:  ctxWithHeaders(),
 			req:  testReq(),
 			regocache: &policyfakes.FakeRegoCache{
 				GetStub: func(key string) (*rego.PreparedEvalQuery, bool) {
@@ -253,13 +248,8 @@ func TestService_Evaluate(t *testing.T) {
 		},
 		{
 			name: "policy is evaluated successfully with TTL sent in the request headers",
-			req: &goapolicy.EvaluateRequest{
-				Group:      "testgroup",
-				PolicyName: "example",
-				Version:    "1.0",
-				Input:      map[string]interface{}{"msg": "yes"},
-				TTL:        ptr.Int(30),
-			},
+			ctx:  ctxWithHeaders(),
+			req:  testReq(),
 			regocache: &policyfakes.FakeRegoCache{
 				GetStub: func(key string) (*rego.PreparedEvalQuery, bool) {
 					return nil, false
@@ -288,6 +278,7 @@ func TestService_Evaluate(t *testing.T) {
 		},
 		{
 			name: "policy using static json data is evaluated successfully",
+			ctx:  ctxWithHeaders(),
 			req:  testReq(),
 			regocache: &policyfakes.FakeRegoCache{
 				GetStub: func(key string) (*rego.PreparedEvalQuery, bool) {
@@ -318,7 +309,7 @@ func TestService_Evaluate(t *testing.T) {
 		},
 		{
 			name: "policy accessing headers is evaluated successfully",
-			ctx:  context.WithValue(context.Background(), policy.HeadersKey, map[string]interface{}{"Authorization": "my-token"}), //nolint:all
+			ctx:  ctxWithHeaders(),
 			req:  testReq(),
 			regocache: &policyfakes.FakeRegoCache{
 				GetStub: func(key string) (*rego.PreparedEvalQuery, bool) {
@@ -343,7 +334,7 @@ func TestService_Evaluate(t *testing.T) {
 				},
 			},
 			res: &goapolicy.EvaluateResult{
-				Result: map[string]interface{}{"token": "my-token"},
+				Result: map[string]interface{}{"token": []interface{}{"my-token"}},
 			},
 		},
 	}

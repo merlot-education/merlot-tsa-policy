@@ -29,6 +29,7 @@ import (
 	goapolicy "gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/policy/gen/policy"
 	"gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/policy/internal/clients/cache"
 	"gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/policy/internal/config"
+	header "gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/policy/internal/middleware"
 	"gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/policy/internal/regocache"
 	"gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/policy/internal/regofunc"
 	"gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/policy/internal/service"
@@ -157,7 +158,7 @@ func main() {
 	}
 
 	// Apply middlewares on the servers
-	policyServer.Evaluate = policy.HeadersMiddleware()(policyServer.Evaluate)
+	policyServer.Evaluate = header.Middleware()(policyServer.Evaluate)
 
 	// Configure the mux.
 	goapolicysrv.Mount(mux, policyServer)
