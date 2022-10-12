@@ -318,7 +318,7 @@ func TestService_Evaluate(t *testing.T) {
 		},
 		{
 			name: "policy accessing headers is evaluated successfully",
-			ctx:  context.WithValue(context.Background(), policy.HeadersKey, map[string]interface{}{"Authorization": "my-token"}),
+			ctx:  context.WithValue(context.Background(), policy.HeadersKey, map[string]interface{}{"Authorization": "my-token"}), //nolint:all
 			req:  testReq(),
 			regocache: &policyfakes.FakeRegoCache{
 				GetStub: func(key string) (*rego.PreparedEvalQuery, bool) {

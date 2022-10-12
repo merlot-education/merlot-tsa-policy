@@ -283,15 +283,14 @@ func (s *Service) queryCacheKey(group, policyName, version string) string {
 func HeadersMiddleware() func(http.Handler) http.Handler {
 	return func(h http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			req := r
 			headers := map[string]string{}
 
 			// get all http headers and add them to a newly initialized request context.
 			for name := range r.Header {
 				headers[name] = r.Header.Get(name)
 			}
-			ctx := context.WithValue(r.Context(), HeadersKey, headers)
-			req = r.WithContext(ctx)
+			ctx := context.WithValue(r.Context(), HeadersKey, headers) //nolint:all
+			req := r.WithContext(ctx)
 
 			// call initial handler.
 			h.ServeHTTP(w, req)
