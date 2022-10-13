@@ -29,7 +29,7 @@ import (
 	goapolicy "gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/policy/gen/policy"
 	"gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/policy/internal/clients/cache"
 	"gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/policy/internal/config"
-	header "gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/policy/internal/middleware"
+	"gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/policy/internal/header"
 	"gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/policy/internal/regocache"
 	"gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/policy/internal/regofunc"
 	"gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/policy/internal/service"

@@ -14,7 +14,7 @@ import (
 	"gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/golib/errors"
 	"gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/golib/ptr"
 	goapolicy "gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/policy/gen/policy"
-	header "gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/policy/internal/middleware"
+	"gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/policy/internal/header"
 	"gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/policy/internal/service/policy"
 	"gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/policy/internal/service/policy/policyfakes"
 	"gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/policy/internal/storage"
@@ -51,6 +51,19 @@ func TestService_Evaluate(t *testing.T) {
 	testReq := func() *goapolicy.EvaluateRequest {
 		input := map[string]interface{}{"msg": "yes"}
 		var body interface{} = input
+
+		return &goapolicy.EvaluateRequest{
+			Group:      "testgroup",
+			PolicyName: "example",
+			Version:    "1.0",
+			Input:      &body,
+			TTL:        ptr.Int(30),
+		}
+	}
+
+	// prepare test request with empty body
+	testEmptyReq := func() *goapolicy.EvaluateRequest {
+		var body interface{} = nil
 
 		return &goapolicy.EvaluateRequest{
 			Group:      "testgroup",
@@ -335,6 +348,36 @@ func TestService_Evaluate(t *testing.T) {
 			},
 			res: &goapolicy.EvaluateResult{
 				Result: map[string]interface{}{"token": []interface{}{"my-token"}},
+			},
+		},
+		{
+			name: "policy with empty input is evaluated successfully",
+			ctx:  ctxWithHeaders(),
+			req:  testEmptyReq(),
+			regocache: &policyfakes.FakeRegoCache{
+				GetStub: func(key string) (*rego.PreparedEvalQuery, bool) {
+					return nil, false
+				},
+			},
+			storage: &policyfakes.FakeStorage{
+				PolicyStub: func(ctx context.Context, s string, s2 string, s3 string) (*storage.Policy, error) {
+					return &storage.Policy{
+						Name:       "example",
+						Group:      "testgroup",
+						Version:    "1.0",
+						Rego:       testPolicy,
+						Locked:     false,
+						LastUpdate: time.Now(),
+					}, nil
+				},
+			},
+			cache: &policyfakes.FakeCache{
+				SetStub: func(ctx context.Context, s string, s2 string, s3 string, bytes []byte, i int) error {
+					return nil
+				},
+			},
+			res: &goapolicy.EvaluateResult{
+				Result: map[string]interface{}{"allow": false},
 			},
 		},
 	}
