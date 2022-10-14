@@ -29,6 +29,7 @@ import (
 	goapolicy "gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/policy/gen/policy"
 	"gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/policy/internal/clients/cache"
 	"gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/policy/internal/config"
+	"gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/policy/internal/header"
 	"gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/policy/internal/regocache"
 	"gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/policy/internal/regofunc"
 	"gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/policy/internal/service"
@@ -155,6 +156,9 @@ func main() {
 		healthServer = goahealthsrv.New(healthEndpoints, mux, dec, enc, nil, errFormatter)
 		openapiServer = goaopenapisrv.New(openapiEndpoints, mux, dec, enc, nil, errFormatter, nil, nil)
 	}
+
+	// Apply middlewares on the servers
+	policyServer.Evaluate = header.Middleware()(policyServer.Evaluate)
 
 	// Configure the mux.
 	goapolicysrv.Mount(mux, policyServer)

@@ -1,0 +1,27 @@
+package header_test
+
+import (
+	"net/http"
+	"net/http/httptest"
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/policy/internal/header"
+)
+
+func TestMiddleware(t *testing.T) {
+	expected := http.Header{"Authorization": []string{"my-token"}}
+
+	req := httptest.NewRequest("POST", "/example", nil)
+	req.Header = expected
+
+	nextHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		value, ok := header.FromContext(r.Context())
+		assert.True(t, ok)
+		assert.Equal(t, expected, value)
+	})
+
+	middleware := header.Middleware()
+	handlerToTest := middleware(nextHandler)
+	handlerToTest.ServeHTTP(httptest.NewRecorder(), req)
+}

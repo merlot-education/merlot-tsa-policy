@@ -12,6 +12,7 @@ import (
 
 	"gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/golib/errors"
 	"gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/policy/gen/policy"
+	"gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/policy/internal/header"
 	"gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/policy/internal/regofunc"
 	"gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/policy/internal/storage"
 )
@@ -19,6 +20,8 @@ import (
 //go:generate counterfeiter . Cache
 //go:generate counterfeiter . Storage
 //go:generate counterfeiter . RegoCache
+
+const HeaderKey = "header"
 
 type Cache interface {
 	Set(ctx context.Context, key, namespace, scope string, value []byte, ttl int) error
@@ -80,7 +83,14 @@ func (s *Service) Evaluate(ctx context.Context, req *policy.EvaluateRequest) (*p
 		return nil, errors.New("error evaluating policy", err)
 	}
 
-	resultSet, err := query.Eval(ctx, rego.EvalInput(req.Input))
+	// add headers to the request input
+	input, err := s.addHeadersToEvaluateInput(ctx, req.Input)
+	if err != nil {
+		logger.Error("error adding headers to evaluate input", zap.Error(err))
+		return nil, errors.New("error adding headers to evaluate input", err)
+	}
+
+	resultSet, err := query.Eval(ctx, rego.EvalInput(input))
 	if err != nil {
 		logger.Error("error evaluating rego query", zap.Error(err))
 		return nil, errors.New("error evaluating rego query", err)
@@ -266,4 +276,30 @@ func (s *Service) buildRegoArgs(filename, regoPolicy, regoQuery, regoData string
 
 func (s *Service) queryCacheKey(group, policyName, version string) string {
 	return fmt.Sprintf("%s,%s,%s", group, policyName, version)
+}
+
+func (s *Service) addHeadersToEvaluateInput(ctx context.Context, in interface{}) (map[string]interface{}, error) {
+	// goa framework decodes the body of the request into a pointer to interface
+	// for this reason we cast it first to interface pointer and then to map, which is the expected value
+	i, ok := in.(*interface{})
+	if !ok {
+		return nil, errors.New("unexpected request body: unsuccessful casting to interface")
+	}
+
+	i2 := *i
+	if i2 == nil { // no request body
+		i2 = map[string]interface{}{}
+	}
+	input, ok := i2.(map[string]interface{})
+	if !ok {
+		return nil, errors.New("unexpected request body: unsuccessful casting to map")
+	}
+
+	header, ok := header.FromContext(ctx)
+	if !ok {
+		return nil, errors.New("error getting headers from context")
+	}
+	input[HeaderKey] = header
+
+	return input, nil
 }
