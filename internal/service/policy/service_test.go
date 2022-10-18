@@ -63,7 +63,7 @@ func TestService_Evaluate(t *testing.T) {
 
 	// prepare test request with empty body
 	testEmptyReq := func() *goapolicy.EvaluateRequest {
-		var body interface{} = nil
+		var body interface{}
 
 		return &goapolicy.EvaluateRequest{
 			Group:      "testgroup",
