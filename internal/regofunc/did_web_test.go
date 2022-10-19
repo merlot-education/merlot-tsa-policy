@@ -10,7 +10,7 @@ import (
 	"gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/policy/internal/regofunc"
 )
 
-func TestToURLFunc(t *testing.T) {
+func TestDIDToURLFunc(t *testing.T) {
 	tests := []struct {
 		// test input
 		name      string
@@ -21,32 +21,32 @@ func TestToURLFunc(t *testing.T) {
 	}{
 		{
 			name:      "DID is empty",
-			regoQuery: `url_from_did("")`,
+			regoQuery: `did_to_url("")`,
 			errText:   "DID cannot be empty",
 		},
 		{
 			name:      "invalid DID",
-			regoQuery: `url_from_did("invalid-did")`,
+			regoQuery: `did_to_url("invalid-did")`,
 			errText:   "invalid DID, host is not found",
 		},
 		{
 			name:      "invalid DID Method",
-			regoQuery: `url_from_did("did:sov:123456qwerty")`,
+			regoQuery: `did_to_url("did:sov:123456qwerty")`,
 			errText:   "invalid DID, method is unknown",
 		},
 		{
 			name:      "transformation success with DID containing domain only",
-			regoQuery: `url_from_did("did:web:w3c-ccg.github.io")`,
+			regoQuery: `did_to_url("did:web:w3c-ccg.github.io")`,
 			res:       "\"https://w3c-ccg.github.io/.well-known/did.json\"",
 		},
 		{
 			name:      "transformation success with DID containing domain and path",
-			regoQuery: `url_from_did("did:web:w3c-ccg.github.io:user:alice")`,
+			regoQuery: `did_to_url("did:web:w3c-ccg.github.io:user:alice")`,
 			res:       "\"https://w3c-ccg.github.io/user/alice/did.json\"",
 		},
 		{
 			name:      "transformation success with DID containing network port",
-			regoQuery: `url_from_did("did:web:example.com%3A3000:user:alice")`,
+			regoQuery: `did_to_url("did:web:example.com%3A3000:user:alice")`,
 			res:       "\"https://example.com:3000/user/alice/did.json\"",
 		},
 	}
@@ -73,7 +73,7 @@ func TestToURLFunc(t *testing.T) {
 	}
 }
 
-func TestFromURLFunc(t *testing.T) {
+func TestURLToDIDFunc(t *testing.T) {
 	tests := []struct {
 		// test input
 		name      string
@@ -84,37 +84,37 @@ func TestFromURLFunc(t *testing.T) {
 	}{
 		{
 			name:      "empty URL",
-			regoQuery: `did_from_url("")`,
+			regoQuery: `url_to_did("")`,
 			errText:   "URL cannot be empty",
 		},
 		{
 			name:      "URL containing special characters",
-			regoQuery: `did_from_url("example.com\nH1234")`,
+			regoQuery: `url_to_did("example.com\nH1234")`,
 			errText:   "cannot parse URL",
 		},
 		{
 			name:      "URL does not contain secure protocol (https)",
-			regoQuery: `did_from_url("example.com")`,
+			regoQuery: `url_to_did("example.com")`,
 			errText:   "invalid URL for did:web method",
 		},
 		{
 			name:      "URL does not contain valid domain",
-			regoQuery: `did_from_url("https://")`,
+			regoQuery: `url_to_did("https://")`,
 			errText:   "invalid URL for did:web method",
 		},
 		{
 			name:      "transformation success with URL containing domain only",
-			regoQuery: `did_from_url("https://w3c-ccg.github.io/.well-known/did.json")`,
+			regoQuery: `url_to_did("https://w3c-ccg.github.io/.well-known/did.json")`,
 			res:       "\"did:web:w3c-ccg.github.io\"",
 		},
 		{
 			name:      "transformation success with URL containing domain with path",
-			regoQuery: `did_from_url("https://w3c-ccg.github.io/user/alice/did.json")`,
+			regoQuery: `url_to_did("https://w3c-ccg.github.io/user/alice/did.json")`,
 			res:       "\"did:web:w3c-ccg.github.io:user:alice\"",
 		},
 		{
 			name:      "transformation success with URL containing network port",
-			regoQuery: `did_from_url("https://example.com:3000/user/alice/did.json")`,
+			regoQuery: `url_to_did("https://example.com:3000/user/alice/did.json")`,
 			res:       "\"did:web:example.com%3A3000:user:alice\"",
 		},
 	}
