@@ -14,7 +14,7 @@ import (
 const (
 	didSeparator   = ":"
 	urlSeparator   = "/"
-	defaultUrlPath = ".well-known"
+	defaultURLPath = ".well-known"
 )
 
 type DIDTransformerFuncs struct{}
@@ -94,7 +94,7 @@ func (dt *DIDTransformerFuncs) didToURL(DID string) (*url.URL, error) {
 		return nil, errors.New("invalid DID, method is unknown")
 	}
 
-	path := defaultUrlPath
+	path := defaultURLPath
 	if len(ss) > 3 {
 		path = ""
 		for i := 3; i < len(ss); i++ {
@@ -118,12 +118,12 @@ func (dt *DIDTransformerFuncs) didToURL(DID string) (*url.URL, error) {
 // urlToDID transforms a valid URL to a DID created following the "did:web" Method Specification.
 // Documentation can be found here: https://w3c-ccg.github.io/did-method-web/
 func (dt *DIDTransformerFuncs) urlToDID(uri *url.URL) *DID {
-	p := strings.TrimRight(uri.Path, "did.json")
+	p := strings.TrimSuffix(uri.Path, "did.json")
 	sp := strings.Split(p, urlSeparator)
 
 	path := url.QueryEscape(uri.Host)
 	for _, v := range sp {
-		if v == defaultUrlPath {
+		if v == defaultURLPath {
 			break
 		}
 		if v == "" {
