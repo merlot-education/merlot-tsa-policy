@@ -53,11 +53,11 @@ func TestToURLFunc(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			DIDTransformerFuncs := regofunc.NewDIDTransformerFuncs()
+			DIDTransformerFuncs := regofunc.NewDIDWebFuncs()
 
 			r := rego.New(
 				rego.Query(test.regoQuery),
-				rego.Function1(DIDTransformerFuncs.ToURLFunc()),
+				rego.Function1(DIDTransformerFuncs.DIDToURLFunc()),
 				rego.StrictBuiltinErrors(true),
 			)
 			resultSet, err := r.Eval(context.Background())
@@ -121,11 +121,11 @@ func TestFromURLFunc(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			DIDTransformerFuncs := regofunc.NewDIDTransformerFuncs()
+			DIDTransformerFuncs := regofunc.NewDIDWebFuncs()
 
 			r := rego.New(
 				rego.Query(test.regoQuery),
-				rego.Function1(DIDTransformerFuncs.FromURLFunc()),
+				rego.Function1(DIDTransformerFuncs.URLToDIDFunc()),
 				rego.StrictBuiltinErrors(true),
 			)
 			resultSet, err := r.Eval(context.Background())

@@ -17,7 +17,7 @@ const (
 	defaultURLPath = ".well-known"
 )
 
-type DIDTransformerFuncs struct{}
+type DIDWebFuncs struct{}
 
 type DID struct {
 	scheme string // scheme is always "did"
@@ -25,11 +25,11 @@ type DID struct {
 	path   string // path is the unique URI assigned by the DID method
 }
 
-func NewDIDTransformerFuncs() *DIDTransformerFuncs {
-	return &DIDTransformerFuncs{}
+func NewDIDWebFuncs() *DIDWebFuncs {
+	return &DIDWebFuncs{}
 }
 
-func (dt *DIDTransformerFuncs) ToURLFunc() (*rego.Function, rego.Builtin1) {
+func (dw *DIDWebFuncs) DIDToURLFunc() (*rego.Function, rego.Builtin1) {
 	return &rego.Function{
 			Name:    "url_from_did",
 			Decl:    types.NewFunction(types.Args(types.S), types.A),
@@ -45,7 +45,7 @@ func (dt *DIDTransformerFuncs) ToURLFunc() (*rego.Function, rego.Builtin1) {
 				return nil, errors.New("DID cannot be empty")
 			}
 
-			u, err := dt.didToURL(did)
+			u, err := dw.didToURL(did)
 			if err != nil {
 				return nil, err
 			}
@@ -54,7 +54,7 @@ func (dt *DIDTransformerFuncs) ToURLFunc() (*rego.Function, rego.Builtin1) {
 		}
 }
 
-func (dt *DIDTransformerFuncs) FromURLFunc() (*rego.Function, rego.Builtin1) {
+func (dw *DIDWebFuncs) URLToDIDFunc() (*rego.Function, rego.Builtin1) {
 	return &rego.Function{
 			Name:    "did_from_url",
 			Decl:    types.NewFunction(types.Args(types.S), types.A),
@@ -77,7 +77,7 @@ func (dt *DIDTransformerFuncs) FromURLFunc() (*rego.Function, rego.Builtin1) {
 				return nil, errors.New("invalid URL for did:web method")
 			}
 
-			did := dt.urlToDID(uri)
+			did := dw.urlToDID(uri)
 
 			return ast.StringTerm(did.String()), nil
 		}
@@ -85,7 +85,7 @@ func (dt *DIDTransformerFuncs) FromURLFunc() (*rego.Function, rego.Builtin1) {
 
 // didToURL transforms a valid DID, created by the "did:web" Method Specification, to a URL.
 // Documentation can be found here: https://w3c-ccg.github.io/did-method-web/
-func (dt *DIDTransformerFuncs) didToURL(DID string) (*url.URL, error) {
+func (dw *DIDWebFuncs) didToURL(DID string) (*url.URL, error) {
 	ss := strings.Split(DID, didSeparator)
 	if len(ss) < 3 {
 		return nil, errors.New("invalid DID, host is not found")
@@ -117,7 +117,7 @@ func (dt *DIDTransformerFuncs) didToURL(DID string) (*url.URL, error) {
 
 // urlToDID transforms a valid URL to a DID created following the "did:web" Method Specification.
 // Documentation can be found here: https://w3c-ccg.github.io/did-method-web/
-func (dt *DIDTransformerFuncs) urlToDID(uri *url.URL) *DID {
+func (dw *DIDWebFuncs) urlToDID(uri *url.URL) *DID {
 	p := strings.TrimSuffix(uri.Path, "did.json")
 	sp := strings.Split(p, urlSeparator)
 
