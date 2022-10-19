@@ -31,7 +31,7 @@ func NewDIDWebFuncs() *DIDWebFuncs {
 
 func (dw *DIDWebFuncs) DIDToURLFunc() (*rego.Function, rego.Builtin1) {
 	return &rego.Function{
-			Name:    "url_from_did",
+			Name:    "did_to_url",
 			Decl:    types.NewFunction(types.Args(types.S), types.A),
 			Memoize: true,
 		},
@@ -56,7 +56,7 @@ func (dw *DIDWebFuncs) DIDToURLFunc() (*rego.Function, rego.Builtin1) {
 
 func (dw *DIDWebFuncs) URLToDIDFunc() (*rego.Function, rego.Builtin1) {
 	return &rego.Function{
-			Name:    "did_from_url",
+			Name:    "url_to_did",
 			Decl:    types.NewFunction(types.Args(types.S), types.A),
 			Memoize: true,
 		},
