@@ -87,6 +87,7 @@ func main() {
 		taskFuncs := regofunc.NewTaskFuncs(cfg.Task.Addr, httpClient)
 		ocmFuncs := regofunc.NewOcmFuncs(cfg.OCM.Addr, httpClient)
 		signerFuncs := regofunc.NewSignerFuncs(cfg.Signer.Addr, httpClient)
+		didTransformerFuncs := regofunc.NewDIDTransformerFuncs()
 		regofunc.Register("cacheGet", rego.Function3(cacheFuncs.CacheGetFunc()))
 		regofunc.Register("cacheSet", rego.Function4(cacheFuncs.CacheSetFunc()))
 		regofunc.Register("didResolve", rego.Function1(didResolverFuncs.ResolveFunc()))
@@ -99,6 +100,8 @@ func main() {
 		regofunc.Register("verifyProof", rego.Function1(signerFuncs.VerifyProof()))
 		regofunc.Register("ocmLoginProofInvitation", rego.Function2(ocmFuncs.GetLoginProofInvitation()))
 		regofunc.Register("ocmLoginProofResult", rego.Function1(ocmFuncs.GetLoginProofResult()))
+		regofunc.Register("didToURL", rego.Function1(didTransformerFuncs.ToURLFunc()))
+		regofunc.Register("urlToDID", rego.Function1(didTransformerFuncs.FromURLFunc()))
 	}
 
 	// subscribe the cache for policy data changes
