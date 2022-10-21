@@ -37,7 +37,7 @@ func TestService_Evaluate(t *testing.T) {
 	testPolicyWithStaticData := `package testgroup.example default allow = false allow { data.msg == "hello world" }`
 
 	// prepare test policy accessing headers during evaluation
-	testPolicyAccessingHeaders := `package testgroup.example token := input.header["Authorization"]`
+	testPolicyAccessingHeaders := `package testgroup.example token := input.headers["Authorization"]`
 
 	// prepare test query that can be retrieved from rego queryCache
 	testQuery, err := rego.New(
@@ -347,7 +347,7 @@ func TestService_Evaluate(t *testing.T) {
 				},
 			},
 			res: &goapolicy.EvaluateResult{
-				Result: map[string]interface{}{"token": []interface{}{"my-token"}},
+				Result: map[string]interface{}{"token": "my-token"},
 			},
 		},
 		{

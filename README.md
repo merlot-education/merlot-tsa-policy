@@ -172,7 +172,26 @@ endpoints for working with arbitrary dynamically uploaded policies.
 ### Access HTTP Headers inside a policy
 
 HTTP Request Headers are passed to the evaluation runtime on each request. One could access any header by name within
-the Rego source code using `input.header.name` or `input.header["name"]`.
+the Rego source code using `input.headers.Name` or `input.headers["Name"]`.
+##### **Important**
+Header names are passed to the Rego runtime in a canonical format. This means that the first character and any characters following a
+hyphen are uppercase and the rest are lowercase.
+
+Example:
+The policy service receives a request with these headers:
+```
+accept-encoding: gzip, deflate
+Accept-Language: en-us
+fOO: Bar
+x-loCATion: Baz
+```
+Inside a policy these headers could be accessed as follows:
+```
+input.headers["Accept-Encoding"]
+input.headers["Accept-Language"]
+input.headers["Foo"]
+input.headers["X-Location"]
+```
 
 ### Policy Extensions Functions
 

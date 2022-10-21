@@ -10,10 +10,10 @@ import (
 )
 
 func TestMiddleware(t *testing.T) {
-	expected := http.Header{"Authorization": []string{"my-token"}}
+	expected := map[string]string{"Authorization": "my-token", "Host": "example.com"}
 
 	req := httptest.NewRequest("POST", "/example", nil)
-	req.Header = expected
+	req.Header = http.Header{"Authorization": []string{"my-token"}}
 
 	nextHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		value, ok := header.FromContext(r.Context())
