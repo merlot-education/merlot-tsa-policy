@@ -18,6 +18,8 @@ import (
 	"go.uber.org/zap/zapcore"
 	goahttp "goa.design/goa/v3/http"
 	goa "goa.design/goa/v3/pkg"
+	"golang.org/x/oauth2"
+	"golang.org/x/oauth2/clientcredentials"
 	"golang.org/x/sync/errgroup"
 
 	"gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/golib/graceful"
@@ -71,6 +73,11 @@ func main() {
 
 	httpClient := httpClient()
 
+	// Create an HTTP Client which uses an authentication token.
+	// The token will auto-refresh as necessary.
+	oauthCtx := context.WithValue(context.Background(), oauth2.HTTPClient, httpClient)
+	oauthClient := newOAuth2Client(oauthCtx, cfg.OAuth.ClientID, cfg.OAuth.ClientSecret, cfg.OAuth.TokenURL)
+
 	// create storage
 	storage, err := storage.New(db, cfg.Mongo.DB, cfg.Mongo.Collection, logger)
 	if err != nil {
@@ -82,11 +89,11 @@ func main() {
 
 	// register rego extension functions
 	{
-		cacheFuncs := regofunc.NewCacheFuncs(cfg.Cache.Addr, httpClient)
+		cacheFuncs := regofunc.NewCacheFuncs(cfg.Cache.Addr, oauthClient)
 		didResolverFuncs := regofunc.NewDIDResolverFuncs(cfg.DIDResolver.Addr, httpClient)
-		taskFuncs := regofunc.NewTaskFuncs(cfg.Task.Addr, httpClient)
+		taskFuncs := regofunc.NewTaskFuncs(cfg.Task.Addr, oauthClient)
 		ocmFuncs := regofunc.NewOcmFuncs(cfg.OCM.Addr, httpClient)
-		signerFuncs := regofunc.NewSignerFuncs(cfg.Signer.Addr, httpClient)
+		signerFuncs := regofunc.NewSignerFuncs(cfg.Signer.Addr, oauthClient)
 		didWebFuncs := regofunc.NewDIDWebFuncs()
 		regofunc.Register("cacheGet", rego.Function3(cacheFuncs.CacheGetFunc()))
 		regofunc.Register("cacheSet", rego.Function4(cacheFuncs.CacheSetFunc()))
@@ -108,7 +115,7 @@ func main() {
 	storage.AddPolicyChangeSubscriber(regocache)
 
 	// create cache client
-	cache := cache.New(cfg.Cache.Addr, cache.WithHTTPClient(httpClient))
+	cache := cache.New(cfg.Cache.Addr, cache.WithHTTPClient(oauthClient))
 
 	// create services
 	var (
@@ -238,6 +245,16 @@ func httpClient() *http.Client {
 		},
 		Timeout: 30 * time.Second,
 	}
+}
+
+func newOAuth2Client(ctx context.Context, cID, cSecret, tokenURL string) *http.Client {
+	oauthCfg := clientcredentials.Config{
+		ClientID:     cID,
+		ClientSecret: cSecret,
+		TokenURL:     tokenURL,
+	}
+
+	return oauthCfg.Client(ctx)
 }
 
 func exposeMetrics(addr string, logger *zap.Logger) {
