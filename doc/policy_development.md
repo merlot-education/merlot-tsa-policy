@@ -21,7 +21,7 @@ If the following policy is evaluated, the returned result will be
 ```
 package example.createProof
 
-credential := proof.create(input)
+credential := add_vc_proof("transit", "key1", input)
 ```
 
 Result:
@@ -43,7 +43,7 @@ of the policy evaluation won't be embedded in an attribute named
 ```
 package example.createProof
 
-_ := proof.create(input)
+_ = add_vc_proof("transit", "key1", input)
 ```
 
 Result:
@@ -133,94 +133,89 @@ result := tasklist.create("task-list-name", input.data)
 
 #### keys.get
 
-Retrieve a specific public key from the signer service. The function accepts one
-argument which is the name of the key. The key is returned in JWK format
-wrapped in a DID verification method envelope.
+Retrieve a specific public key from the signer service. The function accepts
+three arguments which specify the DID, key namespace and key name. The key 
+is returned in JWK format wrapped in a DID verification method envelope.
 
 Example:
 ```
 package example.getkey
 
-_ := keys.get("key1")
+_ := keys.get("did:web:example.com", "transit", "key1")
 ```
 
 Result:
 ```json
-{
-  "id": "key1",
+  {
+  "id": "did:web:example.com#key1",
+  "type": "JsonWebKey2020",
+  "controller": "did:web:example.com",
   "publicKeyJwk": {
-    "crv": "P-256",
+    "kty": "OKP",
     "kid": "key1",
-    "kty": "EC",
-    "x": "RTx_2cyYcGVSIRP_826S32BiZxSgnzyXgRYmKP8N2l0",
-    "y": "unnPzMAnbByBMq2l9WWKsDFE-MDvX6hYhrESsjAaT50"
-  },
-  "type": "JsonWebKey2020"
+    "crv": "Ed25519",
+    "x": "djRlRCtKdWFxcjJwMjlGTjAwa0w2ZHpHWVZURGN1eVJydDdrN1p5eEo5Yz0"
+  }
 }
 ```
 
 #### keys.getAll
 
-Retrieve all public keys from the signer service. The result is JSON array of
+Retrieve all public keys from the signer service. The function accepts
+two arguments specifying DID and key namespace. The result is JSON array of
 keys in JWK format wrapped in a DID verification method envelope.
 
 Example:
 ```
 package example.getAllKeys
 
-_ := keys.getAll()
+_ := keys.getAll("did:web:example.com", "transit")
 ```
 
 Result:
 ```json
 [
   {
-    "id": "key1",
+    "id": "did:web:example.com#key1",
+    "type": "JsonWebKey2020",
+    "controller": "did:web:example.com",
     "publicKeyJwk": {
-      "crv": "P-256",
+      "kty": "OKP",
       "kid": "key1",
-      "kty": "EC",
-      "x": "RTx_2cyYcGVSIRP_826S32BiZxSgnzyXgRYmKP8N2l0",
-      "y": "unnPzMAnbByBMq2l9WWKsDFE-MDvX6hYhrESsjAaT50"
-    },
-    "type": "JsonWebKey2020"
+      "crv": "Ed25519",
+      "x": "djRlRCtKdWFxcjJwMjlGTjAwa0w2ZHpHWVZURGN1eVJydDdrN1p5eEo5Yz0"
+    }
   },
   {
-    ...
+    "id": "did:web:example.com#key2",
+    "type": "JsonWebKey2020",
+    "controller": "did:web:example.com",
+    "publicKeyJwk": {
+      "kty": "EC",
+      "kid": "key2",
+      "crv": "P-256",
+      "x": "8Kfl7wsUWeNOTgMR2wFWRhnU6o8jLnPuRcXQvJBu-Is",
+      "y": "_yVgBlJiWsquGWJPhuxrp_gy1x5g6fhhbDP9oyGWph4"
+    }
   }
 ]
 ```
 
-#### issuer
+#### add_vc_proof
 
-Retrieve DID issuer value configured in the signer service.
-
-Example:
-```
-package example.getIssuer
-
-did := issuer().did
-```
-
-Result:
-```json
-{
-  "did": "did:key:z6Mkfriq1MqLBoPWecGoDLjguo1sB9brj6wT3qZ5BxkKpuP6"
-}
-```
-
-#### proof.create
-
-Create a proof for Verifiable Credential or Verifiable Presentation.
-The function accepts one argument which represents a VC or VP in JSON format.
+Add a proof to Verifiable Credential.
+The function accepts three arguments:
+* Key namespace where the signing key must be present.
+* Key name of the signing key to be used.
+* A Verifiable Credential document in JSON format.
 It calls the signer service to generate a proof and returns the response, 
-which is the same VC/VP but with proof section. 
+which is the same VC but with the generated proof section by the signer. 
 
 Example Policy:
 ```
-package example.createProof
+package example.addProof
 
-_ := proof.create(input)
+_ := add_vc_proof("transit", "key1", input)
 ```
 
 Example VC given to policy evaluation:
@@ -264,6 +259,24 @@ Example Response:
   },
   "type": "VerifiableCredential"
 }
+```
+
+#### add_vp_proof
+
+Add a proof to Verifiable Presentation.
+The function accepts four arguments:
+* Issuer DID used for identifying the verification method to verify the proof.
+* Key namespace where the signing key must be present.
+* Key name of the signing key to be used.
+* A Verifiable Presentation document in JSON format.
+It calls the signer service to generate a proof and returns the response,
+which is the same VC but with the generated proof section by the signer.
+
+Example Policy:
+```
+package example.addProof
+
+_ := add_vp_proof("did: web:example.com", "transit", "key1", input)
 ```
 
 #### proof.verify

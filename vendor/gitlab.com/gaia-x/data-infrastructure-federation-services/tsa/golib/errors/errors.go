@@ -73,16 +73,17 @@ func (k Kind) String() string {
 // recorded.
 //
 // The supported types are:
-//   errors.Kind:
-//       The kind of the error.
-//   *errors.Error
-//       The underlying error that triggered this one. If the error has
-//       non-empty ID and Kind fields, they are promoted as values of the
-//       returned one.
-//   error:
-//       The underlying error that triggered this one.
-//   string:
-//       Treated as an error message and assigned to the Message field.
+//
+//	errors.Kind:
+//	    The kind of the error.
+//	*errors.Error
+//	    The underlying error that triggered this one. If the error has
+//	    non-empty ID and Kind fields, they are promoted as values of the
+//	    returned one.
+//	error:
+//	    The underlying error that triggered this one.
+//	string:
+//	    Treated as an error message and assigned to the Message field.
 func New(args ...interface{}) error {
 	if len(args) == 0 {
 		panic("call to errors.New without arguments")
