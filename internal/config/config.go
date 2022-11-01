@@ -11,6 +11,7 @@ type Config struct {
 	DIDResolver didResolverConfig
 	Metrics     metricsConfig
 	OCM         ocmConfig
+	OAuth       oauthConfig
 
 	LogLevel string `envconfig:"LOG_LEVEL" default:"INFO"`
 }
@@ -53,4 +54,10 @@ type metricsConfig struct {
 
 type ocmConfig struct {
 	Addr string `envconfig:"OCM_ADDR" required:"true"`
+}
+
+type oauthConfig struct {
+	ClientID     string `envconfig:"OAUTH_CLIENT_ID" required:"true"`
+	ClientSecret string `envconfig:"OAUTH_CLIENT_SECRET" required:"true"`
+	TokenURL     string `envconfig:"OAUTH_TOKEN_URL" required:"true"`
 }
