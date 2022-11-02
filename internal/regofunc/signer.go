@@ -14,8 +14,10 @@ import (
 )
 
 const (
-	createVCProofPath = "/v1/credential/proof"
-	createVPProofPath = "/v1/presentation/proof"
+	verificationMethodPath  = "/v1/verification-methods/%s/%s/%s"
+	verificationMethodsPath = "/v1/verification-methods/%s/%s"
+	createVCProofPath       = "/v1/credential/proof"
+	createVPProofPath       = "/v1/presentation/proof"
 )
 
 type SignerFuncs struct {
@@ -30,9 +32,9 @@ func NewSignerFuncs(signerAddr string, httpClient *http.Client) *SignerFuncs {
 	}
 }
 
-func (sf *SignerFuncs) GetKeyFunc() (*rego.Function, rego.Builtin3) {
+func (sf *SignerFuncs) VerificationMethodFunc() (*rego.Function, rego.Builtin3) {
 	return &rego.Function{
-			Name:    "keys.get",
+			Name:    "verification_method",
 			Decl:    types.NewFunction(types.Args(types.S, types.S, types.S), types.A),
 			Memoize: true,
 		},
@@ -56,7 +58,7 @@ func (sf *SignerFuncs) GetKeyFunc() (*rego.Function, rego.Builtin3) {
 				return nil, fmt.Errorf("empty keyname")
 			}
 
-			path := fmt.Sprintf("/v1/keys/%s/%s/%s", did, namespace, key)
+			path := fmt.Sprintf(verificationMethodPath, namespace, key, did)
 			uri, err := url.ParseRequestURI(sf.signerAddr + path)
 			if err != nil {
 				return nil, err
@@ -86,9 +88,9 @@ func (sf *SignerFuncs) GetKeyFunc() (*rego.Function, rego.Builtin3) {
 		}
 }
 
-func (sf *SignerFuncs) GetAllKeysFunc() (*rego.Function, rego.Builtin2) {
+func (sf *SignerFuncs) VerificationMethodsFunc() (*rego.Function, rego.Builtin2) {
 	return &rego.Function{
-			Name:    "keys.getAll",
+			Name:    "verification_methods",
 			Decl:    types.NewFunction(types.Args(types.S, types.S), types.A),
 			Memoize: true,
 		},
@@ -107,7 +109,7 @@ func (sf *SignerFuncs) GetAllKeysFunc() (*rego.Function, rego.Builtin2) {
 				return nil, fmt.Errorf("empty key namespace")
 			}
 
-			path := fmt.Sprintf("/v1/keys/%s/%s", did, namespace)
+			path := fmt.Sprintf(verificationMethodsPath, namespace, did)
 			uri, err := url.ParseRequestURI(sf.signerAddr + path)
 			if err != nil {
 				return nil, err

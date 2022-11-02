@@ -14,7 +14,7 @@ import (
 	"gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/policy/internal/regofunc"
 )
 
-func TestGetKeyFunc(t *testing.T) {
+func TestVerificationMethodFunc(t *testing.T) {
 	expected := `{"key1":"key1 data"}`
 	signerSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		_, _ = fmt.Fprint(w, expected)
@@ -23,8 +23,8 @@ func TestGetKeyFunc(t *testing.T) {
 
 	keysFuncs := regofunc.NewSignerFuncs(signerSrv.URL, http.DefaultClient)
 	r := rego.New(
-		rego.Query(`keys.get("did:web:example.com", "transit", "key1")`),
-		rego.Function3(keysFuncs.GetKeyFunc()),
+		rego.Query(`verification_method("did:web:example.com", "transit", "key1")`),
+		rego.Function3(keysFuncs.VerificationMethodFunc()),
 		rego.StrictBuiltinErrors(true),
 	)
 	resultSet, err := r.Eval(context.Background())
@@ -35,7 +35,7 @@ func TestGetKeyFunc(t *testing.T) {
 	assert.Equal(t, expected, string(resultBytes))
 }
 
-func TestGetKeyFuncError(t *testing.T) {
+func TestVerificationMethodFuncError(t *testing.T) {
 	signerSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
 	}))
@@ -43,19 +43,19 @@ func TestGetKeyFuncError(t *testing.T) {
 
 	keysFuncs := regofunc.NewSignerFuncs(signerSrv.URL, http.DefaultClient)
 	r := rego.New(
-		rego.Query(`keys.get("did:web:example.com", "transit", "key1")`),
-		rego.Function3(keysFuncs.GetKeyFunc()),
+		rego.Query(`verification_method("did:web:example.com", "transit", "key1")`),
+		rego.Function3(keysFuncs.VerificationMethodFunc()),
 		rego.StrictBuiltinErrors(true),
 	)
 	resultSet, err := r.Eval(context.Background())
 	assert.Nil(t, resultSet)
 	assert.Error(t, err)
 
-	expectedError := `keys.get("did:web:example.com", "transit", "key1"): eval_builtin_error: keys.get: unexpected response from signer: 404 Not Found`
+	expectedError := `verification_method("did:web:example.com", "transit", "key1"): eval_builtin_error: verification_method: unexpected response from signer: 404 Not Found`
 	assert.Equal(t, expectedError, err.Error())
 }
 
-func TestGetAllKeysFunc(t *testing.T) {
+func TestVerificationMethodsFunc(t *testing.T) {
 	expected := `[{"key1":"key1 data"},{"key2":"key2 data"}]`
 	signerSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		_, _ = fmt.Fprint(w, expected)
@@ -64,8 +64,8 @@ func TestGetAllKeysFunc(t *testing.T) {
 
 	keysFuncs := regofunc.NewSignerFuncs(signerSrv.URL, http.DefaultClient)
 	r := rego.New(
-		rego.Query(`keys.getAll("did:web:example.com", "transit")`),
-		rego.Function2(keysFuncs.GetAllKeysFunc()),
+		rego.Query(`verification_methods("did:web:example.com", "transit")`),
+		rego.Function2(keysFuncs.VerificationMethodsFunc()),
 		rego.StrictBuiltinErrors(true),
 	)
 	resultSet, err := r.Eval(context.Background())
