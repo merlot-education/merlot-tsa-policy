@@ -1,33 +1,32 @@
 // Package regocache implements in-memory caching of
-// compiled and prepared Rego queries. It also
-// implements a function to purge the cache when
-// external data changes have happened.
+// policy data structure. It also implements a function
+// to purge the cache when external data changes have happened.
 package regocache
 
 import (
 	"sync"
 
-	"github.com/open-policy-agent/opa/rego"
+	"gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/policy/internal/storage"
 )
 
 type Cache struct {
 	mu    sync.RWMutex
-	cache map[string]*rego.PreparedEvalQuery
+	cache map[string]*storage.Policy
 }
 
 func New() *Cache {
 	return &Cache{
-		cache: map[string]*rego.PreparedEvalQuery{},
+		cache: map[string]*storage.Policy{},
 	}
 }
 
-func (c *Cache) Set(key string, query *rego.PreparedEvalQuery) {
+func (c *Cache) Set(key string, policy *storage.Policy) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	c.cache[key] = query
+	c.cache[key] = policy
 }
 
-func (c *Cache) Get(key string) (query *rego.PreparedEvalQuery, found bool) {
+func (c *Cache) Get(key string) (policy *storage.Policy, found bool) {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 	v, ok := c.cache[key]
@@ -38,7 +37,7 @@ func (c *Cache) Get(key string) (query *rego.PreparedEvalQuery, found bool) {
 func (c *Cache) Purge() {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	c.cache = map[string]*rego.PreparedEvalQuery{}
+	c.cache = map[string]*storage.Policy{}
 }
 
 // PolicyDataChange triggers purge on the cache.

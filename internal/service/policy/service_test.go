@@ -7,7 +7,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/open-policy-agent/opa/rego"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
 
@@ -26,8 +25,15 @@ func TestNew(t *testing.T) {
 }
 
 func TestService_Evaluate(t *testing.T) {
-	// prepare test policy source code that will be evaluated
-	testPolicy := `package testgroup.example default allow = false allow { input.msg == "yes" }`
+	testPolicy := &storage.Policy{
+		Filename:   "policy.rego",
+		Name:       "example",
+		Group:      "testgroup",
+		Version:    "1.0",
+		Rego:       `package testgroup.example default allow = false allow { input.msg == "yes" }`,
+		Locked:     false,
+		LastUpdate: time.Now(),
+	}
 
 	// prepare test policy source code for the case when policy result must contain only the
 	// value of a blank variable assignment
@@ -37,15 +43,7 @@ func TestService_Evaluate(t *testing.T) {
 	testPolicyWithStaticData := `package testgroup.example default allow = false allow { data.msg == "hello world" }`
 
 	// prepare test policy accessing headers during evaluation
-	testPolicyAccessingHeaders := `package testgroup.example token := input.headers["Authorization"]`
-
-	// prepare test query that can be retrieved from rego queryCache
-	testQuery, err := rego.New(
-		rego.Module("example.rego", testPolicy),
-		rego.Query("data.testgroup.example"),
-		rego.StrictBuiltinErrors(true),
-	).PrepareForEval(context.Background())
-	assert.NoError(t, err)
+	testPolicyAccessingHeaders := `package testgroup.example token := get_header("Authorization")`
 
 	// prepare test request to be used in tests
 	testReq := func() *goapolicy.EvaluateRequest {
@@ -101,13 +99,12 @@ func TestService_Evaluate(t *testing.T) {
 		errtext string
 	}{
 		{
-			name: "prepared query is found in queryCache",
+			name: "policy is found in policyCache",
 			ctx:  ctxWithHeaders(),
 			req:  testReq(),
 			regocache: &policyfakes.FakeRegoCache{
-				GetStub: func(key string) (*rego.PreparedEvalQuery, bool) {
-					q := testQuery
-					return &q, true
+				GetStub: func(key string) (*storage.Policy, bool) {
+					return testPolicy, true
 				},
 			},
 			cache: &policyfakes.FakeCache{
@@ -123,7 +120,7 @@ func TestService_Evaluate(t *testing.T) {
 			name: "policy is not found",
 			req:  testReq(),
 			regocache: &policyfakes.FakeRegoCache{
-				GetStub: func(key string) (*rego.PreparedEvalQuery, bool) {
+				GetStub: func(key string) (*storage.Policy, bool) {
 					return nil, false
 				},
 			},
@@ -140,7 +137,7 @@ func TestService_Evaluate(t *testing.T) {
 			name: "error getting policy from storage",
 			req:  testReq(),
 			regocache: &policyfakes.FakeRegoCache{
-				GetStub: func(key string) (*rego.PreparedEvalQuery, bool) {
+				GetStub: func(key string) (*storage.Policy, bool) {
 					return nil, false
 				},
 			},
@@ -157,7 +154,7 @@ func TestService_Evaluate(t *testing.T) {
 			name: "policy is locked",
 			req:  testReq(),
 			regocache: &policyfakes.FakeRegoCache{
-				GetStub: func(key string) (*rego.PreparedEvalQuery, bool) {
+				GetStub: func(key string) (*storage.Policy, bool) {
 					return nil, false
 				},
 			},
@@ -175,20 +172,13 @@ func TestService_Evaluate(t *testing.T) {
 			ctx:  ctxWithHeaders(),
 			req:  testReq(),
 			regocache: &policyfakes.FakeRegoCache{
-				GetStub: func(key string) (*rego.PreparedEvalQuery, bool) {
+				GetStub: func(key string) (*storage.Policy, bool) {
 					return nil, false
 				},
 			},
 			storage: &policyfakes.FakeStorage{
 				PolicyStub: func(ctx context.Context, s string, s2 string, s3 string) (*storage.Policy, error) {
-					return &storage.Policy{
-						Name:       "example",
-						Group:      "testgroup",
-						Version:    "1.0",
-						Rego:       testPolicy,
-						Locked:     false,
-						LastUpdate: time.Now(),
-					}, nil
+					return testPolicy, nil
 				},
 			},
 			cache: &policyfakes.FakeCache{
@@ -205,20 +195,13 @@ func TestService_Evaluate(t *testing.T) {
 			ctx:  ctxWithHeaders(),
 			req:  testReq(),
 			regocache: &policyfakes.FakeRegoCache{
-				GetStub: func(key string) (*rego.PreparedEvalQuery, bool) {
+				GetStub: func(key string) (*storage.Policy, bool) {
 					return nil, false
 				},
 			},
 			storage: &policyfakes.FakeStorage{
 				PolicyStub: func(ctx context.Context, s string, s2 string, s3 string) (*storage.Policy, error) {
-					return &storage.Policy{
-						Name:       "example",
-						Group:      "testgroup",
-						Version:    "1.0",
-						Rego:       testPolicy,
-						Locked:     false,
-						LastUpdate: time.Now(),
-					}, nil
+					return testPolicy, nil
 				},
 			},
 			cache: &policyfakes.FakeCache{
@@ -234,7 +217,7 @@ func TestService_Evaluate(t *testing.T) {
 			ctx:  ctxWithHeaders(),
 			req:  testReq(),
 			regocache: &policyfakes.FakeRegoCache{
-				GetStub: func(key string) (*rego.PreparedEvalQuery, bool) {
+				GetStub: func(key string) (*storage.Policy, bool) {
 					return nil, false
 				},
 			},
@@ -264,7 +247,7 @@ func TestService_Evaluate(t *testing.T) {
 			ctx:  ctxWithHeaders(),
 			req:  testReq(),
 			regocache: &policyfakes.FakeRegoCache{
-				GetStub: func(key string) (*rego.PreparedEvalQuery, bool) {
+				GetStub: func(key string) (*storage.Policy, bool) {
 					return nil, false
 				},
 			},
@@ -294,7 +277,7 @@ func TestService_Evaluate(t *testing.T) {
 			ctx:  ctxWithHeaders(),
 			req:  testReq(),
 			regocache: &policyfakes.FakeRegoCache{
-				GetStub: func(key string) (*rego.PreparedEvalQuery, bool) {
+				GetStub: func(key string) (*storage.Policy, bool) {
 					return nil, false
 				},
 			},
@@ -325,7 +308,7 @@ func TestService_Evaluate(t *testing.T) {
 			ctx:  ctxWithHeaders(),
 			req:  testReq(),
 			regocache: &policyfakes.FakeRegoCache{
-				GetStub: func(key string) (*rego.PreparedEvalQuery, bool) {
+				GetStub: func(key string) (*storage.Policy, bool) {
 					return nil, false
 				},
 			},
@@ -355,20 +338,13 @@ func TestService_Evaluate(t *testing.T) {
 			ctx:  ctxWithHeaders(),
 			req:  testEmptyReq(),
 			regocache: &policyfakes.FakeRegoCache{
-				GetStub: func(key string) (*rego.PreparedEvalQuery, bool) {
+				GetStub: func(key string) (*storage.Policy, bool) {
 					return nil, false
 				},
 			},
 			storage: &policyfakes.FakeStorage{
 				PolicyStub: func(ctx context.Context, s string, s2 string, s3 string) (*storage.Policy, error) {
-					return &storage.Policy{
-						Name:       "example",
-						Group:      "testgroup",
-						Version:    "1.0",
-						Rego:       testPolicy,
-						Locked:     false,
-						LastUpdate: time.Now(),
-					}, nil
+					return testPolicy, nil
 				},
 			},
 			cache: &policyfakes.FakeCache{
