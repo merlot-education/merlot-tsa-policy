@@ -34,23 +34,23 @@ type Storage interface {
 }
 
 type RegoCache interface {
-	Set(key string, query *rego.PreparedEvalQuery)
-	Get(key string) (query *rego.PreparedEvalQuery, found bool)
+	Set(key string, policy *storage.Policy)
+	Get(key string) (policy *storage.Policy, found bool)
 }
 
 type Service struct {
-	storage    Storage
-	queryCache RegoCache
-	cache      Cache
-	logger     *zap.Logger
+	storage     Storage
+	policyCache RegoCache
+	cache       Cache
+	logger      *zap.Logger
 }
 
-func New(storage Storage, queryCache RegoCache, cache Cache, logger *zap.Logger) *Service {
+func New(storage Storage, policyCache RegoCache, cache Cache, logger *zap.Logger) *Service {
 	return &Service{
-		storage:    storage,
-		queryCache: queryCache,
-		cache:      cache,
-		logger:     logger,
+		storage:     storage,
+		policyCache: policyCache,
+		cache:       cache,
+		logger:      logger,
 	}
 }
 
@@ -77,20 +77,14 @@ func (s *Service) Evaluate(ctx context.Context, req *policy.EvaluateRequest) (*p
 		zap.String("evaluationID", evaluationID),
 	)
 
-	query, err := s.prepareQuery(ctx, req.Group, req.PolicyName, req.Version)
+	headers, _ := header.FromContext(ctx)
+	query, err := s.prepareQuery(ctx, req.Group, req.PolicyName, req.Version, headers)
 	if err != nil {
 		logger.Error("error getting prepared query", zap.Error(err))
 		return nil, errors.New("error evaluating policy", err)
 	}
 
-	// add headers to the request input
-	input, err := s.addHeadersToEvaluateInput(ctx, req.Input)
-	if err != nil {
-		logger.Error("error adding headers to evaluate input", zap.Error(err))
-		return nil, errors.New("error adding headers to evaluate input", err)
-	}
-
-	resultSet, err := query.Eval(ctx, rego.EvalInput(input))
+	resultSet, err := query.Eval(ctx, rego.EvalInput(req.Input))
 	if err != nil {
 		logger.Error("error evaluating rego query", zap.Error(err))
 		return nil, errors.New("error evaluating rego query", err)
@@ -204,22 +198,23 @@ func (s *Service) Unlock(ctx context.Context, req *policy.UnlockRequest) error {
 }
 
 // prepareQuery tries to get a prepared query from the regocache.
-// If the queryCache entry is not found, it will try to prepare a new
-// query and will set it into the queryCache for future use.
-func (s *Service) prepareQuery(ctx context.Context, group, policyName, version string) (*rego.PreparedEvalQuery, error) {
+// If the policyCache entry is not found, it will try to prepare a new
+// query and will set it into the policyCache for future use.
+func (s *Service) prepareQuery(ctx context.Context, group, policyName, version string, headers map[string]string) (*rego.PreparedEvalQuery, error) {
+	// retrieve policy from cache
 	key := s.queryCacheKey(group, policyName, version)
-	query, ok := s.queryCache.Get(key)
-	if ok {
-		return query, nil
-	}
-
-	// retrieve policy from database storage
-	pol, err := s.storage.Policy(ctx, group, policyName, version)
-	if err != nil {
-		if errors.Is(errors.NotFound, err) {
-			return nil, err
+	pol, ok := s.policyCache.Get(key)
+	if !ok {
+		// retrieve policy from database storage
+		var err error
+		pol, err = s.storage.Policy(ctx, group, policyName, version)
+		if err != nil {
+			if errors.Is(errors.NotFound, err) {
+				return nil, err
+			}
+			return nil, errors.New("error getting policy from storage", err)
 		}
-		return nil, errors.New("error getting policy from storage", err)
+		s.policyCache.Set(key, pol)
 	}
 
 	// if policy is locked, return an error
@@ -237,14 +232,18 @@ func (s *Service) prepareQuery(ctx context.Context, group, policyName, version s
 		return nil, errors.New("error building rego runtime functions", err)
 	}
 
+	// Append dynamically the get_header function on every request,
+	// because it is populated with different headers each time.
+	if len(headers) > 0 {
+		regoArgs = append(regoArgs, rego.Function1(regofunc.GetHeaderFunc(headers)))
+	}
+
 	newQuery, err := rego.New(
 		regoArgs...,
 	).PrepareForEval(ctx)
 	if err != nil {
 		return nil, errors.New("error preparing rego query", err)
 	}
-
-	s.queryCache.Set(key, &newQuery)
 
 	return &newQuery, nil
 }
@@ -254,9 +253,9 @@ func (s *Service) buildRegoArgs(filename, regoPolicy, regoQuery, regoData string
 	availableFuncs[0] = rego.Module(filename, regoPolicy)
 	availableFuncs[1] = rego.Query(regoQuery)
 	availableFuncs[2] = rego.StrictBuiltinErrors(true)
-	extensions := regofunc.List()
-	for i := range extensions {
-		availableFuncs = append(availableFuncs, extensions[i])
+	extensionFuncs := regofunc.List()
+	for i := range extensionFuncs {
+		availableFuncs = append(availableFuncs, extensionFuncs[i])
 	}
 
 	// add static data to evaluation runtime
@@ -276,30 +275,4 @@ func (s *Service) buildRegoArgs(filename, regoPolicy, regoQuery, regoData string
 
 func (s *Service) queryCacheKey(group, policyName, version string) string {
 	return fmt.Sprintf("%s,%s,%s", group, policyName, version)
-}
-
-func (s *Service) addHeadersToEvaluateInput(ctx context.Context, in interface{}) (map[string]interface{}, error) {
-	// goa framework decodes the body of the request into a pointer to interface
-	// for this reason we cast it first to interface pointer and then to map, which is the expected value
-	i, ok := in.(*interface{})
-	if !ok {
-		return nil, errors.New("unexpected request body: unsuccessful casting to interface")
-	}
-
-	i2 := *i
-	if i2 == nil { // no request body
-		i2 = map[string]interface{}{}
-	}
-	input, ok := i2.(map[string]interface{})
-	if !ok {
-		return nil, errors.New("unexpected request body: unsuccessful casting to map")
-	}
-
-	header, ok := header.FromContext(ctx)
-	if !ok {
-		return nil, errors.New("error getting headers from context")
-	}
-	input[HeaderKey] = header
-
-	return input, nil
 }

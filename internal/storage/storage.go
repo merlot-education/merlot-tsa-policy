@@ -7,7 +7,7 @@ import (
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
-	"go.uber.org/zap"
+	zap "go.uber.org/zap"
 
 	"gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/golib/errors"
 )
@@ -45,6 +45,12 @@ func New(db *mongo.Client, dbname, collection string, logger *zap.Logger) (*Stor
 }
 
 func (s *Storage) Policy(ctx context.Context, group, name, version string) (*Policy, error) {
+	s.logger.Debug("get policy from storage",
+		zap.String("group", group),
+		zap.String("policy", name),
+		zap.String("version", version),
+	)
+
 	result := s.policy.FindOne(ctx, bson.M{
 		"group":   group,
 		"name":    name,

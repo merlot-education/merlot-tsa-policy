@@ -69,6 +69,20 @@ A number of Rego extension functions are developed and injected in the
 policy service Rego runtime. Here is a list with brief description for
 each one of them.
 
+#### get_header
+
+The function retrieves an HTTP header value taken from the incoming request 
+during the current policy evaluation. The header name is in Canonical format
+because of the way Go `net/http` library formats headers.
+
+For example, inside Rego the value of a header named `Authorization` can be retrieved
+as follows:
+```
+package example.example
+
+auth := get_header("Authorization")
+```
+
 #### cache.get
 
 The function retrieves JSON data from the Cache service. It accepts

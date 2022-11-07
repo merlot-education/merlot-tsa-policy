@@ -5,34 +5,34 @@ import (
 	"sync"
 
 	"gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/policy/internal/service/policy"
-	"github.com/open-policy-agent/opa/rego"
+	"gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/policy/internal/storage"
 )
 
 type FakeRegoCache struct {
-	GetStub        func(string) (*rego.PreparedEvalQuery, bool)
+	GetStub        func(string) (*storage.Policy, bool)
 	getMutex       sync.RWMutex
 	getArgsForCall []struct {
 		arg1 string
 	}
 	getReturns struct {
-		result1 *rego.PreparedEvalQuery
+		result1 *storage.Policy
 		result2 bool
 	}
 	getReturnsOnCall map[int]struct {
-		result1 *rego.PreparedEvalQuery
+		result1 *storage.Policy
 		result2 bool
 	}
-	SetStub        func(string, *rego.PreparedEvalQuery)
+	SetStub        func(string, *storage.Policy)
 	setMutex       sync.RWMutex
 	setArgsForCall []struct {
 		arg1 string
-		arg2 *rego.PreparedEvalQuery
+		arg2 *storage.Policy
 	}
 	invocations      map[string][][]interface{}
 	invocationsMutex sync.RWMutex
 }
 
-func (fake *FakeRegoCache) Get(arg1 string) (*rego.PreparedEvalQuery, bool) {
+func (fake *FakeRegoCache) Get(arg1 string) (*storage.Policy, bool) {
 	fake.getMutex.Lock()
 	ret, specificReturn := fake.getReturnsOnCall[len(fake.getArgsForCall)]
 	fake.getArgsForCall = append(fake.getArgsForCall, struct {
@@ -57,7 +57,7 @@ func (fake *FakeRegoCache) GetCallCount() int {
 	return len(fake.getArgsForCall)
 }
 
-func (fake *FakeRegoCache) GetCalls(stub func(string) (*rego.PreparedEvalQuery, bool)) {
+func (fake *FakeRegoCache) GetCalls(stub func(string) (*storage.Policy, bool)) {
 	fake.getMutex.Lock()
 	defer fake.getMutex.Unlock()
 	fake.GetStub = stub
@@ -70,37 +70,37 @@ func (fake *FakeRegoCache) GetArgsForCall(i int) string {
 	return argsForCall.arg1
 }
 
-func (fake *FakeRegoCache) GetReturns(result1 *rego.PreparedEvalQuery, result2 bool) {
+func (fake *FakeRegoCache) GetReturns(result1 *storage.Policy, result2 bool) {
 	fake.getMutex.Lock()
 	defer fake.getMutex.Unlock()
 	fake.GetStub = nil
 	fake.getReturns = struct {
-		result1 *rego.PreparedEvalQuery
+		result1 *storage.Policy
 		result2 bool
 	}{result1, result2}
 }
 
-func (fake *FakeRegoCache) GetReturnsOnCall(i int, result1 *rego.PreparedEvalQuery, result2 bool) {
+func (fake *FakeRegoCache) GetReturnsOnCall(i int, result1 *storage.Policy, result2 bool) {
 	fake.getMutex.Lock()
 	defer fake.getMutex.Unlock()
 	fake.GetStub = nil
 	if fake.getReturnsOnCall == nil {
 		fake.getReturnsOnCall = make(map[int]struct {
-			result1 *rego.PreparedEvalQuery
+			result1 *storage.Policy
 			result2 bool
 		})
 	}
 	fake.getReturnsOnCall[i] = struct {
-		result1 *rego.PreparedEvalQuery
+		result1 *storage.Policy
 		result2 bool
 	}{result1, result2}
 }
 
-func (fake *FakeRegoCache) Set(arg1 string, arg2 *rego.PreparedEvalQuery) {
+func (fake *FakeRegoCache) Set(arg1 string, arg2 *storage.Policy) {
 	fake.setMutex.Lock()
 	fake.setArgsForCall = append(fake.setArgsForCall, struct {
 		arg1 string
-		arg2 *rego.PreparedEvalQuery
+		arg2 *storage.Policy
 	}{arg1, arg2})
 	stub := fake.SetStub
 	fake.recordInvocation("Set", []interface{}{arg1, arg2})
@@ -116,13 +116,13 @@ func (fake *FakeRegoCache) SetCallCount() int {
 	return len(fake.setArgsForCall)
 }
 
-func (fake *FakeRegoCache) SetCalls(stub func(string, *rego.PreparedEvalQuery)) {
+func (fake *FakeRegoCache) SetCalls(stub func(string, *storage.Policy)) {
 	fake.setMutex.Lock()
 	defer fake.setMutex.Unlock()
 	fake.SetStub = stub
 }
 
-func (fake *FakeRegoCache) SetArgsForCall(i int) (string, *rego.PreparedEvalQuery) {
+func (fake *FakeRegoCache) SetArgsForCall(i int) (string, *storage.Policy) {
 	fake.setMutex.RLock()
 	defer fake.setMutex.RUnlock()
 	argsForCall := fake.setArgsForCall[i]

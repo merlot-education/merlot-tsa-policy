@@ -171,14 +171,22 @@ endpoints for working with arbitrary dynamically uploaded policies.
 
 ### Access HTTP Headers inside a policy
 
-HTTP Request Headers are passed to the evaluation runtime on each request. One could access any header by name within
-the Rego source code using `input.headers.Name` or `input.headers["Name"]`.
-##### **Important**
-Header names are passed to the Rego runtime in a canonical format. This means that the first character and any characters following a
-hyphen are uppercase and the rest are lowercase.
+HTTP request headers are passed to the evaluation runtime on each request. They can be
+accessed through a built-in extension function named `get_header()`. It accepts as argument
+the name of the header in [Canonical](https://golangbyexample.com/canonical-http-header-key/) 
+format. For example, inside Rego the value of a header named `Authorization` can be retrieved
+as follows:
+```
+package example.example
 
-Example:
-The policy service receives a request with these headers:
+auth := get_header("Authorization")
+```
+
+>Header names are passed to the Rego runtime in Canonical format. This means that the 
+>first character and any characters following a hyphen are uppercase and the rest 
+>are lowercase.
+
+More examples, if the policy service receive a request with the following headers:
 ```
 accept-encoding: gzip, deflate
 Accept-Language: en-us
@@ -187,10 +195,10 @@ x-loCATion: Baz
 ```
 Inside a policy these headers could be accessed as follows:
 ```
-input.headers["Accept-Encoding"]
-input.headers["Accept-Language"]
-input.headers["Foo"]
-input.headers["X-Location"]
+accept_encoding := get_header("Accept-Encoding")
+accept_language := get_header("Accept-Language")
+foo := get_header("Foo")
+location := get_header("X-Location")
 ```
 
 ### Policy Extensions Functions
