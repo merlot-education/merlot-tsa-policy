@@ -22,11 +22,12 @@ import (
 )
 
 const (
-	repoFolder       = "policies"
-	policyFilename   = "policy.rego"
-	dataFilename     = "data.json"
-	policyDatabase   = "policy"
-	policyCollection = "policies"
+	repoFolder         = "policies"
+	policyFilename     = "policy.rego"
+	dataFilename       = "data.json"
+	dataConfigFilename = "data-config.json"
+	policyDatabase     = "policy"
+	policyCollection   = "policies"
 )
 
 type Policy struct {
@@ -37,6 +38,7 @@ type Policy struct {
 	Rego       string
 	Locked     bool
 	Data       interface{}
+	DataConfig interface{}
 	LastUpdate time.Time
 }
 
@@ -170,6 +172,9 @@ func createPolicy(p string, d os.DirEntry) (*Policy, error) {
 	}
 	regoSrc := string(bytes)
 
+	// generate policy filename for DB from pattern {group}/{name}/{version}/policy.rego
+	dbFilename := group + "/" + name + "/" + version + "/" + policyFilename
+
 	// check if there is a data.json file in the same folder as the policy
 	dataBytes, err := os.ReadFile(strings.TrimSuffix(p, policyFilename) + dataFilename)
 	if err != nil && !strings.Contains(err.Error(), "no such file or directory") {
@@ -177,17 +182,27 @@ func createPolicy(p string, d os.DirEntry) (*Policy, error) {
 	}
 	data := string(dataBytes)
 
-	// generate filename for DB from pattern {group}/{name}/{version}/policy.rego
-	dbFilename := group + "/" + name + "/" + version + "/" + policyFilename
+	// check if there is a data-config.json file in the same folder as the policy
+	configBytes, err := os.ReadFile(strings.TrimSuffix(p, policyFilename) + dataConfigFilename)
+	if err != nil && !strings.Contains(err.Error(), "no such file or directory") {
+		return nil, err
+	}
+	dataConfig := string(configBytes)
+
+	// if both data.json and data-config.json files exist, log a warning message
+	if len(dataBytes) > 0 && len(configBytes) > 0 {
+		fmt.Printf("Policy data will be overwritten by a data configuration execution for policy '%s', group '%s' and version '%s'\n", name, group, version)
+	}
 
 	return &Policy{
-		Filename: dbFilename,
-		Name:     name,
-		Group:    group,
-		Version:  version,
-		Rego:     regoSrc,
-		Data:     data,
-		Locked:   false,
+		Filename:   dbFilename,
+		Name:       name,
+		Group:      group,
+		Version:    version,
+		Rego:       regoSrc,
+		Data:       data,
+		DataConfig: dataConfig,
+		Locked:     false,
 	}, nil
 }
 
@@ -275,11 +290,13 @@ func upsert(ctx context.Context, policies []*Policy, db *mongo.Collection) error
 		})
 		op.SetUpdate(bson.M{
 			"$set": bson.M{
-				"filename":   policy.Filename,
-				"locked":     policy.Locked,
-				"rego":       policy.Rego,
-				"data":       policy.Data,
-				"lastUpdate": time.Now(),
+				"filename":            policy.Filename,
+				"locked":              policy.Locked,
+				"rego":                policy.Rego,
+				"data":                policy.Data,
+				"dataConfig":          policy.DataConfig,
+				"lastUpdate":          time.Now(),
+				"nextConfigExecution": nextConfigExecution(policy),
 			},
 		})
 		op.SetUpsert(true)
@@ -294,9 +311,18 @@ func upsert(ctx context.Context, policies []*Policy, db *mongo.Collection) error
 	return nil
 }
 
+func nextConfigExecution(p *Policy) time.Time {
+	if p.DataConfig != "" {
+		return time.Now()
+	}
+
+	return time.Time{}
+}
+
 func (p1 *Policy) equals(p2 *Policy) bool {
 	if p1.Rego == p2.Rego &&
 		p1.Data == p2.Data &&
+		p1.DataConfig == p2.DataConfig &&
 		p1.Name == p2.Name &&
 		p1.Version == p2.Version &&
 		p1.Filename == p2.Filename &&
