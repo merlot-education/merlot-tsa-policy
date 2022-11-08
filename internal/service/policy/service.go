@@ -232,11 +232,9 @@ func (s *Service) prepareQuery(ctx context.Context, group, policyName, version s
 		return nil, errors.New("error building rego runtime functions", err)
 	}
 
-	// Append dynamically the get_header function on every request,
+	// Append dynamically the external.http.header function on every request,
 	// because it is populated with different headers each time.
-	if len(headers) > 0 {
-		regoArgs = append(regoArgs, rego.Function1(regofunc.GetHeaderFunc(headers)))
-	}
+	regoArgs = append(regoArgs, rego.Function1(regofunc.GetHeaderFunc(headers)))
 
 	newQuery, err := rego.New(
 		regoArgs...,
