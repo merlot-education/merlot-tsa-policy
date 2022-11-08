@@ -69,7 +69,7 @@ A number of Rego extension functions are developed and injected in the
 policy service Rego runtime. Here is a list with brief description for
 each one of them.
 
-#### get_header
+#### external.http.header
 
 The function retrieves an HTTP header value taken from the incoming request 
 during the current policy evaluation. The header name is in Canonical format
@@ -80,7 +80,7 @@ as follows:
 ```
 package example.example
 
-auth := get_header("Authorization")
+auth := external.http.header("Authorization")
 ```
 
 #### cache.get

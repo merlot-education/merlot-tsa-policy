@@ -10,7 +10,7 @@ import (
 
 func GetHeaderFunc(headers map[string]string) (*rego.Function, rego.Builtin1) {
 	return &rego.Function{
-			Name:    "get_header",
+			Name:    "external.http.header",
 			Decl:    types.NewFunction(types.Args(types.S), types.S),
 			Memoize: true,
 		},

@@ -172,14 +172,14 @@ endpoints for working with arbitrary dynamically uploaded policies.
 ### Access HTTP Headers inside a policy
 
 HTTP request headers are passed to the evaluation runtime on each request. They can be
-accessed through a built-in extension function named `get_header()`. It accepts as argument
+accessed through a built-in extension function named `external.http.header()`. It accepts as argument
 the name of the header in [Canonical](https://golangbyexample.com/canonical-http-header-key/) 
 format. For example, inside Rego the value of a header named `Authorization` can be retrieved
 as follows:
 ```
 package example.example
 
-auth := get_header("Authorization")
+auth := external.http.header("Authorization")
 ```
 
 >Header names are passed to the Rego runtime in Canonical format. This means that the 
@@ -195,10 +195,10 @@ x-loCATion: Baz
 ```
 Inside a policy these headers could be accessed as follows:
 ```
-accept_encoding := get_header("Accept-Encoding")
-accept_language := get_header("Accept-Language")
-foo := get_header("Foo")
-location := get_header("X-Location")
+accept_encoding := external.http.header("Accept-Encoding")
+accept_language := external.http.header("Accept-Language")
+foo := external.http.header("Foo")
+location := external.http.header("X-Location")
 ```
 
 ### Policy Extensions Functions

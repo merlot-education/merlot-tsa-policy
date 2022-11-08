@@ -43,7 +43,7 @@ func TestService_Evaluate(t *testing.T) {
 	testPolicyWithStaticData := `package testgroup.example default allow = false allow { data.msg == "hello world" }`
 
 	// prepare test policy accessing headers during evaluation
-	testPolicyAccessingHeaders := `package testgroup.example token := get_header("Authorization")`
+	testPolicyAccessingHeaders := `package testgroup.example token := external.http.header("Authorization")`
 
 	// prepare test request to be used in tests
 	testReq := func() *goapolicy.EvaluateRequest {
