@@ -58,6 +58,19 @@ func main() {
 
 	logger.Info("policy service started", zap.String("version", Version), zap.String("goa", goa.Version()))
 
+	httpClient := httpClient()
+
+	// Create an HTTP Client which automatically issues and carries an OAuth2 token.
+	// The token will auto-refresh when its expiration is near.
+	oauthCtx := context.WithValue(context.Background(), oauth2.HTTPClient, httpClient)
+	oauthClient := newOAuth2Client(oauthCtx, cfg.OAuth.ClientID, cfg.OAuth.ClientSecret, cfg.OAuth.TokenURL)
+
+	// create cache client
+	cache := cache.New(cfg.Cache.Addr, cache.WithHTTPClient(oauthClient))
+
+	// create rego policy cache
+	regocache := regocache.New()
+
 	// connect to mongo db
 	db, err := mongo.Connect(
 		context.Background(),
@@ -71,21 +84,14 @@ func main() {
 	}
 	defer db.Disconnect(context.Background()) //nolint:errcheck
 
-	httpClient := httpClient()
-
-	// Create an HTTP Client which uses an authentication token.
-	// The token will auto-refresh as necessary.
-	oauthCtx := context.WithValue(context.Background(), oauth2.HTTPClient, httpClient)
-	oauthClient := newOAuth2Client(oauthCtx, cfg.OAuth.ClientID, cfg.OAuth.ClientSecret, cfg.OAuth.TokenURL)
-
 	// create storage
 	storage, err := storage.New(db, cfg.Mongo.DB, cfg.Mongo.Collection, logger)
 	if err != nil {
 		logger.Fatal("error connecting to database", zap.Error(err))
 	}
 
-	// create rego query cache
-	regocache := regocache.New()
+	// subscribe the cache for policy data changes
+	storage.AddPolicyChangeSubscriber(regocache)
 
 	// register rego extension functions
 	{
@@ -110,12 +116,6 @@ func main() {
 		regofunc.Register("didToURL", rego.Function1(didWebFuncs.DIDToURLFunc()))
 		regofunc.Register("urlToDID", rego.Function1(didWebFuncs.URLToDIDFunc()))
 	}
-
-	// subscribe the cache for policy data changes
-	storage.AddPolicyChangeSubscriber(regocache)
-
-	// create cache client
-	cache := cache.New(cfg.Cache.Addr, cache.WithHTTPClient(oauthClient))
 
 	// create services
 	var (

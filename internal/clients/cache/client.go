@@ -31,6 +31,10 @@ func New(addr string, opts ...Option) *Client {
 }
 
 func (c *Client) Set(ctx context.Context, key, namespace, scope string, value []byte, ttl int) error {
+	if c.addr == "" {
+		return errors.New(errors.ServiceUnavailable, "trying to use cache service, but address is not set")
+	}
+
 	req, err := http.NewRequestWithContext(ctx, "POST", c.addr+"/v1/cache", bytes.NewReader(value))
 	if err != nil {
 		return err
@@ -60,6 +64,10 @@ func (c *Client) Set(ctx context.Context, key, namespace, scope string, value []
 }
 
 func (c *Client) Get(ctx context.Context, key, namespace, scope string) ([]byte, error) {
+	if c.addr == "" {
+		return nil, errors.New(errors.ServiceUnavailable, "trying to use cache service, but address is not set")
+	}
+
 	req, err := http.NewRequestWithContext(ctx, "GET", c.addr+"/v1/cache", nil)
 	req.Header = http.Header{
 		"x-cache-key":       []string{key},

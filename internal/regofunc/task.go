@@ -32,6 +32,10 @@ func (t *TaskFuncs) CreateTaskFunc() (*rego.Function, rego.Builtin2) {
 			Memoize: true,
 		},
 		func(bctx rego.BuiltinContext, taskName, taskData *ast.Term) (*ast.Term, error) {
+			if t.taskAddr == "" {
+				return nil, fmt.Errorf("trying to use task.create Rego function, but task address is not set")
+			}
+
 			var name string
 			var data map[string]interface{}
 
@@ -84,6 +88,10 @@ func (t *TaskFuncs) CreateTaskListFunc() (*rego.Function, rego.Builtin2) {
 			Memoize: true,
 		},
 		func(bctx rego.BuiltinContext, taskListName, taskListData *ast.Term) (*ast.Term, error) {
+			if t.taskAddr == "" {
+				return nil, fmt.Errorf("trying to use tasklist.create Rego function, but task address is not set")
+			}
+
 			var name string
 			var data map[string]interface{}
 
