@@ -25,19 +25,19 @@ type httpConfig struct {
 }
 
 type cacheConfig struct {
-	Addr string `envconfig:"CACHE_ADDR" required:"true"`
+	Addr string `envconfig:"CACHE_ADDR"`
 }
 
 type taskConfig struct {
-	Addr string `envconfig:"TASK_ADDR" required:"true"`
+	Addr string `envconfig:"TASK_ADDR"`
 }
 
 type signerConfig struct {
-	Addr string `envconfig:"SIGNER_ADDR" required:"true"`
+	Addr string `envconfig:"SIGNER_ADDR"`
 }
 
 type didResolverConfig struct {
-	Addr string `envconfig:"DID_RESOLVER_ADDR" required:"true"`
+	Addr string `envconfig:"DID_RESOLVER_ADDR"`
 }
 
 type mongoConfig struct {

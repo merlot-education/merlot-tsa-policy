@@ -12,13 +12,14 @@ import (
 )
 
 type OcmFuncs struct {
+	addr   string
 	client *ocm.Client
 }
 
 func NewOcmFuncs(ocmAddr string, httpClient *http.Client) *OcmFuncs {
 	ocmClient := ocm.New(ocmAddr, ocm.WithHTTPClient(httpClient))
 
-	return &OcmFuncs{client: ocmClient}
+	return &OcmFuncs{addr: ocmAddr, client: ocmClient}
 }
 
 func (of *OcmFuncs) GetLoginProofInvitation() (*rego.Function, rego.Builtin2) {
@@ -28,6 +29,10 @@ func (of *OcmFuncs) GetLoginProofInvitation() (*rego.Function, rego.Builtin2) {
 			Memoize: true,
 		},
 		func(bctx rego.BuiltinContext, rScopes *ast.Term, scopesMap *ast.Term) (*ast.Term, error) {
+			if of.addr == "" {
+				return nil, fmt.Errorf("trying to use ocm.getLoginProofInvitation Rego function, but ocm address is not set")
+			}
+
 			var scopes []string
 			var scopeToType map[string]string
 
@@ -83,6 +88,10 @@ func (of *OcmFuncs) GetLoginProofResult() (*rego.Function, rego.Builtin1) {
 			Memoize: true,
 		},
 		func(bctx rego.BuiltinContext, id *ast.Term) (*ast.Term, error) {
+			if of.addr == "" {
+				return nil, fmt.Errorf("trying to use ocm.getLoginProofResult Rego function, but ocm address is not set")
+			}
+
 			var presentationID string
 
 			if err := ast.As(id.Value, &presentationID); err != nil {

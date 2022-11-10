@@ -30,6 +30,10 @@ func (cf *CacheFuncs) CacheGetFunc() (*rego.Function, rego.Builtin3) {
 			Memoize: true,
 		},
 		func(bctx rego.BuiltinContext, a, b, c *ast.Term) (*ast.Term, error) {
+			if cf.cacheAddr == "" {
+				return nil, fmt.Errorf("trying to use cache.get Rego function, but cache address is not set")
+			}
+
 			var key, namespace, scope string
 
 			if err := ast.As(a.Value, &key); err != nil {
@@ -76,6 +80,10 @@ func (cf *CacheFuncs) CacheSetFunc() (*rego.Function, rego.Builtin4) {
 			Memoize: true,
 		},
 		func(bctx rego.BuiltinContext, k, n, s, d *ast.Term) (*ast.Term, error) {
+			if cf.cacheAddr == "" {
+				return nil, fmt.Errorf("trying to use cache.set Rego function, but cache address is not set")
+			}
+
 			var key, namespace, scope string
 			var data map[string]interface{}
 

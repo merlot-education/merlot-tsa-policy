@@ -21,11 +21,8 @@ import (
 //go:generate counterfeiter . Storage
 //go:generate counterfeiter . RegoCache
 
-const HeaderKey = "headers"
-
 type Cache interface {
 	Set(ctx context.Context, key, namespace, scope string, value []byte, ttl int) error
-	Get(ctx context.Context, key, namespace, scope string) ([]byte, error)
 }
 
 type Storage interface {
@@ -124,9 +121,14 @@ func (s *Service) Evaluate(ctx context.Context, req *policy.EvaluateRequest) (*p
 	if req.TTL != nil {
 		ttl = *req.TTL
 	}
-	if err := s.cache.Set(ctx, evaluationID, "", "", jsonValue, ttl); err != nil {
-		logger.Error("error storing policy result in cache", zap.Error(err))
-		return nil, errors.New("error storing policy result in cache")
+
+	err = s.cache.Set(ctx, evaluationID, "", "", jsonValue, ttl)
+	if err != nil {
+		// if the cache service is not available, don't stop but continue with returning the result
+		if !errors.Is(errors.ServiceUnavailable, err) {
+			logger.Error("error storing policy result in cache", zap.Error(err))
+			return nil, errors.New("error storing policy result in cache")
+		}
 	}
 
 	return &policy.EvaluateResult{

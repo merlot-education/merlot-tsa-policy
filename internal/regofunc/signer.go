@@ -39,6 +39,10 @@ func (sf *SignerFuncs) VerificationMethodFunc() (*rego.Function, rego.Builtin3) 
 			Memoize: true,
 		},
 		func(bctx rego.BuiltinContext, aDID, aNamespace, aKey *ast.Term) (*ast.Term, error) {
+			if sf.signerAddr == "" {
+				return nil, fmt.Errorf("trying to use verification_method Rego function, but signer address is not set")
+			}
+
 			var did, namespace, key string
 			if err := ast.As(aDID.Value, &did); err != nil {
 				return nil, fmt.Errorf("invalid did: %s", err)
@@ -95,6 +99,10 @@ func (sf *SignerFuncs) VerificationMethodsFunc() (*rego.Function, rego.Builtin2)
 			Memoize: true,
 		},
 		func(bctx rego.BuiltinContext, aDID, aNamespace *ast.Term) (*ast.Term, error) {
+			if sf.signerAddr == "" {
+				return nil, fmt.Errorf("trying to use verification_methods Rego function, but signer address is not set")
+			}
+
 			var did, namespace string
 			if err := ast.As(aDID.Value, &did); err != nil {
 				return nil, fmt.Errorf("invalid did: %s", err)
@@ -151,6 +159,10 @@ func (sf *SignerFuncs) AddVCProofFunc() (*rego.Function, rego.Builtin3) {
 			Memoize: true,
 		},
 		func(bctx rego.BuiltinContext, aNamespace, aKey, credential *ast.Term) (*ast.Term, error) {
+			if sf.signerAddr == "" {
+				return nil, fmt.Errorf("trying to use add_vc_proof Rego function, but signer address is not set")
+			}
+
 			var namespace, key string
 			if err := ast.As(aNamespace.Value, &namespace); err != nil {
 				return nil, fmt.Errorf("invalid key namespace: %s", err)
@@ -233,6 +245,10 @@ func (sf *SignerFuncs) AddVPProofFunc() (*rego.Function, rego.Builtin4) {
 			Memoize: true,
 		},
 		func(bctx rego.BuiltinContext, aDID, aNamespace, aKey, presentation *ast.Term) (*ast.Term, error) {
+			if sf.signerAddr == "" {
+				return nil, fmt.Errorf("trying to use add_vp_proof Rego function, but signer address is not set")
+			}
+
 			var did, namespace, key string
 			if err := ast.As(aDID.Value, &did); err != nil {
 				return nil, fmt.Errorf("invalid did: %s", err)
@@ -314,6 +330,10 @@ func (sf *SignerFuncs) VerifyProofFunc() (*rego.Function, rego.Builtin1) {
 			Memoize: true,
 		},
 		func(bctx rego.BuiltinContext, credential *ast.Term) (*ast.Term, error) {
+			if sf.signerAddr == "" {
+				return nil, fmt.Errorf("trying to use proof.verify Rego function, but signer address is not set")
+			}
+
 			// cred represents verifiable credential or presentation
 			var cred map[string]interface{}
 			if err := ast.As(credential.Value, &cred); err != nil {
