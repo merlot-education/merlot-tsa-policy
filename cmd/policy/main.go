@@ -22,6 +22,7 @@ import (
 	"golang.org/x/oauth2/clientcredentials"
 	"golang.org/x/sync/errgroup"
 
+	"gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/golib/auth"
 	"gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/golib/graceful"
 	goahealth "gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/policy/gen/health"
 	goahealthsrv "gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/policy/gen/http/health/server"
@@ -178,6 +179,15 @@ func main() {
 
 	// Apply middlewares on the servers
 	policyServer.Evaluate = header.Middleware()(policyServer.Evaluate)
+
+	// Apply Authentication middleware if enabled
+	if cfg.Auth.Enabled {
+		m, err := auth.NewMiddleware(cfg.Auth.JwkURL, cfg.Auth.RefreshInterval, httpClient)
+		if err != nil {
+			logger.Fatal("failed to create authentication middleware", zap.Error(err))
+		}
+		policyServer.Use(m.Handler())
+	}
 
 	// Configure the mux.
 	goapolicysrv.Mount(mux, policyServer)

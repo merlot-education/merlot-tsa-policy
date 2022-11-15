@@ -13,6 +13,7 @@ type Config struct {
 	OCM         ocmConfig
 	OAuth       oauthConfig
 	Refresher   refresherConfig
+	Auth        authConfig
 
 	LogLevel string `envconfig:"LOG_LEVEL" default:"INFO"`
 }
@@ -65,4 +66,10 @@ type oauthConfig struct {
 
 type refresherConfig struct {
 	PollInterval time.Duration `envconfig:"REFRESHER_POLL_INTERVAL" default:"10s"`
+}
+
+type authConfig struct {
+	Enabled         bool          `envconfig:"AUTH_ENABLED" default:"true"`
+	JwkURL          string        `envconfig:"AUTH_JWK_URL"`
+	RefreshInterval time.Duration `envconfig:"AUTH_REFRESH_INTERVAL" default:"1h"`
 }
