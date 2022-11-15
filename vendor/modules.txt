@@ -13,6 +13,9 @@ github.com/cespare/xxhash/v2
 # github.com/davecgh/go-spew v1.1.1
 ## explicit
 github.com/davecgh/go-spew/spew
+# github.com/decred/dcrd/dcrec/secp256k1/v4 v4.1.0
+## explicit; go 1.17
+github.com/decred/dcrd/dcrec/secp256k1/v4
 # github.com/dimfeld/httppath v0.0.0-20170720192232-ee938bf73598
 ## explicit
 github.com/dimfeld/httppath
@@ -32,6 +35,17 @@ github.com/gobwas/glob/syntax/ast
 github.com/gobwas/glob/syntax/lexer
 github.com/gobwas/glob/util/runes
 github.com/gobwas/glob/util/strings
+# github.com/goccy/go-json v0.9.11
+## explicit; go 1.12
+github.com/goccy/go-json
+github.com/goccy/go-json/internal/decoder
+github.com/goccy/go-json/internal/encoder
+github.com/goccy/go-json/internal/encoder/vm
+github.com/goccy/go-json/internal/encoder/vm_color
+github.com/goccy/go-json/internal/encoder/vm_color_indent
+github.com/goccy/go-json/internal/encoder/vm_indent
+github.com/goccy/go-json/internal/errors
+github.com/goccy/go-json/internal/runtime
 # github.com/golang/protobuf v1.5.2
 ## explicit; go 1.9
 github.com/golang/protobuf/proto
@@ -66,6 +80,45 @@ github.com/klauspost/compress/huff0
 github.com/klauspost/compress/internal/snapref
 github.com/klauspost/compress/zstd
 github.com/klauspost/compress/zstd/internal/xxhash
+# github.com/lestrrat-go/blackmagic v1.0.1
+## explicit; go 1.16
+github.com/lestrrat-go/blackmagic
+# github.com/lestrrat-go/httpcc v1.0.1
+## explicit; go 1.16
+github.com/lestrrat-go/httpcc
+# github.com/lestrrat-go/httprc v1.0.4
+## explicit; go 1.17
+github.com/lestrrat-go/httprc
+# github.com/lestrrat-go/iter v1.0.2
+## explicit; go 1.13
+github.com/lestrrat-go/iter/arrayiter
+github.com/lestrrat-go/iter/mapiter
+# github.com/lestrrat-go/jwx/v2 v2.0.6
+## explicit; go 1.16
+github.com/lestrrat-go/jwx/v2
+github.com/lestrrat-go/jwx/v2/cert
+github.com/lestrrat-go/jwx/v2/internal/base64
+github.com/lestrrat-go/jwx/v2/internal/ecutil
+github.com/lestrrat-go/jwx/v2/internal/iter
+github.com/lestrrat-go/jwx/v2/internal/json
+github.com/lestrrat-go/jwx/v2/internal/keyconv
+github.com/lestrrat-go/jwx/v2/internal/pool
+github.com/lestrrat-go/jwx/v2/jwa
+github.com/lestrrat-go/jwx/v2/jwe
+github.com/lestrrat-go/jwx/v2/jwe/internal/aescbc
+github.com/lestrrat-go/jwx/v2/jwe/internal/cipher
+github.com/lestrrat-go/jwx/v2/jwe/internal/concatkdf
+github.com/lestrrat-go/jwx/v2/jwe/internal/content_crypt
+github.com/lestrrat-go/jwx/v2/jwe/internal/keyenc
+github.com/lestrrat-go/jwx/v2/jwe/internal/keygen
+github.com/lestrrat-go/jwx/v2/jwk
+github.com/lestrrat-go/jwx/v2/jws
+github.com/lestrrat-go/jwx/v2/jwt
+github.com/lestrrat-go/jwx/v2/jwt/internal/types
+github.com/lestrrat-go/jwx/v2/x25519
+# github.com/lestrrat-go/option v1.0.0
+## explicit; go 1.16
+github.com/lestrrat-go/option
 # github.com/manveru/faker v0.0.0-20171103152722-9fbc68a78c4d
 ## explicit
 github.com/manveru/faker
@@ -211,6 +264,7 @@ github.com/youmark/pkcs8
 github.com/zach-klippenstein/goregen
 # gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/golib v1.1.1
 ## explicit; go 1.19
+gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/golib/auth
 gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/golib/errors
 gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/golib/graceful
 gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/golib/ocm
@@ -277,6 +331,9 @@ goa.design/goa/v3/http
 goa.design/goa/v3/pkg
 # golang.org/x/crypto v0.0.0-20220622213112-05595931fe9d
 ## explicit; go 1.17
+golang.org/x/crypto/curve25519
+golang.org/x/crypto/curve25519/internal/field
+golang.org/x/crypto/ed25519
 golang.org/x/crypto/ocsp
 golang.org/x/crypto/pbkdf2
 # golang.org/x/mod v0.6.0-dev.0.20220419223038-86c51ed26bb4
