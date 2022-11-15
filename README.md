@@ -125,7 +125,13 @@ the `group`, `policy name` and `version` are directories inside the Git repo and
 2. In the same directory there could be a data file containing static JSON, which is automatically 
 available for use during policy evaluation by using the `data` variable. The file *must* be named `data.json`. 
 Example: `/gaiax/example/1.0/data.json`
-3. The policy package name inside the policy source code file *must* exactly match
+3. In the same directory there could be a configuration file containing information for getting static JSON
+data from external URL. The file *must* be named `data-config.json`.
+Example: `/gaiax/example/1.0/data-config.json`
+> Note that there should only be one of the two files `data.json` or `data-config.json` in the same directory.
+> If both files exist in the same directory tha data from the `data.json` file will be eventually overwritten by the data
+> acquired using the configuration from the `data-config.json` file.
+4. The policy package name inside the policy source code file *must* exactly match
 the `group` and `policy` (name) of the policy.
 
 *What does it mean?*
@@ -164,7 +170,26 @@ Example: If the `/gaiax/example/1.0/data.json` file is:
 ```
 one could access the data using `data.name` within the Rego source code.
 
-The 3rd rule for package naming is needed so that a generic evaluation function
+The 3rd rule for configuration file is to provide configurations for getting static JSON data from external URL.
+The file must contain a URL, an HTTP method and a period, after which an HTTP request is made to get the latest data.
+> The period must be added as duration e.g. `10h`, `1h30m` etc.
+
+The file MAY contain body for the request.
+Example file contents:
+```json
+{
+  "url": "http://example.com/data.json?page=3",
+  "method": "GET",
+  "period": "10h",
+  "body": {
+    "key": "value"
+  }
+}
+```
+This means that every 10 hours an HTTP request is going to be made on the given URL, with `GET` method and the result is going
+to be stored as static data for this policy and passed during evaluation.
+
+The 4th rule for package naming is needed so that a generic evaluation function
 can be mapped and used for evaluating all kinds of different policies. Without a 
 package naming rule, there's no way the service can automatically generate HTTP 
 endpoints for working with arbitrary dynamically uploaded policies.

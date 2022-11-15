@@ -37,6 +37,7 @@ import (
 	"gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/policy/internal/service"
 	"gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/policy/internal/service/health"
 	"gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/policy/internal/service/policy"
+	"gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/policy/internal/service/policy/policydata"
 	"gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/policy/internal/storage"
 )
 
@@ -92,6 +93,14 @@ func main() {
 
 	// subscribe the cache for policy data changes
 	storage.AddPolicyChangeSubscriber(regocache)
+
+	// create policy data refresher
+	dataRefresher := policydata.NewRefresher(
+		storage,
+		cfg.Refresher.PollInterval,
+		httpClient,
+		logger,
+	)
 
 	// register rego extension functions
 	{
@@ -202,6 +211,9 @@ func main() {
 			return err
 		}
 		return nil
+	})
+	g.Go(func() error {
+		return dataRefresher.Start(ctx)
 	})
 	if err := g.Wait(); err != nil {
 		logger.Error("run group stopped", zap.Error(err))

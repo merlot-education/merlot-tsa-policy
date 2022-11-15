@@ -6,10 +6,17 @@ import (
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	zap "go.uber.org/zap"
 
 	"gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/golib/errors"
+)
+
+const (
+	dataField                = "data"
+	nextDataRefreshTimeField = "nextDataRefreshTime"
+	refreshPostponePeriod    = 5 * time.Minute
 )
 
 type PolicyChangeSubscriber interface {
@@ -17,17 +24,21 @@ type PolicyChangeSubscriber interface {
 }
 
 type Policy struct {
-	Filename   string
-	Name       string
-	Group      string
-	Version    string
-	Rego       string
-	Data       string
-	Locked     bool
-	LastUpdate time.Time
+	ID                  primitive.ObjectID `bson:"_id"`
+	Filename            string
+	Name                string
+	Group               string
+	Version             string
+	Rego                string
+	Data                string
+	DataConfig          string
+	Locked              bool
+	LastUpdate          time.Time
+	NextDataRefreshTime time.Time
 }
 
 type Storage struct {
+	db         *mongo.Client
 	policy     *mongo.Collection
 	subscriber PolicyChangeSubscriber
 	logger     *zap.Logger
@@ -39,6 +50,7 @@ func New(db *mongo.Client, dbname, collection string, logger *zap.Logger) (*Stor
 	}
 
 	return &Storage{
+		db:     db,
 		policy: db.Database(dbname).Collection(collection),
 		logger: logger,
 	}, nil
@@ -108,4 +120,85 @@ func (s *Storage) ListenPolicyDataChanges(ctx context.Context) error {
 
 func (s *Storage) AddPolicyChangeSubscriber(subscriber PolicyChangeSubscriber) {
 	s.subscriber = subscriber
+}
+
+func (s *Storage) GetRefreshPolicies(ctx context.Context) ([]*Policy, error) {
+	// create a callback for the mongodb transaction
+	callback := func(mCtx mongo.SessionContext) (interface{}, error) {
+		filter := bson.M{nextDataRefreshTimeField: bson.M{
+			"$gt":  time.Time{}, // greater than the Go's zero date
+			"$lte": time.Now(),
+		}}
+
+		cursor, err := s.policy.Find(ctx, filter)
+		if err != nil {
+			return nil, err
+		}
+
+		var policies []*Policy
+		if err := cursor.All(ctx, &policies); err != nil {
+			return nil, err
+		}
+		if len(policies) == 0 {
+			return nil, errors.New(errors.NotFound, "policies for data refresh not found")
+		}
+
+		err = s.PostponeRefresh(ctx, policies)
+		if err != nil {
+			return nil, err
+		}
+
+		return policies, nil
+	}
+
+	// execute transaction
+	res, err := s.Transaction(ctx, callback)
+	if err != nil {
+		return nil, err
+	}
+	policies, _ := res.([]*Policy)
+
+	return policies, nil
+}
+
+// PostponeRefresh adds a refreshPostponePeriod Duration to each policy's
+// nextDataRefreshTimeField in order to prevent concurrent data refresh
+func (s *Storage) PostponeRefresh(ctx context.Context, policies []*Policy) error {
+	var ids []*primitive.ObjectID
+	for _, p := range policies {
+		ids = append(ids, &p.ID)
+	}
+
+	filter := bson.M{"_id": bson.M{"$in": ids}}
+	update := bson.M{"$set": bson.M{nextDataRefreshTimeField: time.Now().Add(refreshPostponePeriod)}}
+	_, err := s.policy.UpdateMany(ctx, filter, update)
+
+	return err
+}
+
+// UpdateNextRefreshTime updates policy's data and nextDataRefreshTimeField fields
+func (s *Storage) UpdateNextRefreshTime(ctx context.Context, p *Policy, nextDataRefreshTime time.Time) error {
+	filter := bson.M{"_id": p.ID}
+	update := bson.M{"$set": bson.M{
+		nextDataRefreshTimeField: nextDataRefreshTime,
+		dataField:                p.Data,
+	}}
+	_, err := s.policy.UpdateOne(ctx, filter, update)
+
+	return err
+}
+
+func (s *Storage) Transaction(ctx context.Context, callback func(mCtx mongo.SessionContext) (interface{}, error)) (interface{}, error) {
+	session, err := s.db.StartSession()
+	if err != nil {
+		return nil, errors.New("failed creating session", err)
+	}
+	defer session.EndSession(ctx)
+
+	res, err := session.WithTransaction(ctx, callback)
+	if err != nil {
+		return nil, errors.New("failed executing transaction", err)
+	}
+
+	return res, nil
 }
