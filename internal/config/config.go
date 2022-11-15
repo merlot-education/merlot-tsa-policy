@@ -12,6 +12,7 @@ type Config struct {
 	Metrics     metricsConfig
 	OCM         ocmConfig
 	OAuth       oauthConfig
+	Refresher   refresherConfig
 
 	LogLevel string `envconfig:"LOG_LEVEL" default:"INFO"`
 }
@@ -60,4 +61,8 @@ type oauthConfig struct {
 	ClientID     string `envconfig:"OAUTH_CLIENT_ID" required:"true"`
 	ClientSecret string `envconfig:"OAUTH_CLIENT_SECRET" required:"true"`
 	TokenURL     string `envconfig:"OAUTH_TOKEN_URL" required:"true"`
+}
+
+type refresherConfig struct {
+	PollInterval time.Duration `envconfig:"REFRESHER_POLL_INTERVAL" default:"10s"`
 }

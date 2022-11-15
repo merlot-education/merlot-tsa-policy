@@ -296,7 +296,7 @@ func upsert(ctx context.Context, policies []*Policy, db *mongo.Collection) error
 				"data":                policy.Data,
 				"dataConfig":          policy.DataConfig,
 				"lastUpdate":          time.Now(),
-				"nextConfigExecution": nextConfigExecution(policy),
+				"nextDataRefreshTime": nextDataRefreshTime(policy),
 			},
 		})
 		op.SetUpsert(true)
@@ -311,7 +311,7 @@ func upsert(ctx context.Context, policies []*Policy, db *mongo.Collection) error
 	return nil
 }
 
-func nextConfigExecution(p *Policy) time.Time {
+func nextDataRefreshTime(p *Policy) time.Time {
 	if p.DataConfig != "" {
 		return time.Now()
 	}
