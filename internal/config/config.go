@@ -59,9 +59,9 @@ type ocmConfig struct {
 }
 
 type oauthConfig struct {
-	ClientID     string `envconfig:"OAUTH_CLIENT_ID" required:"true"`
-	ClientSecret string `envconfig:"OAUTH_CLIENT_SECRET" required:"true"`
-	TokenURL     string `envconfig:"OAUTH_TOKEN_URL" required:"true"`
+	ClientID     string `envconfig:"OAUTH_CLIENT_ID"`
+	ClientSecret string `envconfig:"OAUTH_CLIENT_SECRET"`
+	TokenURL     string `envconfig:"OAUTH_TOKEN_URL"`
 }
 
 type refresherConfig struct {
@@ -69,7 +69,7 @@ type refresherConfig struct {
 }
 
 type authConfig struct {
-	Enabled         bool          `envconfig:"AUTH_ENABLED" default:"true"`
+	Enabled         bool          `envconfig:"AUTH_ENABLED" default:"false"`
 	JwkURL          string        `envconfig:"AUTH_JWK_URL"`
 	RefreshInterval time.Duration `envconfig:"AUTH_REFRESH_INTERVAL" default:"1h"`
 }
