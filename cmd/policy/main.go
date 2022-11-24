@@ -62,10 +62,13 @@ func main() {
 
 	httpClient := httpClient()
 
-	// Create an HTTP Client which automatically issues and carries an OAuth2 token.
-	// The token will auto-refresh when its expiration is near.
-	oauthCtx := context.WithValue(context.Background(), oauth2.HTTPClient, httpClient)
-	oauthClient := newOAuth2Client(oauthCtx, cfg.OAuth.ClientID, cfg.OAuth.ClientSecret, cfg.OAuth.TokenURL)
+	oauthClient := httpClient
+	if cfg.Auth.Enabled {
+		// Create an HTTP Client which automatically issues and carries an OAuth2 token.
+		// The token will auto-refresh when its expiration is near.
+		oauthCtx := context.WithValue(context.Background(), oauth2.HTTPClient, httpClient)
+		oauthClient = newOAuth2Client(oauthCtx, cfg.OAuth.ClientID, cfg.OAuth.ClientSecret, cfg.OAuth.TokenURL)
+	}
 
 	// create cache client
 	cache := cache.New(cfg.Cache.Addr, cache.WithHTTPClient(oauthClient))
