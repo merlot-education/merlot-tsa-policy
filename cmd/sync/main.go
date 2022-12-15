@@ -4,8 +4,6 @@ package main
 
 import (
 	"context"
-	"errors"
-	"flag"
 	"fmt"
 	"log"
 	"os"
@@ -22,11 +20,12 @@ import (
 )
 
 const (
-	repoFolder         = "policies"
+	pathSeperator      = string(os.PathSeparator)
+	cloneFolder        = "temp"
+	defaultRepoFolder  = "policies"
 	policyFilename     = "policy.rego"
 	dataFilename       = "data.json"
 	dataConfigFilename = "data-config.json"
-	policyDatabase     = "policy"
 	policyCollection   = "policies"
 )
 
@@ -37,103 +36,121 @@ type Policy struct {
 	Version    string
 	Rego       string
 	Locked     bool
-	Data       interface{}
-	DataConfig interface{}
+	Data       string
+	DataConfig string
 	LastUpdate time.Time
 }
 
 func main() {
-	var repoURL, repoUser, repoPass, branch, dbAddr, dbUser, dbPass string
-
-	flag.StringVar(&repoURL, "repoURL", "", "Policy repository URL.")
-	flag.StringVar(&repoUser, "repoUser", "", "GIT Server username.")
-	flag.StringVar(&repoPass, "repoPass", "", "GIT Server password.")
-	flag.StringVar(&dbAddr, "dbAddr", "", "Mongo DB connection string.")
-	flag.StringVar(&dbUser, "dbUser", "", "Mongo DB username")
-	flag.StringVar(&dbPass, "dbPass", "", "Mongo DB password")
-	flag.StringVar(&branch, "branch", "", "GIT branch for explicit checkout. This flag is optional.")
-	flag.Parse()
-
-	// validate the number of passed command-line flags
-	err := validateFlags("repoURL", "repoUser", "repoPass", "dbAddr", "dbUser", "dbPass")
+	cfg, err := loadConfig()
 	if err != nil {
-		log.Fatalf(" Error: %s", err)
+		log.Fatalln("failed to setup the sync: ", err)
 	}
 
-	log.Println("Started updating policies...")
+	log.Println("start updating policies...")
 
-	// delete policy repository local folder in case the script failed last time it was executed
-	err = os.RemoveAll(repoFolder)
-	if err != nil {
-		log.Fatalf(" Error: %s", err)
+	mongoOpts := options.Client().ApplyURI(cfg.DB.Addr)
+	if cfg.DB.User != "" && cfg.DB.Pass != "" {
+		mongoOpts.SetAuth(options.Credential{
+			Username: cfg.DB.User,
+			Password: cfg.DB.Pass,
+		})
 	}
 
 	// connect to mongo db
-	db, err := mongo.Connect(
-		context.Background(),
-		options.Client().ApplyURI(dbAddr).SetAuth(options.Credential{
-			Username: dbUser,
-			Password: dbPass,
-		}),
-	)
+	db, err := mongo.Connect(context.Background(), mongoOpts)
 	if err != nil {
-		log.Fatalf(" Error: %s", err)
+		log.Fatalln("error connecting to database: ", err)
 	}
 	defer db.Disconnect(context.Background()) //nolint:errcheck
 
-	// clone policy repository
-	err = cloneRepo(context.Background(), repoURL, repoUser, repoPass, branch)
-	if err != nil {
-		log.Fatalf(" Error: %s", err)
-	}
-	log.Println("Repository successfully cloned.")
+	for {
+		if err := sync(cfg, db); err != nil {
+			log.Println(err)
+		}
 
-	// get all policies from the repository
-	policies, err := iterateRepo()
-	if err != nil {
-		log.Fatalf(" Error: %s", err)
+		if cfg.KeepAlive {
+			// TODO catch SIGTERM/INTERRUPT here instead of hanging the program
+
+			time.Sleep(cfg.SyncInterval)
+			continue
+		}
+
+		break // quit sync
 	}
-	log.Println("Policies are extracted successfully")
+}
+
+func sync(cfg *Config, db *mongo.Client) error {
+	// delete policy repository local folder in case the script failed last time it was executed
+	if err := os.RemoveAll(cloneFolder); err != nil {
+		return fmt.Errorf("failed to remove clone folder: %v", err)
+	}
+
+	// clone policy repository
+	if err := cloneRepo(context.Background(), cfg.Repo.URL, cfg.Repo.User, cfg.Repo.Pass, cfg.Repo.Branch); err != nil {
+		return fmt.Errorf("error cloning repo: %v", err)
+	}
+
+	log.Println("Repository is cloned successfully.")
+
+	// get all policies from the repository and the given directory
+	policies, err := iterateRepo(cfg.Repo.Folder)
+	if err != nil {
+		return fmt.Errorf("error iterating repo: %v", err)
+	}
+
+	log.Println("Policies are extracted successfully.")
 
 	// insert or update policies in Mongo DB
-	err = upsertPolicies(context.Background(), db, policies)
-	if err != nil {
-		log.Fatalf(" Error: %s", err)
+	if err := upsertPolicies(context.Background(), db, policies, cfg.DB.Name); err != nil {
+		return fmt.Errorf("error updating policies: %v", err)
 	}
 
 	// delete policy repository folder
-	err = os.RemoveAll(repoFolder)
-	if err != nil {
-		log.Fatalf(" Error: %s", err)
+	if err := os.RemoveAll(cfg.Repo.Folder); err != nil {
+		return fmt.Errorf("error deleting policy repo folder: %v", err)
 	}
 
 	log.Println("Policies are updated successfully.")
+
+	return nil
 }
 
 // cloneRepo clones the Policy repository to repoFolder
 func cloneRepo(ctx context.Context, url, user, pass, branch string) error {
 	log.Println("Cloning repository...")
+
 	opts := &git.CloneOptions{
-		Auth: &http.BasicAuth{
-			Username: user,
-			Password: pass,
-		},
 		URL:   url,
 		Depth: 1,
 	}
+
+	if user != "" && pass != "" {
+		opts.Auth = &http.BasicAuth{
+			Username: user,
+			Password: pass,
+		}
+	}
+
 	if branch != "" {
 		opts.ReferenceName = plumbing.NewBranchReferenceName(branch)
 		opts.SingleBranch = true
 	}
 
-	_, err := git.PlainCloneContext(ctx, repoFolder, false, opts)
+	_, err := git.PlainCloneContext(ctx, cloneFolder, false, opts)
 
 	return err
 }
 
 // iterateRepo iterates over the repoFolder and returns a map
 // of Policy structs
-func iterateRepo() (map[string]*Policy, error) {
+func iterateRepo(repoFolder string) (map[string]*Policy, error) {
+	if repoFolder == "" {
+		repoFolder = cloneFolder
+	} else {
+		repoFolder = filepath.Join(cloneFolder, repoFolder)
+	}
+
 	log.Println("Getting policies from the cloned repository...")
 
 	policies := make(map[string]*Policy)
@@ -142,7 +159,7 @@ func iterateRepo() (map[string]*Policy, error) {
 			return err
 		}
 		if !d.IsDir() && d.Name() == policyFilename {
-			policy, err := createPolicy(p, d)
+			policy, err := createPolicy(p)
 			if err != nil {
 				return err
 			}
@@ -155,10 +172,16 @@ func iterateRepo() (map[string]*Policy, error) {
 }
 
 // createPolicy instantiates a Policy struct out of a policy file on given path
-func createPolicy(p string, d os.DirEntry) (*Policy, error) {
+func createPolicy(p string) (*Policy, error) {
+	ex, err := os.Executable()
+	if err != nil {
+		return nil, fmt.Errorf("error getting executable path: %v", err)
+	}
+
+	exPath := filepath.Dir(ex)
 	// path to Rego policy must be {group}/{name}/{version}/policy.rego
 	// strings.Split on the path give us an array containing at least group, name, version and filename
-	ss := strings.Split(p, "/")
+	ss := strings.Split(p, pathSeperator)
 	if len(ss) < 4 {
 		return nil, fmt.Errorf("failed to get policy filename, name, version and group out of policy path: %s", p)
 	}
@@ -176,22 +199,20 @@ func createPolicy(p string, d os.DirEntry) (*Policy, error) {
 	dbFilename := group + "/" + name + "/" + version + "/" + policyFilename
 
 	// check if there is a data.json file in the same folder as the policy
-	dataBytes, err := os.ReadFile(strings.TrimSuffix(p, policyFilename) + dataFilename)
-	if err != nil && !strings.Contains(err.Error(), "no such file or directory") {
+	dataBytes, err := os.ReadFile(filepath.Join(exPath, strings.TrimSuffix(p, policyFilename)+dataFilename))
+	if err != nil && !os.IsNotExist(err) {
 		return nil, err
 	}
-	data := string(dataBytes)
 
 	// check if there is a data-config.json file in the same folder as the policy
 	configBytes, err := os.ReadFile(strings.TrimSuffix(p, policyFilename) + dataConfigFilename)
-	if err != nil && !strings.Contains(err.Error(), "no such file or directory") {
+	if err != nil && !os.IsNotExist(err) {
 		return nil, err
 	}
-	dataConfig := string(configBytes)
 
 	// if both data.json and data-config.json files exist, log a warning message
 	if len(dataBytes) > 0 && len(configBytes) > 0 {
-		fmt.Printf("Policy data will be overwritten by a data configuration execution for policy '%s', group '%s' and version '%s'\n", name, group, version)
+		log.Printf("[WARNING] policy data will be overwritten by a data configuration execution for policy %q, group %q and version %q\n", name, group, version)
 	}
 
 	return &Policy{
@@ -200,15 +221,15 @@ func createPolicy(p string, d os.DirEntry) (*Policy, error) {
 		Group:      group,
 		Version:    version,
 		Rego:       regoSrc,
-		Data:       data,
-		DataConfig: dataConfig,
+		Data:       string(dataBytes),
+		DataConfig: string(configBytes),
 		Locked:     false,
 	}, nil
 }
 
 // upsertPolicies compares policies from Git repository and MongoDB
-// and then updates the modified policies or inserts new ones
-func upsertPolicies(ctx context.Context, db *mongo.Client, repoPolicies map[string]*Policy) error {
+// and then updates the modified policies and inserts new ones.
+func upsertPolicies(ctx context.Context, db *mongo.Client, repoPolicies map[string]*Policy, policyDatabase string) error {
 	log.Println("Updating policies in Database...")
 	collection := db.Database(policyDatabase).Collection(policyCollection)
 
@@ -219,10 +240,7 @@ func upsertPolicies(ctx context.Context, db *mongo.Client, repoPolicies map[stri
 
 	forUpsert := compare(currPolicies, repoPolicies)
 	if len(forUpsert) > 0 {
-		err = upsert(ctx, forUpsert, collection)
-		if err != nil {
-			return err
-		}
+		return upsert(ctx, forUpsert, collection)
 	}
 
 	return nil
@@ -335,12 +353,4 @@ func (p1 *Policy) equals(p2 *Policy) bool {
 
 func constructKey(p *Policy) string {
 	return fmt.Sprintf("%s.%s.%s", p.Group, p.Name, p.Version)
-}
-
-func validateFlags(flags ...string) error {
-	if flag.NFlag() < len(flags) {
-		return errors.New("required command-line flag is not provided")
-	}
-
-	return nil
 }

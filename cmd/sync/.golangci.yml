@@ -25,5 +25,4 @@ linters:
     - vet
     - vetshadow
     - misspell
-    - staticcheck
     - unused

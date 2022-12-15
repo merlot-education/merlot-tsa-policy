@@ -1,4 +1,4 @@
-FROM golang:1.19.3
+FROM golang:1.19.4
 
 RUN go install github.com/canthefason/go-watcher/cmd/watcher@v0.2.4
 

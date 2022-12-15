@@ -1,25 +1,27 @@
 # Sync
 
-Sync is a small Go program used for synchronization between a GIT repository containing REGO policies
+Sync is a small Go program used for synchronization between Git repository containing Rego policies
 and a MongoDB collection storing policies.
 
-## Script
+It can also be started as a long-running process which is performing the sync on a given `syncInterval`.
+
+## Functionality
 
 The `sync` program executes the following steps:
-* Clones the REGO policy GIT repository on the local filesystem;
-* Fetches all REPO policy documents from the MongoDB policy collection;
-* Compares policies from the GIT repository and the MongoDB collection;
-* Inserts new policies and updates modified ones in MongoDB;
-* Deletes cloned repository from local filesystem.
+* Clones the Rego Git repo on the local filesystem
+* Fetches all Repo policy documents from the MongoDB policy collection
+* Compares policies from the Git repo and the MongoDB collection
+* Inserts new policies and updates modified ones in MongoDB
+* Deletes cloned repository from local filesystem (cleanup)
 
 ## Build 
 
-The script is written in [Go](https://go.dev/dl/). In order to use it as an executable binary, 
-the script should be built by running the following command from the root of the repository:
+The program is written in [Go](https://go.dev/dl/). In order to use it as an executable binary, 
+it should be built by running the following command from the root of the repository:
 ```go
 cd cmd/sync
 
-go build 
+go build -mod=vendor
 ```
 Now an executable binary called `sync` is available in the current directory.
 
@@ -44,11 +46,17 @@ The flags passed to the script are as follows:
         GIT Server username.        
     -repoPass string
         GIT Server password.
+    -repoFolder string
+        Folder where the tool scans for policies
     -branch string
         GIT branch for explicit checkout. This flag is optional.
+    -keepAlive bool
+        Keep alive the service (e.g.for containers)
+    -syncInterval time.Duration
+        Sync interval given as time duration string (e.g. 1s, 10m, 1h30m)
 ```
 
 Usage example:
 ```shell
-./sync -repoURL "https://path/to/repo.git" -repoUser "user" -repoPass "pass" -dbAddr "mongodb://localhost:27017/policy" -dbUser "user" -dbPass "pass" -branch "feature-branch"
+./sync -repoURL="https://path/to/repo.git" -repoUser="user" -repoPass="pass" -dbAddr="mongodb://localhost:27017/policy" -dbUser="user" -dbPass="pass" -branch="feature-branch" -keepAlive=true -syncInterval=20s
 ```
