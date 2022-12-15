@@ -1,4 +1,4 @@
-FROM golang:1.19.3-alpine3.15 as builder
+FROM golang:1.19.4-alpine3.17 as builder
 
 RUN apk add git
 
@@ -8,7 +8,7 @@ ADD . .
 
 RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-X main.Version=$(git describe --tags --always)" -mod=vendor -o /tmp/policy ./cmd/policy/...
 
-FROM alpine:3.15 as runner
+FROM alpine:3.17 as runner
 
 COPY --from=builder /tmp/policy /opt/policy
 

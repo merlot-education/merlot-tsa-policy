@@ -4,6 +4,7 @@ go 1.19
 
 require (
 	github.com/go-git/go-git/v5 v5.4.2
+	github.com/kelseyhightower/envconfig v1.4.0
 	go.mongodb.org/mongo-driver v1.10.2
 )
 

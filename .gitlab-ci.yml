@@ -11,9 +11,9 @@ stages:
   - deploy
 
 include:
-  - project: '${HELPERS_PATH}'
-    file: '${HELPERS_FILE}'
-  - template: 'Workflows/Branch-Pipelines.gitlab-ci.yml'
+  - project: "${HELPERS_PATH}"
+    file: "${HELPERS_FILE}"
+  - template: "Workflows/Branch-Pipelines.gitlab-ci.yml"
 
 lint:
   image: golangci/golangci-lint:v1.50.1
@@ -21,14 +21,16 @@ lint:
   tags:
     - amd64-docker
   script:
-    - golangci-lint --version
-    - golangci-lint run
-  before_script:
     - ln -s /builds /go/src/gitlab.com
     - cd /go/src/gitlab.com/${CI_PROJECT_PATH}
+    - golangci-lint --version
+    - golangci-lint run
+    - cd ./cmd/sync
+    - golangci-lint run
+  before_script: []
 
 unit tests:
-  image: golang:1.19.3
+  image: golang:1.19.4
   extends: .gotest
   stage: test
   tags:
@@ -37,7 +39,7 @@ unit tests:
   coverage: '/total:\s+\(statements\)\s+(\d+.\d+\%)/'
 
 govulncheck:
-  image: golang:1.19.3
+  image: golang:1.19.4
   stage: test
   tags:
     - amd64-docker
@@ -54,6 +56,20 @@ amd64:
   stage: build
   tags:
     - amd64-docker
+
+dockerize sync:
+  stage: build
+  tags:
+    - amd64-docker
+  script:
+    - cd ./cmd/sync
+    - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
+    - docker build -t "${CI_REGISTRY_IMAGE}/sync:${CI_COMMIT_REF_NAME}" .
+    - docker push "${CI_REGISTRY_IMAGE}/sync:${CI_COMMIT_REF_NAME}"
+  only:
+    - main
+    - tags
+    - integration
 
 manifest:
   extends: .manifest-amd64
