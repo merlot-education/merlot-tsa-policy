@@ -35,7 +35,7 @@ Basic usage documentation is available when executing the following command on M
 The flags passed to the script are as follows:
 ```    
     -dbAddr string
-        Mongo DB connection string.    
+        Mongo DB connection string.
     -dbUser string
         Mongo DB username.
     -dbPass string
@@ -43,20 +43,20 @@ The flags passed to the script are as follows:
     -repoURL string
         Policy repository URL.
     -repoUser string
-        GIT Server username.        
+        GIT Server username - optional 
     -repoPass string
-        GIT Server password.
+        GIT Server password - optional
     -repoFolder string
-        Folder where the tool scans for policies
+        Folder where the tool scans for policies - optional
     -branch string
-        GIT branch for explicit checkout. This flag is optional.
+        GIT branch for explicit checkout - optional
     -keepAlive bool
-        Keep alive the service (e.g.for containers)
+        Keep alive the service (e.g.for containers) - optional
     -syncInterval time.Duration
-        Sync interval given as time duration string (e.g. 1s, 10m, 1h30m)
+        Sync interval given as time duration string (e.g. 1s, 10m, 1h30m) - optional
 ```
 
 Usage example:
 ```shell
-./sync -repoURL="https://path/to/repo.git" -repoUser="user" -repoPass="pass" -dbAddr="mongodb://localhost:27017/policy" -dbUser="user" -dbPass="pass" -branch="feature-branch" -keepAlive=true -syncInterval=20s
+./sync -repoURL="https://path/to/repo.git" -repoUser="user" -repoPass="pass" -dbAddr="mongodb://localhost:27017/policy?directConnection=true" -dbUser="user" -dbPass="pass" -branch="feature-branch" -keepAlive=true -syncInterval=20s
 ```
