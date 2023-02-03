@@ -14,6 +14,7 @@ type Config struct {
 	OAuth       oauthConfig
 	Refresher   refresherConfig
 	Auth        authConfig
+	IPFilter    ipFilterConfig
 
 	LogLevel string `envconfig:"LOG_LEVEL" default:"INFO"`
 }
@@ -72,4 +73,9 @@ type authConfig struct {
 	Enabled         bool          `envconfig:"AUTH_ENABLED" default:"false"`
 	JwkURL          string        `envconfig:"AUTH_JWK_URL"`
 	RefreshInterval time.Duration `envconfig:"AUTH_REFRESH_INTERVAL" default:"1h"`
+}
+
+type ipFilterConfig struct {
+	Enabled    bool     `envconfig:"IP_FILTER_ENABLE" default:"false"`
+	AllowedIPs []string `envconfig:"IP_FILTER_ALLOWED_IPS"`
 }

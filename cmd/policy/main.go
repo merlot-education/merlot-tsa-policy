@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/jpillora/ipfilter"
 	"github.com/kelseyhightower/envconfig"
 	"github.com/open-policy-agent/opa/rego"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -182,6 +183,17 @@ func main() {
 
 	// Apply middlewares on the servers
 	policyServer.Evaluate = header.Middleware()(policyServer.Evaluate)
+
+	// Apply IP filter middleware if enabled
+	if cfg.IPFilter.Enabled {
+		m := ipfilter.New(ipfilter.Options{
+			AllowedIPs:     cfg.IPFilter.AllowedIPs,
+			BlockByDefault: true,
+			Logger:         zap.NewStdLog(logger),
+		})
+
+		policyServer.Use(m.Wrap)
+	}
 
 	// Apply Authentication middleware if enabled
 	if cfg.Auth.Enabled {
