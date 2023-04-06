@@ -1,13 +1,11 @@
-FROM golang:1.19.4
+FROM golang:1.20.3
 
-RUN go install github.com/canthefason/go-watcher/cmd/watcher@v0.2.4
+RUN go install github.com/ysmood/kit/cmd/guard@v0.25.11
 
 ADD . /go/src/gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/policy
 
 WORKDIR /go/src/gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/policy
 
-RUN go install -mod=vendor ./cmd/policy/...
-
 EXPOSE 8080
 
-ENTRYPOINT ["sh", "-c", "/go/bin/watcher -run gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/policy/cmd/policy -watch gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/policy"]
+ENTRYPOINT ["sh", "-c", "/go/bin/guard -w '**/*.go' -- go run -mod=vendor ./cmd/policy/..."]

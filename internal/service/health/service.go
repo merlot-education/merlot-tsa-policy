@@ -8,10 +8,10 @@ func New() *Service {
 	return &Service{}
 }
 
-func (s *Service) Liveness(ctx context.Context) error {
+func (s *Service) Liveness(_ context.Context) error {
 	return nil
 }
 
-func (s *Service) Readiness(ctx context.Context) error {
+func (s *Service) Readiness(_ context.Context) error {
 	return nil
 }
