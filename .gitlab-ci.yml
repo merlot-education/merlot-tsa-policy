@@ -16,7 +16,7 @@ include:
   - template: "Workflows/Branch-Pipelines.gitlab-ci.yml"
 
 lint:
-  image: golangci/golangci-lint:v1.50.1
+  image: golangci/golangci-lint:latest
   stage: test
   tags:
     - amd64-docker
@@ -30,7 +30,7 @@ lint:
   before_script: []
 
 unit tests:
-  image: golang:1.19.4
+  image: golang:1.20.3
   extends: .gotest
   stage: test
   tags:
@@ -39,7 +39,7 @@ unit tests:
   coverage: '/total:\s+\(statements\)\s+(\d+.\d+\%)/'
 
 govulncheck:
-  image: golang:1.19.4
+  image: golang:1.20.3
   stage: test
   tags:
     - amd64-docker

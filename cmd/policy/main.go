@@ -126,7 +126,9 @@ func main() {
 		regofunc.Register("addVPProof", rego.Function4(signerFuncs.AddVPProofFunc()))
 		regofunc.Register("verifyProof", rego.Function1(signerFuncs.VerifyProofFunc()))
 		regofunc.Register("ocmLoginProofInvitation", rego.Function2(ocmFuncs.GetLoginProofInvitation()))
+		regofunc.Register("ocmSendPresentationRequest", rego.Function1(ocmFuncs.SendPresentationRequest()))
 		regofunc.Register("ocmLoginProofResult", rego.Function1(ocmFuncs.GetLoginProofResult()))
+		regofunc.Register("ocmRawProofResult", rego.Function1(ocmFuncs.GetRawProofResult()))
 		regofunc.Register("didToURL", rego.Function1(didWebFuncs.DIDToURLFunc()))
 		regofunc.Register("urlToDID", rego.Function1(didWebFuncs.URLToDIDFunc()))
 	}

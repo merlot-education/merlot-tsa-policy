@@ -379,11 +379,64 @@ Result:
 }
 ```
 
+#### ocm.SendPresentationRequest
+
+Send a Presentation Request containing attributes (claims) with corresponding `schemaId` and `credentialDefinitionId` 
+and receive an Invitation URL in return.
+
+> Note: `schemaId`, `credentialDefinitionId` and `attributeName` are required fields for each attribute.
+
+Example request body:
+```json
+{
+  "attributes": [
+    {
+      "schemaId": "7KuDTpQh3GJ7Gp6kErpWvM:2:principalTestSchema:1.0",
+      "credentialDefinitionId": "7KuDTpQh3GJ7Gp6kErpWvM:3:CL:40329:principalTestCredDefExpir",
+      "attributeName": "prcLastName"
+    },
+    {
+      "schemaId": "7KuDTpQh3GJ7Gp6kErpWvM:2:principalTestSchema:1.0",
+      "credentialDefinitionId": "7KuDTpQh3GJ7Gp6kErpWvM:3:CL:40329:principalTestCredDefExpir",
+      "attributeName": "email"
+    }
+
+  ],
+  "options": {
+    "type": "Aries1.0"
+  }
+}
+```
+
+Example policy:
+
+```rego
+package example.SendPresentationRequest
+
+_ = ocm.sendPresentationRequest(input)
+```
+
+Result:
+
+```json
+{
+    "link": "https://ocm:443/didcomm/?d_m=eyJAdHlwZSI6Imh0dHBzOi8vZGlkY29tbS5vc9tbSJ9fQ",
+    "requestId": "851076fa-da78-444a-9127-e636c5102f40"
+}
+```
+
 #### ocm.GetLoginProofResult
 
 Get a Proof Invitation result from OCM containing a flattened list of claims.
-This function accepts one argument which is the `resuestId` from the
-`ocm.getLoginProofInvitation` result.
+This function accepts one argument which is the  `resuestId` from the result of one of the
+`ocm.getLoginProofInvitation` or `ocm.sendPresentationRequest` functions.
+
+Example request body:
+```json
+{
+  "requestId": "87839b89-da07-4d30-bb57-392e49999fc3"
+}
+```
 
 Example policy:
 
@@ -403,5 +456,68 @@ Result:
     "email_verified": true,
     "preferred_username": "john",
     "gender": "NA"
+}
+```
+
+#### ocm.GetRawProofResult
+
+Get a Proof Invitation result containing the raw response from the OCM.
+This function accepts one argument which is the `resuestId` from the result of one of the
+`ocm.getLoginProofInvitation` or `ocm.sendPresentationRequest` functions.
+
+Example request body:
+```json
+{
+  "requestId": "87839b89-da07-4d30-bb57-392e49999fc3"
+}
+```
+
+
+Example policy:
+```rego
+package example.GetRawProofResult
+
+_ = ocm.getRawProofResult(input.requestId)
+```
+
+Result before Proof request is accepted:
+```json
+{
+  "data": {
+    "presentations": [
+      {
+        "credDefId": "",
+        "credentialSubject": {},
+        "revRegId": "",
+        "schemaId": "",
+        "timestamp": ""
+      }
+    ],
+    "state": "request-sent"
+  },
+  "message": "Proof presentation fetch successfully",
+  "statusCode": 200
+}
+```
+
+Result after Proof request is accepted:
+```json
+{
+  "data": {
+    "presentations": [
+      {
+        "credDefId": "7KuDTpQh3GJ7Gp6kErpWvM:3:CL:40329:principalTestCredDefExpire",
+        "credentialSubject": {
+          "email": "23957edb-991d-4b5f-bf76-153103ba45b7",
+          "prcLastName": "NA"
+        },
+        "revRegId": null,
+        "schemaId": "7KuDTpQh3GJ7Gp6kErpWvM:2:principalTestSchema:1.0"
+      }
+    ],
+    "state": "done"
+  },
+  "message": "Proof presentation fetch successfully",
+  "statusCode": 200
 }
 ```

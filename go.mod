@@ -9,7 +9,7 @@ require (
 	github.com/open-policy-agent/opa v0.44.0
 	github.com/prometheus/client_golang v1.13.0
 	github.com/stretchr/testify v1.8.0
-	gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/golib v1.1.1
+	gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/golib v1.1.2-0.20230405150435-e1958486a0d7
 	go.mongodb.org/mongo-driver v1.10.2
 	go.uber.org/zap v1.23.0
 	goa.design/goa/v3 v3.8.5

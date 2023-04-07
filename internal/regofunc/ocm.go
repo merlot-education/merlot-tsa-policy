@@ -81,6 +81,44 @@ func (of *OcmFuncs) GetLoginProofInvitation() (*rego.Function, rego.Builtin2) {
 		}
 }
 
+func (of *OcmFuncs) SendPresentationRequest() (*rego.Function, rego.Builtin1) {
+	return &rego.Function{
+			Name:    "ocm.sendPresentationRequest",
+			Decl:    types.NewFunction(types.Args(types.A), types.A),
+			Memoize: true,
+		},
+		func(bctx rego.BuiltinContext, request *ast.Term) (*ast.Term, error) {
+			if of.addr == "" {
+				return nil, fmt.Errorf("trying to use ocm.sendPresentationRequest Rego function, but ocm address is not set")
+			}
+
+			var req map[string]interface{}
+			if err := ast.As(request.Value, &req); err != nil {
+				return nil, fmt.Errorf("invalid request map: %s", err)
+			}
+
+			res, err := of.client.SendOutOfBandRequest(bctx.Context, req)
+			if err != nil {
+				return nil, err
+			}
+
+			type result struct {
+				Link      string `json:"link"`
+				RequestID string `json:"requestId"`
+			}
+			var val ast.Value
+			val, err = ast.InterfaceToValue(result{
+				Link:      res.Data.PresentationMessage,
+				RequestID: res.Data.PresentationID,
+			})
+			if err != nil {
+				return nil, err
+			}
+
+			return ast.NewTerm(val), nil
+		}
+}
+
 func (of *OcmFuncs) GetLoginProofResult() (*rego.Function, rego.Builtin1) {
 	return &rego.Function{
 			Name:    "ocm.getLoginProofResult",
@@ -112,6 +150,38 @@ func (of *OcmFuncs) GetLoginProofResult() (*rego.Function, rego.Builtin1) {
 
 			var val ast.Value
 			val, err = ast.InterfaceToValue(claims)
+			if err != nil {
+				return nil, err
+			}
+
+			return ast.NewTerm(val), nil
+		}
+}
+
+func (of *OcmFuncs) GetRawProofResult() (*rego.Function, rego.Builtin1) {
+	return &rego.Function{
+			Name:    "ocm.getRawProofResult",
+			Decl:    types.NewFunction(types.Args(types.S), types.A),
+			Memoize: true,
+		},
+		func(bctx rego.BuiltinContext, id *ast.Term) (*ast.Term, error) {
+			if of.addr == "" {
+				return nil, fmt.Errorf("trying to use ocm.getRawProofResult Rego function, but ocm address is not set")
+			}
+
+			var presentationID string
+
+			if err := ast.As(id.Value, &presentationID); err != nil {
+				return nil, fmt.Errorf("invalid presentationId: %s", err)
+			}
+
+			res, err := of.client.GetRawLoginProofResult(bctx.Context, presentationID)
+			if err != nil {
+				return nil, err
+			}
+
+			var val ast.Value
+			val, err = ast.InterfaceToValue(res)
 			if err != nil {
 				return nil, err
 			}
