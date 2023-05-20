@@ -20,7 +20,7 @@ func TestGetLoginProofInvitationSuccess(t *testing.T) {
 		"statusCode": 201,
 		"message": "Presentation request send successfully",
 		"data": {
-			"presentationId": "2cf01406-b15f-4960-a6a7-7bc62cd37a3c",			
+			"proofRecordId": "2cf01406-b15f-4960-a6a7-7bc62cd37a3c",			
 			"presentationMessage": "https://ocm:443/ocm/didcomm/?d_m=eyJAdHlwZSI"
 		}
 	}`
@@ -112,7 +112,7 @@ func TestSendPresentationRequestSuccess(t *testing.T) {
 		"statusCode": 201,
 		"message": "Presentation request send successfully",
 		"data": {
-			"presentationId": "2cf01406-b15f-4960-a6a7-7bc62cd37a3c",
+			"proofRecordId": "2cf01406-b15f-4960-a6a7-7bc62cd37a3c",
 			"presentationMessage": "https://ocm:443/ocm/didcomm/?d_m=eyJAdHlwZSI"
 		}
 	}`

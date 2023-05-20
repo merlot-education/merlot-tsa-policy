@@ -71,7 +71,7 @@ func (of *OcmFuncs) GetLoginProofInvitation() (*rego.Function, rego.Builtin2) {
 			var val ast.Value
 			val, err = ast.InterfaceToValue(result{
 				Link:      res.Data.PresentationMessage,
-				RequestID: res.Data.PresentationID,
+				RequestID: res.Data.ProofRecordID,
 			})
 			if err != nil {
 				return nil, err
@@ -109,7 +109,7 @@ func (of *OcmFuncs) SendPresentationRequest() (*rego.Function, rego.Builtin1) {
 			var val ast.Value
 			val, err = ast.InterfaceToValue(result{
 				Link:      res.Data.PresentationMessage,
-				RequestID: res.Data.PresentationID,
+				RequestID: res.Data.ProofRecordID,
 			})
 			if err != nil {
 				return nil, err
@@ -142,8 +142,8 @@ func (of *OcmFuncs) GetLoginProofResult() (*rego.Function, rego.Builtin1) {
 			}
 
 			claims := map[string]interface{}{}
-			for _, cred := range res.Data.Data {
-				for cName, cValue := range cred.Claims {
+			for _, pres := range res.Data.Presentations {
+				for cName, cValue := range pres.Claims {
 					claims[cName] = cValue
 				}
 			}
