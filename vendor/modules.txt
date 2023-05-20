@@ -271,7 +271,7 @@ github.com/youmark/pkcs8
 # github.com/zach-klippenstein/goregen v0.0.0-20160303162051-795b5e3961ea
 ## explicit
 github.com/zach-klippenstein/goregen
-# gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/golib v1.1.2-0.20230405150435-e1958486a0d7
+# gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/golib v1.3.0
 ## explicit; go 1.19
 gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/golib/auth
 gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/golib/errors
