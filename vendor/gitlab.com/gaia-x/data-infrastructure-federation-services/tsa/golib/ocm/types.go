@@ -7,7 +7,7 @@ type LoginProofInvitationResponse struct {
 }
 
 type LoginProofInvitationResponseData struct {
-	PresentationID      string `json:"presentationId"`
+	ProofRecordID       string `json:"proofRecordId"`
 	PresentationMessage string `json:"presentationMessage"`
 }
 
@@ -18,11 +18,11 @@ type LoginProofResultResponse struct {
 }
 
 type LoginProofResultResponseData struct {
-	State string       `json:"state"`
-	Data  []Credential `json:"presentations"`
+	State         string         `json:"state"`
+	Presentations []Presentation `json:"presentations"`
 }
 
-type Credential struct {
+type Presentation struct {
 	SchemaID  string                 `json:"schemaId"`
 	CredDefID string                 `json:"credDefId"`
 	Claims    map[string]interface{} `json:"credentialSubject"`

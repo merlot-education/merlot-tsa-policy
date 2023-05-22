@@ -96,12 +96,12 @@ func New(args ...interface{}) error {
 		case Kind:
 			e.Kind = arg
 		case *Error:
-			copy := *arg
-			e.Err = &copy
-			e.ID = copy.ID
-			innerKind = copy.Kind
+			errCopy := *arg
+			e.Err = &errCopy
+			e.ID = errCopy.ID
+			innerKind = errCopy.Kind
 			if e.Message == "" {
-				e.Message = copy.Message
+				e.Message = errCopy.Message
 			}
 		case error:
 			e.Err = arg

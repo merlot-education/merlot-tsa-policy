@@ -146,7 +146,7 @@ func (c *Client) findByPresentationID(ctx context.Context, presentationID string
 	}
 
 	v := url.Values{}
-	v.Add("presentationId", presentationID)
+	v.Add("proofRecordId", presentationID)
 	req.URL.RawQuery = v.Encode()
 
 	resp, err := c.httpClient.Do(req)
