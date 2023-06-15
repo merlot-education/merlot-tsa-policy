@@ -44,11 +44,12 @@ type didResolverConfig struct {
 }
 
 type mongoConfig struct {
-	Addr       string `envconfig:"MONGO_ADDR" required:"true"`
-	User       string `envconfig:"MONGO_USER" required:"true"`
-	Pass       string `envconfig:"MONGO_PASS" required:"true"`
-	DB         string `envconfig:"MONGO_DBNAME" default:"policy"`
-	Collection string `envconfig:"MONGO_COLLECTION" default:"policies"`
+	Addr          string `envconfig:"MONGO_ADDR" required:"true"`
+	User          string `envconfig:"MONGO_USER" required:"true"`
+	Pass          string `envconfig:"MONGO_PASS" required:"true"`
+	DB            string `envconfig:"MONGO_DBNAME" default:"policy"`
+	Collection    string `envconfig:"MONGO_COLLECTION" default:"policies"`
+	AuthMechanism string `envconfig:"MONGO_AUTH_MECHANISM" default:"SCRAM-SHA-1"`
 }
 
 type metricsConfig struct {

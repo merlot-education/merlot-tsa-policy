@@ -81,8 +81,9 @@ func main() {
 	db, err := mongo.Connect(
 		context.Background(),
 		options.Client().ApplyURI(cfg.Mongo.Addr).SetAuth(options.Credential{
-			Username: cfg.Mongo.User,
-			Password: cfg.Mongo.Pass,
+			AuthMechanism: cfg.Mongo.AuthMechanism,
+			Username:      cfg.Mongo.User,
+			Password:      cfg.Mongo.Pass,
 		}),
 	)
 	if err != nil {
