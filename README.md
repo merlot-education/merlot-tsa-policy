@@ -2,6 +2,7 @@
 [![coverage report](https://gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/policy/badges/main/coverage.svg)](https://gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/policy/-/commits/main)
 
 # Policy Service
+This project has been migrated to Eclipse Foundation, and it can be found under https://gitlab.eclipse.org/eclipse/xfsc/
 
 The policy service provides HTTP API to evaluate/execute 
 [OPA](https://www.openpolicyagent.org/) policies.
