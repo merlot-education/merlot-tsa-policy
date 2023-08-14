@@ -1,5 +1,5 @@
-[![pipeline status](https://gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/policy/badges/main/pipeline.svg)](https://gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/policy/-/commits/main)
-[![coverage report](https://gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/policy/badges/main/coverage.svg)](https://gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/policy/-/commits/main)
+[![pipeline status](https://gitlab.eclipse.org/eclipse/xfsc/tsa/policy/badges/main/pipeline.svg)](https://gitlab.eclipse.org/eclipse/xfsc/tsa/policy/-/commits/main)
+[![coverage report](https://gitlab.eclipse.org/eclipse/xfsc/tsa/policy/badges/main/coverage.svg)](https://gitlab.eclipse.org/eclipse/xfsc/tsa/policy/-/commits/main)
 
 # Policy Service
 
@@ -36,7 +36,7 @@ The `host` and `port` parts will be different for the different environments.
 
 ```
 # URL with example policy group, name and version
-http://localhost:8081/policy/gaiax/didresolve/1.0/evaluation
+http://localhost:8081/policy/xfsc/didresolve/1.0/evaluation
 
 # URL with parameter placeholders
 http://localhost:8081/policy/{group}/{policy}/{version}/evaluation
@@ -61,7 +61,7 @@ it will be accessible by `input.message`:
 
 Here is a complete example CURL request:
 ```shell
-curl -X POST http://localhost:8081/policy/gaiax/didresolve/1.0/evaluation -d '{"message":"hello world"}'
+curl -X POST http://localhost:8081/policy/xfsc/didresolve/1.0/evaluation -d '{"message":"hello world"}'
 ```
 
 ### Policy Locking
@@ -72,12 +72,12 @@ its evaluation/execution to proceed normally.
 
 Lock a policy with POST request:
 ```shell
-curl -X POST http://localhost:8081/policy/gaiax/didresolve/1.0/lock
+curl -X POST http://localhost:8081/policy/xfsc/didresolve/1.0/lock
 ```
 
 Unlock a policy with DELETE request:
 ```shell
-curl -X DELETE http://localhost:8081/policy/gaiax/didresolve/1.0/lock
+curl -X DELETE http://localhost:8081/policy/xfsc/didresolve/1.0/lock
 ```
 
 ### Policy Storage
@@ -121,13 +121,13 @@ for detailed overview of Rego and OPA capabilities.
 
 1. The filename of the policy *must* follow rules for the naming and directory structure:
 the `group`, `policy name` and `version` are directories inside the Git repo and policy file *must* be named
-`policy.rego`.  For example: `/gaiax/example/1.0/policy.rego`.
+`policy.rego`.  For example: `/xfsc/example/1.0/policy.rego`.
 2. In the same directory there could be a data file containing static JSON, which is automatically 
 available for use during policy evaluation by using the `data` variable. The file *must* be named `data.json`. 
-Example: `/gaiax/example/1.0/data.json`
+Example: `/xfsc/example/1.0/data.json`
 3. In the same directory there could be a configuration file containing information for getting static JSON
 data from external URL. The file *must* be named `data-config.json`.
-Example: `/gaiax/example/1.0/data-config.json`
+Example: `/xfsc/example/1.0/data-config.json`
 > Note that there should only be one of the two files `data.json` or `data-config.json` in the same directory.
 > If both files exist in the same directory tha data from the `data.json` file will be eventually overwritten by the data
 > acquired using the configuration from the `data-config.json` file.
@@ -138,31 +138,31 @@ the `group` and `policy` (name) of the policy.
 
 Let's see an example for the 1st convention.
 ```
-package gaiax.example
+package xfsc.example
 
 allow {
     input.message == "hello world"
 }
 ```
 
-Next, the filename must be `/gaiax/example/1.0/policy.rego`. When such file is synchronized
+Next, the filename must be `/xfsc/example/1.0/policy.rego`. When such file is synchronized
 with the policy service (storage), the naming convention allows the service to understand
 which part is the policy group, which part is policy name and which part is version.
 
-If we create the above policy and store it in the Git repo as `/gaiax/example/1.0/policy.rego`,
+If we create the above policy and store it in the Git repo as `/xfsc/example/1.0/policy.rego`,
 after the Git server is synchronized with the Policy Storage, the policy service will
 automatically expose URLs for working with the policy at:
 ```
-http://localhost:8081/policy/gaiax/example/1.0/evaluation
-http://localhost:8081/policy/gaiax/example/1.0/lock
+http://localhost:8081/policy/xfsc/example/1.0/evaluation
+http://localhost:8081/policy/xfsc/example/1.0/lock
 ```
-The 2nd rule for static data file naming is to make sure that file `/gaiax/example/1.0/data.json`
+The 2nd rule for static data file naming is to make sure that file `/xfsc/example/1.0/data.json`
 is passed and is available to the evaluation runtime when a policy is evaluated at URL:
 ```
-http://localhost:8081/policy/gaiax/example/1.0/evaluation
+http://localhost:8081/policy/xfsc/example/1.0/evaluation
 ```
 Static data is accessed within the Rego policy with `data.someKey`.
-Example: If the `/gaiax/example/1.0/data.json` file is:
+Example: If the `/xfsc/example/1.0/data.json` file is:
 ```json
 {
   "name": "some name"

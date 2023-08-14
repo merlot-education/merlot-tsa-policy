@@ -2,7 +2,7 @@ FROM golang:1.20.5-alpine3.17 as builder
 
 RUN apk add git
 
-WORKDIR /go/src/gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/policy
+WORKDIR /go/src/gitlab.eclipse.org/eclipse/xfsc/tsa/policy
 
 ADD . .
 

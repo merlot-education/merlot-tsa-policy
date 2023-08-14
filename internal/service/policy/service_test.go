@@ -10,13 +10,13 @@ import (
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
 
-	"gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/golib/errors"
-	"gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/golib/ptr"
-	goapolicy "gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/policy/gen/policy"
-	"gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/policy/internal/header"
-	"gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/policy/internal/service/policy"
-	"gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/policy/internal/service/policy/policyfakes"
-	"gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/policy/internal/storage"
+	"gitlab.eclipse.org/eclipse/xfsc/tsa/golib/errors"
+	"gitlab.eclipse.org/eclipse/xfsc/tsa/golib/ptr"
+	goapolicy "gitlab.eclipse.org/eclipse/xfsc/tsa/policy/gen/policy"
+	"gitlab.eclipse.org/eclipse/xfsc/tsa/policy/internal/header"
+	"gitlab.eclipse.org/eclipse/xfsc/tsa/policy/internal/service/policy"
+	"gitlab.eclipse.org/eclipse/xfsc/tsa/policy/internal/service/policy/policyfakes"
+	"gitlab.eclipse.org/eclipse/xfsc/tsa/policy/internal/storage"
 )
 
 func TestNew(t *testing.T) {

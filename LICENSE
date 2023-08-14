@@ -1,4 +1,4 @@
-GAIA-X "Policy Service" 
+XFSC "Policy Service"
 
 provides HTTP API to evaluate/execute OPA policies. It is developed using the 
 Goa v3 framework (https://goa.design/)and uses the Go OPA framework

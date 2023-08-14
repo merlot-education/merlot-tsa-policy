@@ -1,13 +1,14 @@
 package service
 
 import (
+	"context"
 	goahttp "goa.design/goa/v3/http"
 	goa "goa.design/goa/v3/pkg"
 
-	"gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/golib/errors"
+	"gitlab.eclipse.org/eclipse/xfsc/tsa/golib/errors"
 )
 
-func NewErrorResponse(err error) goahttp.Statuser {
+func NewErrorResponse(ctx context.Context, err error) goahttp.Statuser {
 	if err == nil {
 		return nil
 	}
@@ -18,7 +19,7 @@ func NewErrorResponse(err error) goahttp.Statuser {
 		newerr = e
 	case *goa.ServiceError:
 		// Use goahttp.ErrorResponse to determine error kind
-		goaerr := goahttp.NewErrorResponse(e)
+		goaerr := goahttp.NewErrorResponse(ctx, e)
 		kind := errors.GetKind(goaerr.StatusCode())
 		newerr = &errors.Error{
 			ID:      e.ID,
