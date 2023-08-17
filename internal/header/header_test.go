@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	
+
 	"gitlab.eclipse.org/eclipse/xfsc/tsa/policy/internal/header"
 )
 
