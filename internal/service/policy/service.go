@@ -10,11 +10,11 @@ import (
 	"github.com/open-policy-agent/opa/storage/inmem"
 	"go.uber.org/zap"
 
-	"gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/golib/errors"
-	"gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/policy/gen/policy"
-	"gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/policy/internal/header"
-	"gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/policy/internal/regofunc"
-	"gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/policy/internal/storage"
+	"gitlab.eclipse.org/eclipse/xfsc/tsa/golib/errors"
+	"gitlab.eclipse.org/eclipse/xfsc/tsa/policy/gen/policy"
+	"gitlab.eclipse.org/eclipse/xfsc/tsa/policy/internal/header"
+	"gitlab.eclipse.org/eclipse/xfsc/tsa/policy/internal/regofunc"
+	"gitlab.eclipse.org/eclipse/xfsc/tsa/policy/internal/storage"
 )
 
 //go:generate counterfeiter . Cache

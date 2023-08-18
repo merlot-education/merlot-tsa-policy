@@ -6,7 +6,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/policy/internal/header"
+
+	"gitlab.eclipse.org/eclipse/xfsc/tsa/policy/internal/header"
 )
 
 func TestMiddleware(t *testing.T) {

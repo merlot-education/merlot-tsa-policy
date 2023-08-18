@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"strconv"
 
-	"gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/golib/errors"
+	"gitlab.eclipse.org/eclipse/xfsc/tsa/golib/errors"
 )
 
 // Client for the Cache service.

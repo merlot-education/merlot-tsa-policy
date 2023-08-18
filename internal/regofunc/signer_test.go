@@ -11,7 +11,7 @@ import (
 	"github.com/open-policy-agent/opa/rego"
 	"github.com/stretchr/testify/assert"
 
-	"gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/policy/internal/regofunc"
+	"gitlab.eclipse.org/eclipse/xfsc/tsa/policy/internal/regofunc"
 )
 
 func TestVerificationMethodFunc(t *testing.T) {

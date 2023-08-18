@@ -23,24 +23,24 @@ import (
 	"golang.org/x/oauth2/clientcredentials"
 	"golang.org/x/sync/errgroup"
 
-	"gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/golib/auth"
-	"gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/golib/graceful"
-	goahealth "gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/policy/gen/health"
-	goahealthsrv "gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/policy/gen/http/health/server"
-	goaopenapisrv "gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/policy/gen/http/openapi/server"
-	goapolicysrv "gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/policy/gen/http/policy/server"
-	"gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/policy/gen/openapi"
-	goapolicy "gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/policy/gen/policy"
-	"gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/policy/internal/clients/cache"
-	"gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/policy/internal/config"
-	"gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/policy/internal/header"
-	"gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/policy/internal/regocache"
-	"gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/policy/internal/regofunc"
-	"gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/policy/internal/service"
-	"gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/policy/internal/service/health"
-	"gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/policy/internal/service/policy"
-	"gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/policy/internal/service/policy/policydata"
-	"gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/policy/internal/storage"
+	"gitlab.eclipse.org/eclipse/xfsc/tsa/golib/auth"
+	"gitlab.eclipse.org/eclipse/xfsc/tsa/golib/graceful"
+	goahealth "gitlab.eclipse.org/eclipse/xfsc/tsa/policy/gen/health"
+	goahealthsrv "gitlab.eclipse.org/eclipse/xfsc/tsa/policy/gen/http/health/server"
+	goaopenapisrv "gitlab.eclipse.org/eclipse/xfsc/tsa/policy/gen/http/openapi/server"
+	goapolicysrv "gitlab.eclipse.org/eclipse/xfsc/tsa/policy/gen/http/policy/server"
+	"gitlab.eclipse.org/eclipse/xfsc/tsa/policy/gen/openapi"
+	goapolicy "gitlab.eclipse.org/eclipse/xfsc/tsa/policy/gen/policy"
+	"gitlab.eclipse.org/eclipse/xfsc/tsa/policy/internal/clients/cache"
+	"gitlab.eclipse.org/eclipse/xfsc/tsa/policy/internal/config"
+	"gitlab.eclipse.org/eclipse/xfsc/tsa/policy/internal/header"
+	"gitlab.eclipse.org/eclipse/xfsc/tsa/policy/internal/regocache"
+	"gitlab.eclipse.org/eclipse/xfsc/tsa/policy/internal/regofunc"
+	"gitlab.eclipse.org/eclipse/xfsc/tsa/policy/internal/service"
+	"gitlab.eclipse.org/eclipse/xfsc/tsa/policy/internal/service/health"
+	"gitlab.eclipse.org/eclipse/xfsc/tsa/policy/internal/service/policy"
+	"gitlab.eclipse.org/eclipse/xfsc/tsa/policy/internal/service/policy/policydata"
+	"gitlab.eclipse.org/eclipse/xfsc/tsa/policy/internal/storage"
 )
 
 var Version = "0.0.0+development"
@@ -267,8 +267,8 @@ func createLogger(logLevel string, opts ...zap.Option) (*zap.Logger, error) {
 	return config.Build(opts...)
 }
 
-func errFormatter(e error) goahttp.Statuser {
-	return service.NewErrorResponse(e)
+func errFormatter(ctx context.Context, e error) goahttp.Statuser {
+	return service.NewErrorResponse(ctx, e)
 }
 
 func httpClient() *http.Client {

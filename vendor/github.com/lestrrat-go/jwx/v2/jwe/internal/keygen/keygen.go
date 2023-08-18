@@ -22,18 +22,6 @@ func (k ByteKey) Bytes() []byte {
 	return []byte(k)
 }
 
-// Size returns the size of the key
-func (g Static) Size() int {
-	return len(g)
-}
-
-// Generate returns the key
-func (g Static) Generate() (ByteSource, error) {
-	buf := make([]byte, g.Size())
-	copy(buf, g)
-	return ByteKey(buf), nil
-}
-
 // NewRandom creates a new Generator that returns
 // random bytes
 func NewRandom(n int) Random {
@@ -88,6 +76,9 @@ func (g Ecdhes) Generate() (ByteSource, error) {
 	pubinfo := make([]byte, 4)
 	binary.BigEndian.PutUint32(pubinfo, uint32(g.keysize)*8)
 
+	if !priv.PublicKey.Curve.IsOnCurve(g.pubkey.X, g.pubkey.Y) {
+		return nil, fmt.Errorf(`public key used does not contain a point (X,Y) on the curve`)
+	}
 	z, _ := priv.PublicKey.Curve.ScalarMult(g.pubkey.X, g.pubkey.Y, priv.D.Bytes())
 	zBytes := ecutil.AllocECPointBuffer(z, priv.PublicKey.Curve)
 	defer ecutil.ReleaseECPointBuffer(zBytes)

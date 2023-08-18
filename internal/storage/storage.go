@@ -10,7 +10,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	zap "go.uber.org/zap"
 
-	"gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/golib/errors"
+	"gitlab.eclipse.org/eclipse/xfsc/tsa/golib/errors"
 )
 
 const (
