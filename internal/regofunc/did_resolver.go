@@ -8,7 +8,7 @@ import (
 	"github.com/open-policy-agent/opa/rego"
 	"github.com/open-policy-agent/opa/types"
 
-	"gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/golib/errors"
+	"gitlab.eclipse.org/eclipse/xfsc/tsa/golib/errors"
 )
 
 type DIDResolverFuncs struct {

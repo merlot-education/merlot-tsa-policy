@@ -6,9 +6,9 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/policy/internal/regocache"
-	"gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/policy/internal/service/policy"
-	"gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/policy/internal/storage"
+	"gitlab.eclipse.org/eclipse/xfsc/tsa/policy/internal/regocache"
+	"gitlab.eclipse.org/eclipse/xfsc/tsa/policy/internal/service/policy"
+	"gitlab.eclipse.org/eclipse/xfsc/tsa/policy/internal/storage"
 )
 
 func TestNew(t *testing.T) {

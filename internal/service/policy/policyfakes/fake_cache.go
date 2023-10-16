@@ -5,7 +5,7 @@ import (
 	"context"
 	"sync"
 
-	"gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/policy/internal/service/policy"
+	"gitlab.eclipse.org/eclipse/xfsc/tsa/policy/internal/service/policy"
 )
 
 type FakeCache struct {

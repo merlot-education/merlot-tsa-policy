@@ -1,5 +1,6 @@
 variables:
   HELPERS_FILE: docker-build.yml
+  HELM_HELPERS_FILE: helm.yml
   APP_HELM_NAME: policy
   DOCKER_FILE: deployment/ci/Dockerfile
 
@@ -7,13 +8,15 @@ stages:
   - compile
   - test
   - build
-  - manifest
+  - helm
   - deploy
 
 include:
   - project: "${HELPERS_PATH}"
     file: "${HELPERS_FILE}"
   - template: "Workflows/Branch-Pipelines.gitlab-ci.yml"
+  - project: "$HELM_HELPERS_PATH}"
+    file: "${HELM_HELPERS_FILE}"
 
 lint:
   image: golangci/golangci-lint:latest
@@ -71,14 +74,8 @@ dockerize sync:
     - tags
     - integration
 
-manifest:
-  extends: .manifest-amd64
-  stage: manifest
-
-cloud:
-  extends: .manifest-cloud
-  stage: manifest
-
-release:
-  extends: .manifest-release
-  stage: manifest
+helm-lint:
+  extends: .helm-lint
+  stage: helm
+  tags:
+    - amd64-docker

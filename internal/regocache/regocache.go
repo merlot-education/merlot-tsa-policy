@@ -6,7 +6,7 @@ package regocache
 import (
 	"sync"
 
-	"gitlab.com/gaia-x/data-infrastructure-federation-services/tsa/policy/internal/storage"
+	"gitlab.eclipse.org/eclipse/xfsc/tsa/policy/internal/storage"
 )
 
 type Cache struct {

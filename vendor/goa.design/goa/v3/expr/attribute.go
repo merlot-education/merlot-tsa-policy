@@ -28,9 +28,7 @@ type (
 		// Meta is a list of key/value pairs
 		Meta MetaExpr
 		// Optional member default value
-		DefaultValue interface{}
-		// ZeroValue sets the zero value for the attribute type
-		ZeroValue interface{}
+		DefaultValue any
 		// UserExample set in DSL or computed in Finalize
 		UserExamples []*ExampleExpr
 		// finalized is true if the attribute has been finalized - only
@@ -45,12 +43,12 @@ type (
 		// Description is an optional long description.
 		Description string
 		// Value is the example value.
-		Value interface{}
+		Value any
 	}
 
 	// Val is the type used to provide the value of examples for attributes that are
 	// objects.
-	Val map[string]interface{}
+	Val map[string]any
 
 	// CompositeExpr defines a generic composite expression that contains an
 	// attribute.  This makes it possible for plugins to use attributes in
@@ -64,7 +62,7 @@ type (
 	ValidationExpr struct {
 		// Values represents an enum validation as described at
 		// http://json-schema.org/latest/json-schema-validation.html#anchor76.
-		Values []interface{}
+		Values []any
 		// Format represents a format validation as described at
 		// http://json-schema.org/latest/json-schema-validation.html#anchor104.
 		Format ValidationFormat
@@ -200,13 +198,33 @@ func (a *AttributeExpr) Validate(ctx string, parent eval.Expression) *eval.Valid
 		ctx += " - "
 	}
 	verr.Merge(a.validateEnumDefault(ctx, parent))
+	if v := a.Validation; v != nil {
+		verr.Merge(v.Validate(ctx, parent))
+	}
 	if o := AsObject(a.Type); o != nil {
 		for _, n := range a.AllRequired() {
 			if a.Find(n) == nil {
 				verr.Add(parent, `%srequired field %q does not exist in type %s`, ctx, n, a.Type.Name())
 			}
 		}
+		var pkgPath string
+		if ut, ok := a.Type.(UserType); ok {
+			if meta, ok := ut.Attribute().Meta["struct:pkg:path"]; ok {
+				pkgPath = meta[0]
+			}
+		}
 		for _, nat := range *o {
+			if ut, ok := nat.Attribute.Type.(UserType); pkgPath != "" && ok {
+				// This check ensures we error if a sub-type has a different custom package type set
+				// or if two user types have different custom packages but share a sub-type (field that's a user type)
+				if ut.Attribute().Meta != nil &&
+					ut.Attribute().Meta["struct:pkg:path"] != nil &&
+					ut.Attribute().Meta["struct:pkg:path"][0] != pkgPath {
+					verr.Add(a, "type \"%s\" has conflicting packages %s and %s", ut.Name(), ut.Attribute().Meta["struct:pkg:path"][0], pkgPath)
+				}
+
+				ut.Attribute().AddMeta("struct:pkg:path", pkgPath)
+			}
 			ctx = fmt.Sprintf("field %s", nat.Name)
 			verr.Merge(nat.Attribute.Validate(ctx, parent))
 		}
@@ -288,7 +306,7 @@ func (a *AttributeExpr) Finalize() {
 						// union values must be declared in the same package as
 						// the parent attribute.
 						if ut, ok := nat.Attribute.Type.(UserType); ok {
-							ut.Attribute().Meta["struct:pkg:path"] = []string{pkgPath}
+							ut.Attribute().AddMeta("struct:pkg:path", pkgPath)
 						}
 					}
 				}
@@ -399,12 +417,11 @@ func (a *AttributeExpr) IsRequiredNoDefault(attName string) bool {
 // between request types where attributes with default values should not be
 // generated using a pointer value and response types where they should.
 //
-//    DefaultValue UseDefault Pointer (assuming all other conditions are true)
-//    Yes          True       False
-//    Yes          False      True
-//    No           True       True
-//    No           False      True
-//
+//	DefaultValue UseDefault Pointer (assuming all other conditions are true)
+//	Yes          True       False
+//	Yes          False      True
+//	No           True       True
+//	No           False      True
 func (a *AttributeExpr) IsPrimitivePointer(attName string, useDefault bool) bool {
 	o := AsObject(a.Type)
 	if o == nil {
@@ -476,7 +493,7 @@ func (a *AttributeExpr) HasDefaultValue(attName string) bool {
 // GetDefault gets the default value for the child attribute with the given
 // name. It returns nil if the child attribute with the given name does not
 // exist or if the child attribute does not have a default value.
-func (a *AttributeExpr) GetDefault(attName string) interface{} {
+func (a *AttributeExpr) GetDefault(attName string) any {
 	if o := AsObject(a.Type); o != nil {
 		att := o.Attribute(attName)
 		if att.DefaultValue != nil {
@@ -491,7 +508,7 @@ func (a *AttributeExpr) GetDefault(attName string) interface{} {
 
 // SetDefault sets the default for the attribute. It also converts HashVal
 // and ArrayVal to map and slice respectively.
-func (a *AttributeExpr) SetDefault(def interface{}) {
+func (a *AttributeExpr) SetDefault(def any) {
 	switch actual := def.(type) {
 	case MapVal:
 		a.DefaultValue = actual.ToMap()
@@ -546,7 +563,7 @@ func (a *AttributeExpr) Delete(name string) {
 			a.Validation.RemoveRequired(name)
 		}
 		for _, ex := range a.UserExamples {
-			if m, ok := ex.Value.(map[string]interface{}); ok {
+			if m, ok := ex.Value.(map[string]any); ok {
 				delete(m, name)
 			}
 		}
@@ -594,20 +611,23 @@ func (a *AttributeExpr) debug(prefix string, seen map[*AttributeExpr]int, indent
 	} else {
 		fmt.Printf("%s: %s <%T>\n", prefix, n, a.Type)
 	}
-	if o := AsObject(a.Type); o != nil {
-		for _, nat := range *o {
+	ut, isUT := a.Type.(UserType)
+	switch {
+	case isUT:
+		ut.Attribute().debug("att", seen, indent+1)
+		tabs = strings.Repeat(tab, indent+1)
+	case IsObject(a.Type):
+		for _, nat := range *AsObject(a.Type) {
 			nat.Attribute.debug("- "+nat.Name, seen, indent+1)
 		}
-	}
-	if a := AsArray(a.Type); a != nil {
-		a.ElemType.debug("elem", seen, indent+1)
-	}
-	if m := AsMap(a.Type); m != nil {
+	case IsArray(a.Type):
+		AsArray(a.Type).ElemType.debug("elem", seen, indent+1)
+	case IsMap(a.Type):
+		m := AsMap(a.Type)
 		m.KeyType.debug("key", seen, indent+1)
 		m.ElemType.debug("elem", seen, indent+1)
-	}
-	if u := AsUnion(a.Type); u != nil {
-		for _, nat := range u.Values {
+	case IsUnion(a.Type):
+		for _, nat := range AsUnion(a.Type).Values {
 			nat.Attribute.debug("* "+nat.Name, seen, indent+1)
 		}
 	}
@@ -640,11 +660,6 @@ func (a *AttributeExpr) debug(prefix string, seen map[*AttributeExpr]int, indent
 	}
 	if v := a.Validation; v != nil {
 		v.Debug("", tabs+tab, tab)
-	}
-	if t, ok := a.Type.(UserType); ok {
-		if v := t.Attribute().Validation; v != nil {
-			v.Debug("user type ", tabs+tab, tab)
-		}
 	}
 	if len(a.Bases) > 0 {
 		fmt.Printf("%s%sbases\n", tabs, tab)
@@ -741,6 +756,35 @@ func (a *AttributeExpr) shouldInherit(parent *AttributeExpr) bool {
 // EvalName returns the name used by the DSL evaluation.
 func (a *ExampleExpr) EvalName() string {
 	return `example "` + a.Summary + `"`
+}
+
+// Validate validates the validation expression.
+func (v *ValidationExpr) Validate(ctx string, parent eval.Expression) *eval.ValidationErrors {
+	verr := new(eval.ValidationErrors)
+	hasMin, hasMax := v.Minimum != nil, v.Maximum != nil
+	hasExclusiveMin, hasExclusiveMax := v.ExclusiveMinimum != nil, v.ExclusiveMaximum != nil
+	if hasMin && hasExclusiveMin {
+		verr.Add(parent, "%sboth minimum and exclusive minimum are defined", ctx)
+	}
+	if hasMax && hasExclusiveMax {
+		verr.Add(parent, "%sboth maximum and exclusive maximum are defined", ctx)
+	}
+	if hasMin && hasMax && *v.Minimum > *v.Maximum {
+		verr.Add(parent, "%sminimum is greater than maximum", ctx)
+	}
+	if hasMin && hasExclusiveMax && *v.Minimum >= *v.ExclusiveMaximum {
+		verr.Add(parent, "%sminimum is greater than or equal to exclusive maximum", ctx)
+	}
+	if hasExclusiveMin && hasExclusiveMax && *v.ExclusiveMinimum > *v.ExclusiveMaximum {
+		verr.Add(parent, "%sexclusive minimum is greater than exclusive maximum", ctx)
+	}
+	if hasExclusiveMin && hasMax && *v.ExclusiveMinimum >= *v.Maximum {
+		verr.Add(parent, "%sexclusive minimum is greater than or equal to maximum", ctx)
+	}
+	if v.MinLength != nil && v.MaxLength != nil && *v.MinLength > *v.MaxLength {
+		verr.Add(parent, "%smin length is greater than max length", ctx)
+	}
+	return verr
 }
 
 // Merge merges other into v.
