@@ -165,9 +165,9 @@ func (s *Storage) GetRefreshPolicies(ctx context.Context) ([]*Policy, error) {
 // PostponeRefresh adds a refreshPostponePeriod Duration to each policy's
 // nextDataRefreshTimeField in order to prevent concurrent data refresh
 func (s *Storage) PostponeRefresh(ctx context.Context, policies []*Policy) error {
-	var ids []*primitive.ObjectID
+	var ids []primitive.ObjectID
 	for _, p := range policies {
-		ids = append(ids, (*primitive.ObjectID)(&p.ID))
+		ids = append(ids, p.ID)
 	}
 
 	filter := bson.M{"_id": bson.M{"$in": ids}}
