@@ -59,6 +59,22 @@ var _ = Service("policy", func() {
 			Response(StatusOK)
 		})
 	})
+
+	Method("ListPolicies", func() {
+		Description("Listing all policies")
+		Payload(PoliciesRequest)
+		Result(PoliciesResult)
+		HTTP(func() {
+			GET("/v1/policies")
+			Params(func() {
+				Param("locked", Boolean, "return only locked or unlocked policies")
+				Param("rego", Boolean, "return the rego code of the policies also")
+				Param("data", Boolean, "return the data of the policies also")
+				Param("dataConfig", Boolean, "return the data config of the policies also")
+			})
+			Response(StatusOK)
+		})
+	})
 })
 
 var _ = Service("health", func() {

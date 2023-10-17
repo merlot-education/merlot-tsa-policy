@@ -245,3 +245,163 @@ paths:
                     description: OK response.
             schemes:
                 - http
+    /v1/policies:
+        get:
+            tags:
+                - policy
+            summary: ListPolicies policy
+            description: Listing all policies
+            operationId: policy#ListPolicies
+            parameters:
+                - name: locked
+                  in: query
+                  description: return only locked or unlocked policies
+                  required: false
+                  type: boolean
+                - name: rego
+                  in: query
+                  description: return the rego code of the policies also
+                  required: false
+                  type: boolean
+                - name: data
+                  in: query
+                  description: return the data of the policies also
+                  required: false
+                  type: boolean
+                - name: dataConfig
+                  in: query
+                  description: return the data config of the policies also
+                  required: false
+                  type: boolean
+            responses:
+                "200":
+                    description: OK response.
+                    schema:
+                        $ref: '#/definitions/PolicyListPoliciesResponseBody'
+                        required:
+                            - policies
+            schemes:
+                - http
+definitions:
+    PolicyListPoliciesResponseBody:
+        title: PolicyListPoliciesResponseBody
+        type: object
+        properties:
+            policies:
+                type: array
+                items:
+                    $ref: '#/definitions/PolicyResponseBody'
+                description: policy list
+                example:
+                    - data: Commodi nemo fugiat id praesentium accusantium expedita.
+                      dataConfig: Qui non quia.
+                      group: Sequi adipisci et nulla.
+                      lastUpdate: 8181859392515170659
+                      locked: false
+                      policyName: Consequatur accusamus.
+                      rego: Sunt in et quia cum.
+                      version: In quis nesciunt autem et.
+                    - data: Commodi nemo fugiat id praesentium accusantium expedita.
+                      dataConfig: Qui non quia.
+                      group: Sequi adipisci et nulla.
+                      lastUpdate: 8181859392515170659
+                      locked: false
+                      policyName: Consequatur accusamus.
+                      rego: Sunt in et quia cum.
+                      version: In quis nesciunt autem et.
+                    - data: Commodi nemo fugiat id praesentium accusantium expedita.
+                      dataConfig: Qui non quia.
+                      group: Sequi adipisci et nulla.
+                      lastUpdate: 8181859392515170659
+                      locked: false
+                      policyName: Consequatur accusamus.
+                      rego: Sunt in et quia cum.
+                      version: In quis nesciunt autem et.
+        example:
+            policies:
+                - data: Commodi nemo fugiat id praesentium accusantium expedita.
+                  dataConfig: Qui non quia.
+                  group: Sequi adipisci et nulla.
+                  lastUpdate: 8181859392515170659
+                  locked: false
+                  policyName: Consequatur accusamus.
+                  rego: Sunt in et quia cum.
+                  version: In quis nesciunt autem et.
+                - data: Commodi nemo fugiat id praesentium accusantium expedita.
+                  dataConfig: Qui non quia.
+                  group: Sequi adipisci et nulla.
+                  lastUpdate: 8181859392515170659
+                  locked: false
+                  policyName: Consequatur accusamus.
+                  rego: Sunt in et quia cum.
+                  version: In quis nesciunt autem et.
+                - data: Commodi nemo fugiat id praesentium accusantium expedita.
+                  dataConfig: Qui non quia.
+                  group: Sequi adipisci et nulla.
+                  lastUpdate: 8181859392515170659
+                  locked: false
+                  policyName: Consequatur accusamus.
+                  rego: Sunt in et quia cum.
+                  version: In quis nesciunt autem et.
+                - data: Commodi nemo fugiat id praesentium accusantium expedita.
+                  dataConfig: Qui non quia.
+                  group: Sequi adipisci et nulla.
+                  lastUpdate: 8181859392515170659
+                  locked: false
+                  policyName: Consequatur accusamus.
+                  rego: Sunt in et quia cum.
+                  version: In quis nesciunt autem et.
+        required:
+            - policies
+    PolicyResponseBody:
+        title: PolicyResponseBody
+        type: object
+        properties:
+            data:
+                type: string
+                description: policy data
+                example: Accusamus enim.
+            dataConfig:
+                type: string
+                description: policy data config
+                example: Recusandae est rerum corrupti quia.
+            group:
+                type: string
+                description: policy group
+                example: Optio quia et laborum.
+            lastUpdate:
+                type: integer
+                description: Last update (timestamp).
+                example: 1029654258457164464
+                format: int64
+            locked:
+                type: boolean
+                description: if it true gives locked status on the policy
+                example: true
+            policyName:
+                type: string
+                description: policy name
+                example: Quia non voluptatibus error.
+            rego:
+                type: string
+                description: policy rego code
+                example: Ut amet.
+            version:
+                type: string
+                description: policy version
+                example: In libero perspiciatis voluptatum ut soluta.
+        example:
+            data: Totam officia necessitatibus tempore nulla animi.
+            dataConfig: Consequatur vel rerum rem ipsam nam.
+            group: Adipisci inventore ipsum voluptatibus recusandae.
+            lastUpdate: 1724369781608544610
+            locked: true
+            policyName: Architecto itaque voluptatum voluptas ad.
+            rego: Ab perspiciatis voluptatem pariatur corporis est rem.
+            version: Nisi distinctio vitae.
+        required:
+            - group
+            - policyName
+            - version
+            - locked
+            - lastUpdate

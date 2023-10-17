@@ -121,7 +121,7 @@ func Test_Execute(t *testing.T) {
 				})
 			}
 			refresher := policydata.NewRefresher(test.storage, time.Duration(0), httpClient, logger)
-			refresher.Execute(context.Background(), &test.policy)
+			refresher.Execute(context.Background(), (*storage.Policy)(&test.policy))
 
 			assert.Equal(t, test.logCnt, observedLogs.Len())
 			if observedLogs.Len() > 0 {

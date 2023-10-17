@@ -11,6 +11,7 @@ import (
 	"go.uber.org/zap"
 
 	"gitlab.eclipse.org/eclipse/xfsc/tsa/golib/errors"
+	"gitlab.eclipse.org/eclipse/xfsc/tsa/golib/ptr"
 	"gitlab.eclipse.org/eclipse/xfsc/tsa/policy/gen/policy"
 	"gitlab.eclipse.org/eclipse/xfsc/tsa/policy/internal/header"
 	"gitlab.eclipse.org/eclipse/xfsc/tsa/policy/internal/regofunc"
@@ -28,6 +29,7 @@ type Cache interface {
 type Storage interface {
 	Policy(ctx context.Context, group, name, version string) (*storage.Policy, error)
 	SetPolicyLock(ctx context.Context, group, name, version string, lock bool) error
+	GetPolicies(ctx context.Context, locked *bool) ([]*storage.Policy, error)
 }
 
 type RegoCache interface {
@@ -197,6 +199,46 @@ func (s *Service) Unlock(ctx context.Context, req *policy.UnlockRequest) error {
 	logger.Debug("policy is unlocked")
 
 	return nil
+}
+
+func (s *Service) ListPolicies(ctx context.Context, req *policy.PoliciesRequest) (*policy.PoliciesResult, error) {
+	logger := s.logger.With(
+		zap.String("operaiton", "listPolicies"),
+	)
+
+	policies, err := s.storage.GetPolicies(ctx, req.Locked)
+	if err != nil {
+		logger.Error("error retrieving policies", zap.Error(err))
+		return nil, errors.New("error retrieving policies", err)
+	}
+
+	policiesResult := make([]*policy.Policy, 0, len(policies))
+
+	for _, p := range policies {
+		policy := &policy.Policy{
+			PolicyName: p.Name,
+			Group:      p.Group,
+			Version:    p.Version,
+			Locked:     p.Locked,
+			LastUpdate: p.LastUpdate.Unix(),
+		}
+
+		if req.Rego != nil && *req.Rego {
+			policy.Rego = ptr.String(p.Rego)
+		}
+
+		if req.Data != nil && *req.Data {
+			policy.Data = ptr.String(p.Data)
+		}
+
+		if req.DataConfig != nil && *req.DataConfig {
+			policy.DataConfig = ptr.String(p.DataConfig)
+		}
+
+		policiesResult = append(policiesResult, policy)
+	}
+
+	return &policy.PoliciesResult{Policies: policiesResult}, nil
 }
 
 // prepareQuery tries to get a prepared query from the regocache.
