@@ -14,6 +14,7 @@ import (
 )
 
 const (
+	lockedField              = "locked"
 	dataField                = "data"
 	nextDataRefreshTimeField = "nextDataRefreshTime"
 	refreshPostponePeriod    = 5 * time.Minute
@@ -164,9 +165,9 @@ func (s *Storage) GetRefreshPolicies(ctx context.Context) ([]*Policy, error) {
 // PostponeRefresh adds a refreshPostponePeriod Duration to each policy's
 // nextDataRefreshTimeField in order to prevent concurrent data refresh
 func (s *Storage) PostponeRefresh(ctx context.Context, policies []*Policy) error {
-	var ids []*primitive.ObjectID
+	var ids []primitive.ObjectID
 	for _, p := range policies {
-		ids = append(ids, &p.ID)
+		ids = append(ids, p.ID)
 	}
 
 	filter := bson.M{"_id": bson.M{"$in": ids}}
@@ -201,4 +202,23 @@ func (s *Storage) Transaction(ctx context.Context, callback func(mCtx mongo.Sess
 	}
 
 	return res, nil
+}
+
+func (s *Storage) GetPolicies(ctx context.Context, locked *bool) ([]*Policy, error) {
+	var filter bson.M
+	if locked != nil {
+		filter = bson.M{lockedField: locked}
+	}
+
+	cursor, err := s.policy.Find(ctx, filter)
+	if err != nil {
+		return nil, err
+	}
+
+	var policies []*Policy
+	if err := cursor.All(ctx, &policies); err != nil {
+		return nil, err
+	}
+
+	return policies, nil
 }

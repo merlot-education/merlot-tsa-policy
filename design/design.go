@@ -59,6 +59,22 @@ var _ = Service("policy", func() {
 			Response(StatusOK)
 		})
 	})
+
+	Method("ListPolicies", func() {
+		Description("List policies from storage with optional filters.")
+		Payload(PoliciesRequest)
+		Result(PoliciesResult)
+		HTTP(func() {
+			GET("/v1/policies")
+			Params(func() {
+				Param("locked", Boolean, "Filter to return locked/unlocked policies (optional).")
+				Param("rego", Boolean, "Include policy source code in results (optional).")
+				Param("data", Boolean, "Include policy static data in results (optional). ")
+				Param("dataConfig", Boolean, "Include static data config (optional).")
+			})
+			Response(StatusOK)
+		})
+	})
 })
 
 var _ = Service("health", func() {

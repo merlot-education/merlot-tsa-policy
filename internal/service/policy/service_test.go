@@ -2,6 +2,7 @@ package policy_test
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -573,6 +574,225 @@ func TestService_Unlock(t *testing.T) {
 
 				assert.Contains(t, e.Error(), test.errtext)
 				assert.Equal(t, test.errkind, e.Kind)
+			}
+		})
+	}
+}
+
+func TestService_ListPolicies(t *testing.T) {
+	strPointer := func(str string) *string {
+		return &str
+	}
+	boolTrue := true
+	boolFalse := false
+	tests := []struct {
+		name    string
+		storage policy.Storage
+		request *goapolicy.PoliciesRequest
+
+		response *goapolicy.PoliciesResult
+		errText  string
+	}{
+		{
+			name: "storage return error",
+			storage: &policyfakes.FakeStorage{GetPoliciesStub: func(ctx context.Context, b *bool) ([]*storage.Policy, error) {
+				return nil, fmt.Errorf("some error")
+			}},
+			request: &goapolicy.PoliciesRequest{
+				Locked:     new(bool),
+				Rego:       new(bool),
+				Data:       new(bool),
+				DataConfig: new(bool),
+			},
+
+			errText: "some error",
+		},
+		{
+			name: "request without errors and any additional request parameter return all policies",
+			storage: &policyfakes.FakeStorage{GetPoliciesStub: func(ctx context.Context, b *bool) ([]*storage.Policy, error) {
+				return []*storage.Policy{{
+					Name:       "example",
+					Group:      "example",
+					Version:    "example",
+					Rego:       "some rego",
+					Data:       "some Data",
+					DataConfig: "data config",
+					Locked:     false,
+					LastUpdate: time.Time{},
+				}, {
+					Name:       "example",
+					Group:      "example",
+					Version:    "example",
+					Rego:       "some rego",
+					Data:       "some data",
+					DataConfig: "data config",
+					Locked:     true,
+					LastUpdate: time.Time{},
+				}}, nil
+			}},
+			request: &goapolicy.PoliciesRequest{},
+
+			response: &goapolicy.PoliciesResult{
+				Policies: []*goapolicy.Policy{
+					{
+						PolicyName: "example",
+						Group:      "example",
+						Version:    "example",
+						Locked:     false,
+						LastUpdate: time.Time{}.Unix(),
+					},
+					{
+						PolicyName: "example",
+						Group:      "example",
+						Version:    "example",
+						Locked:     true,
+						LastUpdate: time.Time{}.Unix(),
+					},
+				},
+			},
+		},
+		{
+			name: "request with only locked parameter equal to true returns only locked policies",
+			storage: &policyfakes.FakeStorage{GetPoliciesStub: func(ctx context.Context, b *bool) ([]*storage.Policy, error) {
+				return []*storage.Policy{{
+					Name:       "example",
+					Group:      "example",
+					Version:    "example",
+					Rego:       "some rego",
+					Data:       "some data",
+					DataConfig: "data config",
+					Locked:     true,
+					LastUpdate: time.Time{},
+				}}, nil
+			}},
+			request: &goapolicy.PoliciesRequest{
+				Locked: &boolTrue,
+			},
+
+			response: &goapolicy.PoliciesResult{
+				Policies: []*goapolicy.Policy{
+					{
+						PolicyName: "example",
+						Group:      "example",
+						Version:    "example",
+						Locked:     true,
+						LastUpdate: time.Time{}.Unix(),
+					},
+				},
+			},
+		},
+		{
+			name: "request with only locked parameter equal to false returns only unlocked policies",
+			storage: &policyfakes.FakeStorage{GetPoliciesStub: func(ctx context.Context, b *bool) ([]*storage.Policy, error) {
+				return []*storage.Policy{{
+					Name:       "example",
+					Group:      "example",
+					Version:    "example",
+					Rego:       "some rego",
+					Data:       "some data",
+					DataConfig: "data config",
+					Locked:     false,
+					LastUpdate: time.Time{},
+				}}, nil
+			}},
+			request: &goapolicy.PoliciesRequest{
+				Locked: &boolFalse,
+			},
+
+			response: &goapolicy.PoliciesResult{
+				Policies: []*goapolicy.Policy{
+					{
+						PolicyName: "example",
+						Group:      "example",
+						Version:    "example",
+						Locked:     false,
+						LastUpdate: time.Time{}.Unix(),
+					},
+				},
+			},
+		},
+		{
+			name: "request with all additional params set to true",
+			storage: &policyfakes.FakeStorage{GetPoliciesStub: func(ctx context.Context, b *bool) ([]*storage.Policy, error) {
+				return []*storage.Policy{{
+					Name:       "example",
+					Group:      "example",
+					Version:    "example",
+					Rego:       "some rego",
+					Data:       "some data",
+					DataConfig: "data config",
+					Locked:     false,
+					LastUpdate: time.Time{},
+				}}, nil
+			}},
+			request: &goapolicy.PoliciesRequest{
+				Locked:     new(bool),
+				Rego:       &boolTrue,
+				Data:       &boolTrue,
+				DataConfig: &boolTrue,
+			},
+
+			response: &goapolicy.PoliciesResult{
+				Policies: []*goapolicy.Policy{
+					{
+						PolicyName: "example",
+						Group:      "example",
+						Version:    "example",
+						Rego:       strPointer("some rego"),
+						Data:       strPointer("some data"),
+						DataConfig: strPointer("data config"),
+						Locked:     false,
+						LastUpdate: time.Time{}.Unix(),
+					},
+				},
+			},
+		},
+		{
+			name: "request with all additional params set to false",
+			storage: &policyfakes.FakeStorage{GetPoliciesStub: func(ctx context.Context, b *bool) ([]*storage.Policy, error) {
+				return []*storage.Policy{{
+					Name:       "example",
+					Group:      "example",
+					Version:    "example",
+					Rego:       "some rego",
+					Data:       "some data",
+					DataConfig: "data config",
+					Locked:     false,
+					LastUpdate: time.Time{},
+				}}, nil
+			}},
+			request: &goapolicy.PoliciesRequest{
+				Locked:     new(bool),
+				Rego:       &boolFalse,
+				Data:       &boolFalse,
+				DataConfig: &boolFalse,
+			},
+
+			response: &goapolicy.PoliciesResult{
+				Policies: []*goapolicy.Policy{
+					{
+						PolicyName: "example",
+						Group:      "example",
+						Version:    "example",
+						Locked:     false,
+						LastUpdate: time.Time{}.Unix(),
+					},
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			svc := policy.New(test.storage, nil, nil, zap.NewNop())
+			result, err := svc.ListPolicies(context.Background(), test.request)
+
+			if test.errText != "" {
+				assert.ErrorContains(t, err, test.errText)
+				assert.Nil(t, result)
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, result, test.response)
 			}
 		})
 	}
