@@ -19,7 +19,7 @@ type Service interface {
 	Lock(context.Context, *LockRequest) (err error)
 	// Unlock a policy so it can be evaluated again.
 	Unlock(context.Context, *UnlockRequest) (err error)
-	// Listing all policies
+	// List policies from storage with optional filters.
 	ListPolicies(context.Context, *PoliciesRequest) (res *PoliciesResult, err error)
 }
 
@@ -80,26 +80,26 @@ type PoliciesRequest struct {
 
 // PoliciesResult is the result type of the policy service ListPolicies method.
 type PoliciesResult struct {
-	// policy list
+	// JSON array of policies.
 	Policies []*Policy
 }
 
 type Policy struct {
-	// policy name
+	// Policy name.
 	PolicyName string
-	// policy group
+	// Policy group.
 	Group string
-	// policy version
+	// Policy version.
 	Version string
-	// policy rego code
+	// Policy rego source code.
 	Rego *string
-	// policy data
+	// Policy static data.
 	Data *string
-	// policy data config
+	// Policy static data optional configuration.
 	DataConfig *string
-	// if it true gives locked status on the policy
+	// Locked specifies if the policy is locked or allowed to execute.
 	Locked bool
-	// Last update (timestamp).
+	// Last update (Unix timestamp).
 	LastUpdate int64
 }
 

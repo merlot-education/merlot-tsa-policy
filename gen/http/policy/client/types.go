@@ -15,27 +15,27 @@ import (
 // ListPoliciesResponseBody is the type of the "policy" service "ListPolicies"
 // endpoint HTTP response body.
 type ListPoliciesResponseBody struct {
-	// policy list
+	// JSON array of policies.
 	Policies []*PolicyResponseBody `form:"policies,omitempty" json:"policies,omitempty" xml:"policies,omitempty"`
 }
 
 // PolicyResponseBody is used to define fields on response body types.
 type PolicyResponseBody struct {
-	// policy name
+	// Policy name.
 	PolicyName *string `form:"policyName,omitempty" json:"policyName,omitempty" xml:"policyName,omitempty"`
-	// policy group
+	// Policy group.
 	Group *string `form:"group,omitempty" json:"group,omitempty" xml:"group,omitempty"`
-	// policy version
+	// Policy version.
 	Version *string `form:"version,omitempty" json:"version,omitempty" xml:"version,omitempty"`
-	// policy rego code
+	// Policy rego source code.
 	Rego *string `form:"rego,omitempty" json:"rego,omitempty" xml:"rego,omitempty"`
-	// policy data
+	// Policy static data.
 	Data *string `form:"data,omitempty" json:"data,omitempty" xml:"data,omitempty"`
-	// policy data config
+	// Policy static data optional configuration.
 	DataConfig *string `form:"dataConfig,omitempty" json:"dataConfig,omitempty" xml:"dataConfig,omitempty"`
-	// if it true gives locked status on the policy
+	// Locked specifies if the policy is locked or allowed to execute.
 	Locked *bool `form:"locked,omitempty" json:"locked,omitempty" xml:"locked,omitempty"`
-	// Last update (timestamp).
+	// Last update (Unix timestamp).
 	LastUpdate *int64 `form:"lastUpdate,omitempty" json:"lastUpdate,omitempty" xml:"lastUpdate,omitempty"`
 }
 

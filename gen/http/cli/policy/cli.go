@@ -246,7 +246,7 @@ COMMAND:
     evaluate: Evaluate executes a policy with the given 'data' as input.
     lock: Lock a policy so that it cannot be evaluated.
     unlock: Unlock a policy so it can be evaluated again.
-    list-policies: Listing all policies
+    list-policies: List policies from storage with optional filters.
 
 Additional help:
     %[1]s policy COMMAND --help
@@ -297,7 +297,7 @@ Example:
 func policyListPoliciesUsage() {
 	fmt.Fprintf(os.Stderr, `%[1]s [flags] policy list-policies -locked BOOL -rego BOOL -data BOOL -data-config BOOL
 
-Listing all policies
+List policies from storage with optional filters.
     -locked BOOL: 
     -rego BOOL: 
     -data BOOL: 

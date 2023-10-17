@@ -203,7 +203,7 @@ func (s *Service) Unlock(ctx context.Context, req *policy.UnlockRequest) error {
 
 func (s *Service) ListPolicies(ctx context.Context, req *policy.PoliciesRequest) (*policy.PoliciesResult, error) {
 	logger := s.logger.With(
-		zap.String("operaiton", "listPolicies"),
+		zap.String("operation", "listPolicies"),
 	)
 
 	policies, err := s.storage.GetPolicies(ctx, req.Locked)

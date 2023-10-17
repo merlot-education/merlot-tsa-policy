@@ -250,27 +250,27 @@ paths:
             tags:
                 - policy
             summary: ListPolicies policy
-            description: Listing all policies
+            description: List policies from storage with optional filters.
             operationId: policy#ListPolicies
             parameters:
                 - name: locked
                   in: query
-                  description: return only locked or unlocked policies
+                  description: Filter to return locked/unlocked policies (optional).
                   required: false
                   type: boolean
                 - name: rego
                   in: query
-                  description: return the rego code of the policies also
+                  description: Include policy source code in results (optional).
                   required: false
                   type: boolean
                 - name: data
                   in: query
-                  description: return the data of the policies also
+                  description: 'Include policy static data in results (optional). '
                   required: false
                   type: boolean
                 - name: dataConfig
                   in: query
-                  description: return the data config of the policies also
+                  description: Include static data config (optional).
                   required: false
                   type: boolean
             responses:
@@ -291,7 +291,7 @@ definitions:
                 type: array
                 items:
                     $ref: '#/definitions/PolicyResponseBody'
-                description: policy list
+                description: JSON array of policies.
                 example:
                     - data: Commodi nemo fugiat id praesentium accusantium expedita.
                       dataConfig: Qui non quia.
@@ -359,36 +359,36 @@ definitions:
         properties:
             data:
                 type: string
-                description: policy data
+                description: Policy static data.
                 example: Accusamus enim.
             dataConfig:
                 type: string
-                description: policy data config
+                description: Policy static data optional configuration.
                 example: Recusandae est rerum corrupti quia.
             group:
                 type: string
-                description: policy group
+                description: Policy group.
                 example: Optio quia et laborum.
             lastUpdate:
                 type: integer
-                description: Last update (timestamp).
+                description: Last update (Unix timestamp).
                 example: 1029654258457164464
                 format: int64
             locked:
                 type: boolean
-                description: if it true gives locked status on the policy
+                description: Locked specifies if the policy is locked or allowed to execute.
                 example: true
             policyName:
                 type: string
-                description: policy name
+                description: Policy name.
                 example: Quia non voluptatibus error.
             rego:
                 type: string
-                description: policy rego code
+                description: Policy rego source code.
                 example: Ut amet.
             version:
                 type: string
-                description: policy version
+                description: Policy version.
                 example: In libero perspiciatis voluptatum ut soluta.
         example:
             data: Totam officia necessitatibus tempore nulla animi.

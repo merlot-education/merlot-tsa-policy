@@ -359,43 +359,43 @@ paths:
             tags:
                 - policy
             summary: ListPolicies policy
-            description: Listing all policies
+            description: List policies from storage with optional filters.
             operationId: policy#ListPolicies
             parameters:
                 - name: locked
                   in: query
-                  description: return only locked or unlocked policies
+                  description: Filter to return locked/unlocked policies (optional).
                   allowEmptyValue: true
                   schema:
                     type: boolean
-                    description: return only locked or unlocked policies
+                    description: Filter to return locked/unlocked policies (optional).
                     example: false
                   example: true
                 - name: rego
                   in: query
-                  description: return the rego code of the policies also
+                  description: Include policy source code in results (optional).
                   allowEmptyValue: true
                   schema:
                     type: boolean
-                    description: return the rego code of the policies also
+                    description: Include policy source code in results (optional).
                     example: false
                   example: true
                 - name: data
                   in: query
-                  description: return the data of the policies also
+                  description: 'Include policy static data in results (optional). '
                   allowEmptyValue: true
                   schema:
                     type: boolean
-                    description: return the data of the policies also
+                    description: 'Include policy static data in results (optional). '
                     example: false
                   example: false
                 - name: dataConfig
                   in: query
-                  description: return the data config of the policies also
+                  description: Include static data config (optional).
                   allowEmptyValue: true
                   schema:
                     type: boolean
-                    description: return the data config of the policies also
+                    description: Include static data config (optional).
                     example: false
                   example: true
             responses:
@@ -448,7 +448,7 @@ components:
                     type: array
                     items:
                         $ref: '#/components/schemas/Policy'
-                    description: policy list
+                    description: JSON array of policies.
                     example:
                         - data: Commodi nemo fugiat id praesentium accusantium expedita.
                           dataConfig: Qui non quia.
@@ -515,36 +515,36 @@ components:
             properties:
                 data:
                     type: string
-                    description: policy data
+                    description: Policy static data.
                     example: Ipsa ad voluptatum maxime ut.
                 dataConfig:
                     type: string
-                    description: policy data config
+                    description: Policy static data optional configuration.
                     example: Aut asperiores.
                 group:
                     type: string
-                    description: policy group
+                    description: Policy group.
                     example: Veritatis quam qui nostrum eaque.
                 lastUpdate:
                     type: integer
-                    description: Last update (timestamp).
+                    description: Last update (Unix timestamp).
                     example: 1131015782715696616
                     format: int64
                 locked:
                     type: boolean
-                    description: if it true gives locked status on the policy
+                    description: Locked specifies if the policy is locked or allowed to execute.
                     example: false
                 policyName:
                     type: string
-                    description: policy name
+                    description: Policy name.
                     example: Maiores et minus.
                 rego:
                     type: string
-                    description: policy rego code
+                    description: Policy rego source code.
                     example: Delectus rerum molestiae possimus cum laboriosam.
                 version:
                     type: string
-                    description: policy version
+                    description: Policy version.
                     example: Et dolores.
             example:
                 data: Similique architecto.

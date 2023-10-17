@@ -40,14 +40,14 @@ var UnlockRequest = Type("UnlockRequest", func() {
 })
 
 var Policy = Type("Policy", func() {
-	Field(1, "policyName", String, "policy name")
-	Field(2, "group", String, "policy group")
-	Field(3, "version", String, "policy version")
-	Field(4, "rego", String, "policy rego code")
-	Field(5, "data", String, "policy data")
-	Field(6, "dataConfig", String, "policy data config")
-	Field(7, "locked", Boolean, "if it true gives locked status on the policy")
-	Field(8, "lastUpdate", Int64, "Last update (timestamp).")
+	Field(1, "policyName", String, "Policy name.")
+	Field(2, "group", String, "Policy group.")
+	Field(3, "version", String, "Policy version.")
+	Field(4, "rego", String, "Policy rego source code.")
+	Field(5, "data", String, "Policy static data.")
+	Field(6, "dataConfig", String, "Policy static data optional configuration.")
+	Field(7, "locked", Boolean, "Locked specifies if the policy is locked or allowed to execute.")
+	Field(8, "lastUpdate", Int64, "Last update (Unix timestamp).")
 	Required("group", "policyName", "version", "locked", "lastUpdate")
 })
 
@@ -59,6 +59,6 @@ var PoliciesRequest = Type("PoliciesRequest", func() {
 })
 
 var PoliciesResult = Type("PoliciesResult", func() {
-	Field(1, "policies", ArrayOf(Policy), "policy list")
+	Field(1, "policies", ArrayOf(Policy), "JSON array of policies.")
 	Required("policies")
 })

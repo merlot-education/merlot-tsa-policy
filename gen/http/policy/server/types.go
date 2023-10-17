@@ -14,27 +14,27 @@ import (
 // ListPoliciesResponseBody is the type of the "policy" service "ListPolicies"
 // endpoint HTTP response body.
 type ListPoliciesResponseBody struct {
-	// policy list
+	// JSON array of policies.
 	Policies []*PolicyResponseBody `form:"policies" json:"policies" xml:"policies"`
 }
 
 // PolicyResponseBody is used to define fields on response body types.
 type PolicyResponseBody struct {
-	// policy name
+	// Policy name.
 	PolicyName string `form:"policyName" json:"policyName" xml:"policyName"`
-	// policy group
+	// Policy group.
 	Group string `form:"group" json:"group" xml:"group"`
-	// policy version
+	// Policy version.
 	Version string `form:"version" json:"version" xml:"version"`
-	// policy rego code
+	// Policy rego source code.
 	Rego *string `form:"rego,omitempty" json:"rego,omitempty" xml:"rego,omitempty"`
-	// policy data
+	// Policy static data.
 	Data *string `form:"data,omitempty" json:"data,omitempty" xml:"data,omitempty"`
-	// policy data config
+	// Policy static data optional configuration.
 	DataConfig *string `form:"dataConfig,omitempty" json:"dataConfig,omitempty" xml:"dataConfig,omitempty"`
-	// if it true gives locked status on the policy
+	// Locked specifies if the policy is locked or allowed to execute.
 	Locked bool `form:"locked" json:"locked" xml:"locked"`
-	// Last update (timestamp).
+	// Last update (Unix timestamp).
 	LastUpdate int64 `form:"lastUpdate" json:"lastUpdate" xml:"lastUpdate"`
 }
 

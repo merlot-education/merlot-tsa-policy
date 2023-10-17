@@ -61,16 +61,16 @@ var _ = Service("policy", func() {
 	})
 
 	Method("ListPolicies", func() {
-		Description("Listing all policies")
+		Description("List policies from storage with optional filters.")
 		Payload(PoliciesRequest)
 		Result(PoliciesResult)
 		HTTP(func() {
 			GET("/v1/policies")
 			Params(func() {
-				Param("locked", Boolean, "return only locked or unlocked policies")
-				Param("rego", Boolean, "return the rego code of the policies also")
-				Param("data", Boolean, "return the data of the policies also")
-				Param("dataConfig", Boolean, "return the data config of the policies also")
+				Param("locked", Boolean, "Filter to return locked/unlocked policies (optional).")
+				Param("rego", Boolean, "Include policy source code in results (optional).")
+				Param("data", Boolean, "Include policy static data in results (optional). ")
+				Param("dataConfig", Boolean, "Include static data config (optional).")
 			})
 			Response(StatusOK)
 		})
