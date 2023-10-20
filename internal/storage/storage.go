@@ -2,15 +2,18 @@ package storage
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 	zap "go.uber.org/zap"
 
 	"gitlab.eclipse.org/eclipse/xfsc/tsa/golib/errors"
+	"gitlab.eclipse.org/eclipse/xfsc/tsa/policy/internal/clients/event"
 )
 
 const (
@@ -21,7 +24,7 @@ const (
 )
 
 type PolicyChangeSubscriber interface {
-	PolicyDataChange()
+	PolicyDataChange(ctx context.Context, data *event.Data) error
 }
 
 type Policy struct {
@@ -39,10 +42,10 @@ type Policy struct {
 }
 
 type Storage struct {
-	db         *mongo.Client
-	policy     *mongo.Collection
-	subscriber PolicyChangeSubscriber
-	logger     *zap.Logger
+	db          *mongo.Client
+	policy      *mongo.Collection
+	subscribers []PolicyChangeSubscriber
+	logger      *zap.Logger
 }
 
 func New(db *mongo.Client, dbname, collection string, logger *zap.Logger) (*Storage, error) {
@@ -103,24 +106,45 @@ func (s *Storage) SetPolicyLock(ctx context.Context, group, name, version string
 	return err
 }
 
+type PolicyEvent struct {
+	OperationType string `bson:"operationType"`
+	Policy        Policy `bson:"fullDocument"`
+}
+
 func (s *Storage) ListenPolicyDataChanges(ctx context.Context) error {
-	stream, err := s.policy.Watch(ctx, mongo.Pipeline{})
+	opts := options.ChangeStream().SetFullDocument(options.UpdateLookup)
+	stream, err := s.policy.Watch(ctx, mongo.Pipeline{}, opts)
 	if err != nil {
 		return errors.New("cannot subscribe for policy data changes", err)
 	}
+	defer stream.Close(ctx)
 
 	for stream.Next(ctx) {
-		s.logger.Info("mongo policy data changed")
-		if s.subscriber != nil {
-			s.subscriber.PolicyDataChange()
+		var policyEvent PolicyEvent
+		err := stream.Decode(&policyEvent)
+		if err != nil {
+			return err
 		}
+
+		policy := policyEvent.Policy
+
+		fmt.Println("Version = ", policy.Version, "Name = ", policy.Name, "Group = ", policy.Group)
+
+		for _, subscriber := range s.subscribers {
+			err := subscriber.PolicyDataChange(ctx, &event.Data{Name: policy.Name, Version: policy.Version, Group: policy.Group})
+			if err != nil {
+				return err
+			}
+		}
+
+		s.logger.Info("mongo policy data changed")
 	}
 
 	return stream.Err()
 }
 
-func (s *Storage) AddPolicyChangeSubscriber(subscriber PolicyChangeSubscriber) {
-	s.subscriber = subscriber
+func (s *Storage) AddPolicyChangeSubscriber(subscriber ...PolicyChangeSubscriber) {
+	s.subscribers = subscriber
 }
 
 func (s *Storage) GetRefreshPolicies(ctx context.Context) ([]*Policy, error) {

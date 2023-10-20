@@ -4,8 +4,10 @@
 package regocache
 
 import (
+	"context"
 	"sync"
 
+	"gitlab.eclipse.org/eclipse/xfsc/tsa/policy/internal/clients/event"
 	"gitlab.eclipse.org/eclipse/xfsc/tsa/policy/internal/storage"
 )
 
@@ -41,6 +43,7 @@ func (c *Cache) Purge() {
 }
 
 // PolicyDataChange triggers purge on the cache.
-func (c *Cache) PolicyDataChange() {
+func (c *Cache) PolicyDataChange(_ context.Context, _ *event.Data) error {
 	c.Purge()
+	return nil
 }

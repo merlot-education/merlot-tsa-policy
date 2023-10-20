@@ -32,8 +32,10 @@ import (
 	"gitlab.eclipse.org/eclipse/xfsc/tsa/policy/gen/openapi"
 	goapolicy "gitlab.eclipse.org/eclipse/xfsc/tsa/policy/gen/policy"
 	"gitlab.eclipse.org/eclipse/xfsc/tsa/policy/internal/clients/cache"
+	"gitlab.eclipse.org/eclipse/xfsc/tsa/policy/internal/clients/event"
 	"gitlab.eclipse.org/eclipse/xfsc/tsa/policy/internal/config"
 	"gitlab.eclipse.org/eclipse/xfsc/tsa/policy/internal/header"
+	"gitlab.eclipse.org/eclipse/xfsc/tsa/policy/internal/notify"
 	"gitlab.eclipse.org/eclipse/xfsc/tsa/policy/internal/regocache"
 	"gitlab.eclipse.org/eclipse/xfsc/tsa/policy/internal/regofunc"
 	"gitlab.eclipse.org/eclipse/xfsc/tsa/policy/internal/service"
@@ -74,8 +76,18 @@ func main() {
 	// create cache client
 	cache := cache.New(cfg.Cache.Addr, cache.WithHTTPClient(oauthClient))
 
+	// create event client
+	events, err := event.New(cfg.Nats.Addr, cfg.Nats.Subject)
+	if err != nil {
+		log.Fatalf("failed to create events client: %v", err)
+	}
+	defer events.CLose(context.Background())
+
 	// create rego policy cache
 	regocache := regocache.New()
+
+	// create policy changes notifier
+	notify := notify.New(events)
 
 	// connect to mongo db
 	db, err := mongo.Connect(
@@ -98,7 +110,7 @@ func main() {
 	}
 
 	// subscribe the cache for policy data changes
-	storage.AddPolicyChangeSubscriber(regocache)
+	storage.AddPolicyChangeSubscriber(regocache, notify)
 
 	// create policy data refresher
 	dataRefresher := policydata.NewRefresher(

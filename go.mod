@@ -3,6 +3,7 @@ module gitlab.eclipse.org/eclipse/xfsc/tsa/policy
 go 1.20
 
 require (
+	github.com/cloudevents/sdk-go/v2 v2.14.0
 	github.com/google/uuid v1.3.0
 	github.com/jpillora/ipfilter v1.2.9
 	github.com/kelseyhightower/envconfig v1.4.0
@@ -18,10 +19,22 @@ require (
 )
 
 require (
+	github.com/json-iterator/go v1.1.12 // indirect
+	github.com/minio/highwayhash v1.0.2 // indirect
+	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
+	github.com/modern-go/reflect2 v1.0.2 // indirect
+	github.com/nats-io/jwt/v2 v2.5.2 // indirect
+	github.com/nats-io/nats.go v1.13.1-0.20220308171302-2f2f6968e98d // indirect
+	github.com/nats-io/nkeys v0.4.4 // indirect
+	github.com/nats-io/nuid v1.0.1 // indirect
+)
+
+require (
 	github.com/OneOfOne/xxhash v1.2.8 // indirect
 	github.com/agnivade/levenshtein v1.1.1 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
+	github.com/cloudevents/sdk-go/protocol/nats/v2 v2.14.0
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.2.0 // indirect
 	github.com/dimfeld/httppath v0.0.0-20170720192232-ee938bf73598 // indirect
