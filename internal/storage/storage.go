@@ -2,7 +2,6 @@ package storage
 
 import (
 	"context"
-	"fmt"
 	"strings"
 	"time"
 
@@ -13,7 +12,7 @@ import (
 	zap "go.uber.org/zap"
 
 	"gitlab.eclipse.org/eclipse/xfsc/tsa/golib/errors"
-	"gitlab.eclipse.org/eclipse/xfsc/tsa/policy/internal/clients/event"
+	"gitlab.eclipse.org/eclipse/xfsc/tsa/policy/internal/notify"
 )
 
 const (
@@ -24,7 +23,7 @@ const (
 )
 
 type PolicyChangeSubscriber interface {
-	PolicyDataChange(ctx context.Context, data *event.Data) error
+	PolicyDataChange(ctx context.Context, event *notify.EventPolicyChange) error
 }
 
 type Policy struct {
@@ -128,10 +127,11 @@ func (s *Storage) ListenPolicyDataChanges(ctx context.Context) error {
 
 		policy := policyEvent.Policy
 
-		fmt.Println("Version = ", policy.Version, "Name = ", policy.Name, "Group = ", policy.Group)
-
 		for _, subscriber := range s.subscribers {
-			err := subscriber.PolicyDataChange(ctx, &event.Data{Name: policy.Name, Version: policy.Version, Group: policy.Group})
+			err := subscriber.PolicyDataChange(
+				ctx,
+				&notify.EventPolicyChange{Name: policy.Name, Version: policy.Version, Group: policy.Group},
+			)
 			if err != nil {
 				return err
 			}
@@ -143,8 +143,8 @@ func (s *Storage) ListenPolicyDataChanges(ctx context.Context) error {
 	return stream.Err()
 }
 
-func (s *Storage) AddPolicyChangeSubscriber(subscriber ...PolicyChangeSubscriber) {
-	s.subscribers = subscriber
+func (s *Storage) AddPolicyChangeSubscribers(subscribers ...PolicyChangeSubscriber) {
+	s.subscribers = subscribers
 }
 
 func (s *Storage) GetRefreshPolicies(ctx context.Context) ([]*Policy, error) {

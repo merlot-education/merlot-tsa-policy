@@ -1,4 +1,4 @@
-package event
+package nats
 
 import (
 	"context"
@@ -17,12 +17,6 @@ const eventType = "update_policy"
 type Client struct {
 	sender *nats.Sender
 	events cloudevents.Client
-}
-
-type Data struct {
-	Name    string `json:"name"`
-	Version string `json:"version"`
-	Group   string `json:"group"`
 }
 
 func New(addr, subject string) (*Client, error) {
@@ -45,7 +39,7 @@ func New(addr, subject string) (*Client, error) {
 	}, nil
 }
 
-func (c *Client) Send(ctx context.Context, data *Data) error {
+func (c *Client) Send(ctx context.Context, data any) error {
 	e, err := newEvent(data)
 	if err != nil {
 		return err
@@ -59,11 +53,11 @@ func (c *Client) Send(ctx context.Context, data *Data) error {
 	return nil
 }
 
-func (c *Client) CLose(ctx context.Context) error {
+func (c *Client) Close(ctx context.Context) error {
 	return c.sender.Close(ctx)
 }
 
-func newEvent(data *Data) (*event.Event, error) {
+func newEvent(data any) (*event.Event, error) {
 	e := cloudevents.NewEvent()
 	e.SetID(uuid.NewString()) // required field
 	e.SetSource("policy")     // required field

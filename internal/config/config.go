@@ -84,5 +84,5 @@ type ipFilterConfig struct {
 
 type natsConfig struct {
 	Addr    string `envconfig:"NATS_ADDR" required:"true"`
-	Subject string `envconfig:"NATS_SUBJECT" default:"notifier"`
+	Subject string `envconfig:"NATS_SUBJECT" default:"policy_notifier"`
 }

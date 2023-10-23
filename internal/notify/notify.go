@@ -2,26 +2,30 @@ package notify
 
 import (
 	"context"
-
-	"gitlab.eclipse.org/eclipse/xfsc/tsa/policy/internal/clients/event"
 )
 
-type Client interface {
-	Send(ctx context.Context, data *event.Data) error
+type EventPolicyChange struct {
+	Name    string `json:"name"`
+	Version string `json:"version"`
+	Group   string `json:"group"`
 }
 
-type Notify struct {
-	client Client
+type Events interface {
+	Send(ctx context.Context, data any) error
 }
 
-func New(client Client) *Notify {
-	return &Notify{client: client}
+type Notifier struct {
+	events Events
 }
 
-func (n *Notify) PolicyDataChange(ctx context.Context, data *event.Data) error {
-	err := n.client.Send(ctx, data)
-	if err != nil {
-		return err
-	}
-	return nil
+// New creates a policy change notifier for interested subscribers.
+// It can notify for policy changes both via MessageQueue or Web hooks.
+func New(events Events) *Notifier {
+	return &Notifier{events: events}
+}
+
+// PolicyDataChange is called when the policies source code or data are updated
+// in storage. The function will notify subscribers of the given changes.
+func (n *Notifier) PolicyDataChange(ctx context.Context, event *EventPolicyChange) error {
+	return n.events.Send(ctx, event)
 }

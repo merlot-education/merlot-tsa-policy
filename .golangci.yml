@@ -27,3 +27,4 @@ linters:
     - misspell
     - staticcheck
     - unused
+    - gosimple
