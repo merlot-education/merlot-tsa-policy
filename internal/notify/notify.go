@@ -4,11 +4,7 @@ import (
 	"context"
 )
 
-type EventPolicyChange struct {
-	Name    string `json:"name"`
-	Version string `json:"version"`
-	Group   string `json:"group"`
-}
+//go:generate counterfeiter . Events
 
 type Events interface {
 	Send(ctx context.Context, data any) error
@@ -16,6 +12,12 @@ type Events interface {
 
 type Notifier struct {
 	events Events
+}
+
+type EventPolicyChange struct {
+	Name    string `json:"name"`
+	Version string `json:"version"`
+	Group   string `json:"group"`
 }
 
 // New creates a policy change notifier for interested subscribers.
