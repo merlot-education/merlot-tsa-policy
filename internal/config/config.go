@@ -15,6 +15,7 @@ type Config struct {
 	Refresher   refresherConfig
 	Auth        authConfig
 	IPFilter    ipFilterConfig
+	Nats        natsConfig
 
 	LogLevel string `envconfig:"LOG_LEVEL" default:"INFO"`
 }
@@ -79,4 +80,9 @@ type authConfig struct {
 type ipFilterConfig struct {
 	Enabled    bool     `envconfig:"IP_FILTER_ENABLE" default:"false"`
 	AllowedIPs []string `envconfig:"IP_FILTER_ALLOWED_IPS"`
+}
+
+type natsConfig struct {
+	Addr    string `envconfig:"NATS_ADDR" required:"true"`
+	Subject string `envconfig:"NATS_SUBJECT" default:"policy_notifier"`
 }

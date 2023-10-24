@@ -32,8 +32,10 @@ import (
 	"gitlab.eclipse.org/eclipse/xfsc/tsa/policy/gen/openapi"
 	goapolicy "gitlab.eclipse.org/eclipse/xfsc/tsa/policy/gen/policy"
 	"gitlab.eclipse.org/eclipse/xfsc/tsa/policy/internal/clients/cache"
+	"gitlab.eclipse.org/eclipse/xfsc/tsa/policy/internal/clients/nats"
 	"gitlab.eclipse.org/eclipse/xfsc/tsa/policy/internal/config"
 	"gitlab.eclipse.org/eclipse/xfsc/tsa/policy/internal/header"
+	"gitlab.eclipse.org/eclipse/xfsc/tsa/policy/internal/notify"
 	"gitlab.eclipse.org/eclipse/xfsc/tsa/policy/internal/regocache"
 	"gitlab.eclipse.org/eclipse/xfsc/tsa/policy/internal/regofunc"
 	"gitlab.eclipse.org/eclipse/xfsc/tsa/policy/internal/service"
@@ -65,7 +67,7 @@ func main() {
 
 	oauthClient := httpClient
 	if cfg.Auth.Enabled {
-		// Create an HTTP Client which automatically issues and carries an OAuth2 token.
+		// Create an HTTP Events which automatically issues and carries an OAuth2 token.
 		// The token will auto-refresh when its expiration is near.
 		oauthCtx := context.WithValue(context.Background(), oauth2.HTTPClient, httpClient)
 		oauthClient = newOAuth2Client(oauthCtx, cfg.OAuth.ClientID, cfg.OAuth.ClientSecret, cfg.OAuth.TokenURL)
@@ -74,8 +76,18 @@ func main() {
 	// create cache client
 	cache := cache.New(cfg.Cache.Addr, cache.WithHTTPClient(oauthClient))
 
+	// create event client
+	events, err := nats.New(cfg.Nats.Addr, cfg.Nats.Subject)
+	if err != nil {
+		logger.Fatal("failed to create events client", zap.Error(err))
+	}
+	defer events.Close(context.Background())
+
 	// create rego policy cache
 	regocache := regocache.New()
+
+	// create policy changes notifier
+	notifier := notify.New(events)
 
 	// connect to mongo db
 	db, err := mongo.Connect(
@@ -98,7 +110,7 @@ func main() {
 	}
 
 	// subscribe the cache for policy data changes
-	storage.AddPolicyChangeSubscriber(regocache)
+	storage.AddPolicyChangeSubscribers(regocache, notifier)
 
 	// create policy data refresher
 	dataRefresher := policydata.NewRefresher(
