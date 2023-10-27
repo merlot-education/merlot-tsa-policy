@@ -23,9 +23,9 @@ var _ = Service("policy", func() {
 		Payload(EvaluateRequest)
 		Result(EvaluateResult)
 		HTTP(func() {
-			GET("/policy/{group}/{policyName}/{version}/evaluation/did.json")
-			GET("/policy/{group}/{policyName}/{version}/evaluation")
-			POST("/policy/{group}/{policyName}/{version}/evaluation")
+			GET("/policy/{repository}/{group}/{policyName}/{version}/evaluation/did.json")
+			GET("/policy/{repository}/{group}/{policyName}/{version}/evaluation")
+			POST("/policy/{repository}/{group}/{policyName}/{version}/evaluation")
 			Header("evaluationID:x-evaluation-id", String, "EvaluationID allows overwriting the randomly generated evaluationID", func() {
 				Example("did:web:example.com")
 			})
@@ -45,7 +45,7 @@ var _ = Service("policy", func() {
 		Payload(LockRequest)
 		Result(Empty)
 		HTTP(func() {
-			POST("/policy/{group}/{policyName}/{version}/lock")
+			POST("/policy/{repository}/{group}/{policyName}/{version}/lock")
 			Response(StatusOK)
 		})
 	})
@@ -55,7 +55,7 @@ var _ = Service("policy", func() {
 		Payload(UnlockRequest)
 		Result(Empty)
 		HTTP(func() {
-			DELETE("/policy/{group}/{policyName}/{version}/lock")
+			DELETE("/policy/{repository}/{group}/{policyName}/{version}/lock")
 			Response(StatusOK)
 		})
 	})
