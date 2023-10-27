@@ -49,6 +49,7 @@ func DecodeEvaluateRequest(mux goahttp.Muxer, decoder func(*http.Request) goahtt
 		}
 
 		var (
+			repository   string
 			group        string
 			policyName   string
 			version      string
@@ -57,6 +58,7 @@ func DecodeEvaluateRequest(mux goahttp.Muxer, decoder func(*http.Request) goahtt
 
 			params = mux.Vars(r)
 		)
+		repository = params["repository"]
 		group = params["group"]
 		policyName = params["policyName"]
 		version = params["version"]
@@ -78,7 +80,7 @@ func DecodeEvaluateRequest(mux goahttp.Muxer, decoder func(*http.Request) goahtt
 		if err != nil {
 			return nil, err
 		}
-		payload := NewEvaluateRequest(body, group, policyName, version, evaluationID, ttl)
+		payload := NewEvaluateRequest(body, repository, group, policyName, version, evaluationID, ttl)
 
 		return payload, nil
 	}
@@ -98,16 +100,18 @@ func EncodeLockResponse(encoder func(context.Context, http.ResponseWriter) goaht
 func DecodeLockRequest(mux goahttp.Muxer, decoder func(*http.Request) goahttp.Decoder) func(*http.Request) (any, error) {
 	return func(r *http.Request) (any, error) {
 		var (
+			repository string
 			group      string
 			policyName string
 			version    string
 
 			params = mux.Vars(r)
 		)
+		repository = params["repository"]
 		group = params["group"]
 		policyName = params["policyName"]
 		version = params["version"]
-		payload := NewLockRequest(group, policyName, version)
+		payload := NewLockRequest(repository, group, policyName, version)
 
 		return payload, nil
 	}
@@ -127,16 +131,18 @@ func EncodeUnlockResponse(encoder func(context.Context, http.ResponseWriter) goa
 func DecodeUnlockRequest(mux goahttp.Muxer, decoder func(*http.Request) goahttp.Decoder) func(*http.Request) (any, error) {
 	return func(r *http.Request) (any, error) {
 		var (
+			repository string
 			group      string
 			policyName string
 			version    string
 
 			params = mux.Vars(r)
 		)
+		repository = params["repository"]
 		group = params["group"]
 		policyName = params["policyName"]
 		version = params["version"]
-		payload := NewUnlockRequest(group, policyName, version)
+		payload := NewUnlockRequest(repository, group, policyName, version)
 
 		return payload, nil
 	}
@@ -218,6 +224,7 @@ func DecodeListPoliciesRequest(mux goahttp.Muxer, decoder func(*http.Request) go
 // *PolicyResponseBody from a value of type *policy.Policy.
 func marshalPolicyPolicyToPolicyResponseBody(v *policy.Policy) *PolicyResponseBody {
 	res := &PolicyResponseBody{
+		Repository: v.Repository,
 		PolicyName: v.PolicyName,
 		Group:      v.Group,
 		Version:    v.Version,

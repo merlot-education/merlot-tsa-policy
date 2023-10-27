@@ -21,6 +21,8 @@ type ListPoliciesResponseBody struct {
 
 // PolicyResponseBody is used to define fields on response body types.
 type PolicyResponseBody struct {
+	// Policy repository.
+	Repository *string `form:"repository,omitempty" json:"repository,omitempty" xml:"repository,omitempty"`
 	// Policy name.
 	PolicyName *string `form:"policyName,omitempty" json:"policyName,omitempty" xml:"policyName,omitempty"`
 	// Policy group.
@@ -81,6 +83,9 @@ func ValidateListPoliciesResponseBody(body *ListPoliciesResponseBody) (err error
 
 // ValidatePolicyResponseBody runs the validations defined on PolicyResponseBody
 func ValidatePolicyResponseBody(body *PolicyResponseBody) (err error) {
+	if body.Repository == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("repository", "body"))
+	}
 	if body.Group == nil {
 		err = goa.MergeErrors(err, goa.MissingFieldError("group", "body"))
 	}
