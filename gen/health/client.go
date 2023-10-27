@@ -28,13 +28,21 @@ func NewClient(liveness, readiness goa.Endpoint) *Client {
 }
 
 // Liveness calls the "Liveness" endpoint of the "health" service.
-func (c *Client) Liveness(ctx context.Context) (err error) {
-	_, err = c.LivenessEndpoint(ctx, nil)
-	return
+func (c *Client) Liveness(ctx context.Context) (res *HealthResponse, err error) {
+	var ires any
+	ires, err = c.LivenessEndpoint(ctx, nil)
+	if err != nil {
+		return
+	}
+	return ires.(*HealthResponse), nil
 }
 
 // Readiness calls the "Readiness" endpoint of the "health" service.
-func (c *Client) Readiness(ctx context.Context) (err error) {
-	_, err = c.ReadinessEndpoint(ctx, nil)
-	return
+func (c *Client) Readiness(ctx context.Context) (res *HealthResponse, err error) {
+	var ires any
+	ires, err = c.ReadinessEndpoint(ctx, nil)
+	if err != nil {
+		return
+	}
+	return ires.(*HealthResponse), nil
 }

@@ -156,7 +156,7 @@ func main() {
 	)
 	{
 		policySvc = policy.New(storage, regocache, cache, logger)
-		healthSvc = health.New()
+		healthSvc = health.New(Version)
 	}
 
 	// create endpoints

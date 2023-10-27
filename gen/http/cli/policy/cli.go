@@ -23,15 +23,15 @@ import (
 //
 //	command (subcommand1|subcommand2|...)
 func UsageCommands() string {
-	return `health (liveness|readiness)
-policy (evaluate|lock|unlock|list-policies)
+	return `policy (evaluate|lock|unlock|list-policies)
+health (liveness|readiness)
 `
 }
 
 // UsageExamples produces an example of a valid invocation of the CLI tool.
 func UsageExamples() string {
-	return os.Args[0] + ` health liveness` + "\n" +
-		os.Args[0] + ` policy evaluate --body "Quibusdam ab repellendus in illum." --group "example" --policy-name "example" --version "1.0" --evaluation-id "Nihil repudiandae dolore quod sunt aut." --ttl 4633716418015214972` + "\n" +
+	return os.Args[0] + ` policy evaluate --body "At incidunt unde consequatur voluptas dolorem nisi." --group "example" --policy-name "example" --version "1.0" --evaluation-id "Illum est et hic." --ttl 5942762461305129155` + "\n" +
+		os.Args[0] + ` health liveness` + "\n" +
 		""
 }
 
@@ -45,12 +45,6 @@ func ParseEndpoint(
 	restore bool,
 ) (goa.Endpoint, any, error) {
 	var (
-		healthFlags = flag.NewFlagSet("health", flag.ContinueOnError)
-
-		healthLivenessFlags = flag.NewFlagSet("liveness", flag.ExitOnError)
-
-		healthReadinessFlags = flag.NewFlagSet("readiness", flag.ExitOnError)
-
 		policyFlags = flag.NewFlagSet("policy", flag.ContinueOnError)
 
 		policyEvaluateFlags            = flag.NewFlagSet("evaluate", flag.ExitOnError)
@@ -76,16 +70,22 @@ func ParseEndpoint(
 		policyListPoliciesRegoFlag       = policyListPoliciesFlags.String("rego", "", "")
 		policyListPoliciesDataFlag       = policyListPoliciesFlags.String("data", "", "")
 		policyListPoliciesDataConfigFlag = policyListPoliciesFlags.String("data-config", "", "")
-	)
-	healthFlags.Usage = healthUsage
-	healthLivenessFlags.Usage = healthLivenessUsage
-	healthReadinessFlags.Usage = healthReadinessUsage
 
+		healthFlags = flag.NewFlagSet("health", flag.ContinueOnError)
+
+		healthLivenessFlags = flag.NewFlagSet("liveness", flag.ExitOnError)
+
+		healthReadinessFlags = flag.NewFlagSet("readiness", flag.ExitOnError)
+	)
 	policyFlags.Usage = policyUsage
 	policyEvaluateFlags.Usage = policyEvaluateUsage
 	policyLockFlags.Usage = policyLockUsage
 	policyUnlockFlags.Usage = policyUnlockUsage
 	policyListPoliciesFlags.Usage = policyListPoliciesUsage
+
+	healthFlags.Usage = healthUsage
+	healthLivenessFlags.Usage = healthLivenessUsage
+	healthReadinessFlags.Usage = healthReadinessUsage
 
 	if err := flag.CommandLine.Parse(os.Args[1:]); err != nil {
 		return nil, nil, err
@@ -102,10 +102,10 @@ func ParseEndpoint(
 	{
 		svcn = flag.Arg(0)
 		switch svcn {
-		case "health":
-			svcf = healthFlags
 		case "policy":
 			svcf = policyFlags
+		case "health":
+			svcf = healthFlags
 		default:
 			return nil, nil, fmt.Errorf("unknown service %q", svcn)
 		}
@@ -121,16 +121,6 @@ func ParseEndpoint(
 	{
 		epn = svcf.Arg(0)
 		switch svcn {
-		case "health":
-			switch epn {
-			case "liveness":
-				epf = healthLivenessFlags
-
-			case "readiness":
-				epf = healthReadinessFlags
-
-			}
-
 		case "policy":
 			switch epn {
 			case "evaluate":
@@ -144,6 +134,16 @@ func ParseEndpoint(
 
 			case "list-policies":
 				epf = policyListPoliciesFlags
+
+			}
+
+		case "health":
+			switch epn {
+			case "liveness":
+				epf = healthLivenessFlags
+
+			case "readiness":
+				epf = healthReadinessFlags
 
 			}
 
@@ -167,16 +167,6 @@ func ParseEndpoint(
 	)
 	{
 		switch svcn {
-		case "health":
-			c := healthc.NewClient(scheme, host, doer, enc, dec, restore)
-			switch epn {
-			case "liveness":
-				endpoint = c.Liveness()
-				data = nil
-			case "readiness":
-				endpoint = c.Readiness()
-				data = nil
-			}
 		case "policy":
 			c := policyc.NewClient(scheme, host, doer, enc, dec, restore)
 			switch epn {
@@ -193,6 +183,16 @@ func ParseEndpoint(
 				endpoint = c.ListPolicies()
 				data, err = policyc.BuildListPoliciesPayload(*policyListPoliciesLockedFlag, *policyListPoliciesRegoFlag, *policyListPoliciesDataFlag, *policyListPoliciesDataConfigFlag)
 			}
+		case "health":
+			c := healthc.NewClient(scheme, host, doer, enc, dec, restore)
+			switch epn {
+			case "liveness":
+				endpoint = c.Liveness()
+				data = nil
+			case "readiness":
+				endpoint = c.Readiness()
+				data = nil
+			}
 		}
 	}
 	if err != nil {
@@ -200,6 +200,78 @@ func ParseEndpoint(
 	}
 
 	return endpoint, data, nil
+}
+
+// policyUsage displays the usage of the policy command and its subcommands.
+func policyUsage() {
+	fmt.Fprintf(os.Stderr, `Policy Service provides evaluation of policies through Open Policy Agent.
+Usage:
+    %[1]s [globalflags] policy COMMAND [flags]
+
+COMMAND:
+    evaluate: Evaluate executes a policy with the given 'data' as input.
+    lock: Lock a policy so that it cannot be evaluated.
+    unlock: Unlock a policy so it can be evaluated again.
+    list-policies: List policies from storage with optional filters.
+
+Additional help:
+    %[1]s policy COMMAND --help
+`, os.Args[0])
+}
+func policyEvaluateUsage() {
+	fmt.Fprintf(os.Stderr, `%[1]s [flags] policy evaluate -body JSON -group STRING -policy-name STRING -version STRING -evaluation-id STRING -ttl INT
+
+Evaluate executes a policy with the given 'data' as input.
+    -body JSON: 
+    -group STRING: Policy group.
+    -policy-name STRING: Policy name.
+    -version STRING: Policy version.
+    -evaluation-id STRING: 
+    -ttl INT: 
+
+Example:
+    %[1]s policy evaluate --body "At incidunt unde consequatur voluptas dolorem nisi." --group "example" --policy-name "example" --version "1.0" --evaluation-id "Illum est et hic." --ttl 5942762461305129155
+`, os.Args[0])
+}
+
+func policyLockUsage() {
+	fmt.Fprintf(os.Stderr, `%[1]s [flags] policy lock -group STRING -policy-name STRING -version STRING
+
+Lock a policy so that it cannot be evaluated.
+    -group STRING: Policy group.
+    -policy-name STRING: Policy name.
+    -version STRING: Policy version.
+
+Example:
+    %[1]s policy lock --group "At eos facilis molestias in voluptas rem." --policy-name "Ab accusantium ut ut aliquid sint animi." --version "Dolorem cumque laborum quis nesciunt."
+`, os.Args[0])
+}
+
+func policyUnlockUsage() {
+	fmt.Fprintf(os.Stderr, `%[1]s [flags] policy unlock -group STRING -policy-name STRING -version STRING
+
+Unlock a policy so it can be evaluated again.
+    -group STRING: Policy group.
+    -policy-name STRING: Policy name.
+    -version STRING: Policy version.
+
+Example:
+    %[1]s policy unlock --group "Ut commodi perspiciatis corporis." --policy-name "Accusamus autem sequi." --version "Et nulla."
+`, os.Args[0])
+}
+
+func policyListPoliciesUsage() {
+	fmt.Fprintf(os.Stderr, `%[1]s [flags] policy list-policies -locked BOOL -rego BOOL -data BOOL -data-config BOOL
+
+List policies from storage with optional filters.
+    -locked BOOL: 
+    -rego BOOL: 
+    -data BOOL: 
+    -data-config BOOL: 
+
+Example:
+    %[1]s policy list-policies --locked true --rego true --data true --data-config false
+`, os.Args[0])
 }
 
 // healthUsage displays the usage of the health command and its subcommands.
@@ -233,77 +305,5 @@ Readiness implements Readiness.
 
 Example:
     %[1]s health readiness
-`, os.Args[0])
-}
-
-// policyUsage displays the usage of the policy command and its subcommands.
-func policyUsage() {
-	fmt.Fprintf(os.Stderr, `Policy Service provides evaluation of policies through Open Policy Agent.
-Usage:
-    %[1]s [globalflags] policy COMMAND [flags]
-
-COMMAND:
-    evaluate: Evaluate executes a policy with the given 'data' as input.
-    lock: Lock a policy so that it cannot be evaluated.
-    unlock: Unlock a policy so it can be evaluated again.
-    list-policies: List policies from storage with optional filters.
-
-Additional help:
-    %[1]s policy COMMAND --help
-`, os.Args[0])
-}
-func policyEvaluateUsage() {
-	fmt.Fprintf(os.Stderr, `%[1]s [flags] policy evaluate -body JSON -group STRING -policy-name STRING -version STRING -evaluation-id STRING -ttl INT
-
-Evaluate executes a policy with the given 'data' as input.
-    -body JSON: 
-    -group STRING: Policy group.
-    -policy-name STRING: Policy name.
-    -version STRING: Policy version.
-    -evaluation-id STRING: 
-    -ttl INT: 
-
-Example:
-    %[1]s policy evaluate --body "Quibusdam ab repellendus in illum." --group "example" --policy-name "example" --version "1.0" --evaluation-id "Nihil repudiandae dolore quod sunt aut." --ttl 4633716418015214972
-`, os.Args[0])
-}
-
-func policyLockUsage() {
-	fmt.Fprintf(os.Stderr, `%[1]s [flags] policy lock -group STRING -policy-name STRING -version STRING
-
-Lock a policy so that it cannot be evaluated.
-    -group STRING: Policy group.
-    -policy-name STRING: Policy name.
-    -version STRING: Policy version.
-
-Example:
-    %[1]s policy lock --group "Aliquam atque voluptatum ut dolorem." --policy-name "Aut facere veniam repudiandae id." --version "Aut minus alias."
-`, os.Args[0])
-}
-
-func policyUnlockUsage() {
-	fmt.Fprintf(os.Stderr, `%[1]s [flags] policy unlock -group STRING -policy-name STRING -version STRING
-
-Unlock a policy so it can be evaluated again.
-    -group STRING: Policy group.
-    -policy-name STRING: Policy name.
-    -version STRING: Policy version.
-
-Example:
-    %[1]s policy unlock --group "Aut voluptas." --policy-name "Sint nam voluptatem ea consequatur similique et." --version "Non mollitia nesciunt impedit facere."
-`, os.Args[0])
-}
-
-func policyListPoliciesUsage() {
-	fmt.Fprintf(os.Stderr, `%[1]s [flags] policy list-policies -locked BOOL -rego BOOL -data BOOL -data-config BOOL
-
-List policies from storage with optional filters.
-    -locked BOOL: 
-    -rego BOOL: 
-    -data BOOL: 
-    -data-config BOOL: 
-
-Example:
-    %[1]s policy list-policies --locked false --rego true --data false --data-config false
 `, os.Args[0])
 }

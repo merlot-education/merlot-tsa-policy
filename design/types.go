@@ -62,3 +62,10 @@ var PoliciesResult = Type("PoliciesResult", func() {
 	Field(1, "policies", ArrayOf(Policy), "JSON array of policies.")
 	Required("policies")
 })
+
+var HealthResponse = Type("HealthResponse", func() {
+	Field(1, "service", String, "Service name.")
+	Field(2, "status", String, "Status message.")
+	Field(3, "version", String, "Service runtime version.")
+	Required("service", "status", "version")
+})

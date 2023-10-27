@@ -37,7 +37,7 @@ func (e *Endpoints) Use(m func(goa.Endpoint) goa.Endpoint) {
 // "Liveness" of service "health".
 func NewLivenessEndpoint(s Service) goa.Endpoint {
 	return func(ctx context.Context, req any) (any, error) {
-		return nil, s.Liveness(ctx)
+		return s.Liveness(ctx)
 	}
 }
 
@@ -45,6 +45,6 @@ func NewLivenessEndpoint(s Service) goa.Endpoint {
 // "Readiness" of service "health".
 func NewReadinessEndpoint(s Service) goa.Endpoint {
 	return func(ctx context.Context, req any) (any, error) {
-		return nil, s.Readiness(ctx)
+		return s.Readiness(ctx)
 	}
 }
