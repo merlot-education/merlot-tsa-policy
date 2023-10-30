@@ -70,6 +70,7 @@ func (s *Service) Evaluate(ctx context.Context, req *policy.EvaluateRequest) (*p
 	}
 
 	logger := s.logger.With(
+		zap.String("repository", req.Repository),
 		zap.String("group", req.Group),
 		zap.String("name", req.PolicyName),
 		zap.String("version", req.Version),
@@ -142,6 +143,7 @@ func (s *Service) Evaluate(ctx context.Context, req *policy.EvaluateRequest) (*p
 // Lock a policy so that it cannot be evaluated.
 func (s *Service) Lock(ctx context.Context, req *policy.LockRequest) error {
 	logger := s.logger.With(
+		zap.String("repository", req.Repository),
 		zap.String("group", req.Group),
 		zap.String("name", req.PolicyName),
 		zap.String("version", req.Version),
@@ -173,6 +175,7 @@ func (s *Service) Lock(ctx context.Context, req *policy.LockRequest) error {
 // Unlock a policy so it can be evaluated again.
 func (s *Service) Unlock(ctx context.Context, req *policy.UnlockRequest) error {
 	logger := s.logger.With(
+		zap.String("repository", req.Repository),
 		zap.String("group", req.Group),
 		zap.String("name", req.PolicyName),
 		zap.String("version", req.Version),

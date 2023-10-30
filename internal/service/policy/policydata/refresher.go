@@ -72,6 +72,7 @@ loop:
 
 func (e *Refresher) Execute(ctx context.Context, p *storage.Policy) {
 	logger := e.logger.With(
+		zap.String("policyRepository", p.Repository),
 		zap.String("policyName", p.Name),
 		zap.String("policyGroup", p.Group),
 		zap.String("policyVersion", p.Version),
