@@ -7,6 +7,7 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/jpillora/ipfilter"
@@ -19,6 +20,8 @@ import (
 	"go.uber.org/zap/zapcore"
 	goahttp "goa.design/goa/v3/http"
 	goa "goa.design/goa/v3/pkg"
+	"golang.ngrok.com/ngrok"
+	ngrokconfig "golang.ngrok.com/ngrok/config"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/clientcredentials"
 	"golang.org/x/sync/errgroup"
@@ -153,7 +156,7 @@ func main() {
 	)
 	{
 		policySvc = policy.New(storage, regocache, cache, logger)
-		healthSvc = health.New()
+		healthSvc = health.New(Version)
 	}
 
 	// create endpoints
@@ -239,6 +242,11 @@ func main() {
 
 	g, ctx := errgroup.WithContext(context.Background())
 	g.Go(func() error {
+		// use ngrok to expose the service externally
+		if useNgrok := os.Getenv("USE_NGROK"); useNgrok == "true" {
+			return ngrokListenAndServe(ctx, srv, logger)
+		}
+
 		if err := graceful.Shutdown(ctx, srv, 20*time.Second); err != nil {
 			logger.Error("server shutdown error", zap.Error(err))
 			return err
@@ -316,4 +324,35 @@ func exposeMetrics(addr string, logger *zap.Logger) {
 	if err := http.ListenAndServe(addr, promMux); err != nil { //nolint:gosec
 		logger.Error("error exposing prometheus metrics", zap.Error(err))
 	}
+}
+
+// ngrokListenAndServe starts the HTTP server through ngrok tunnel,
+// so that it's automatically exposed to the internet with HTTPS scheme.
+// This functionality is needed for resolving DIDs (through policy evaluation),
+// because DID resolvers do not work with insecure HTTP.
+// WARNING: must be used only for development!
+func ngrokListenAndServe(ctx context.Context, srv *http.Server, logger *zap.Logger) error {
+	// If you have static ngrok domain, you can set it in your environment and use it
+	// to have a stable domain for testing. If you don't, the service will be exposed with
+	// randomly generated domain everytime it's restarted.
+	var tunnel ngrokconfig.Tunnel
+	if os.Getenv("NGROK_STATIC_DOMAIN") != "" {
+		tunnel = ngrokconfig.HTTPEndpoint(ngrokconfig.WithDomain(os.Getenv("NGROK_STATIC_DOMAIN")))
+	} else {
+		tunnel = ngrokconfig.HTTPEndpoint()
+	}
+
+	var connOpts []ngrok.ConnectOption
+	if os.Getenv("NGROK_TOKEN") != "" {
+		connOpts = append(connOpts, ngrok.WithAuthtoken(os.Getenv("NGROK_TOKEN")))
+	}
+
+	ln, err := ngrok.Listen(ctx, tunnel, connOpts...)
+	if err != nil {
+		return fmt.Errorf("error starting ngrok listener: %v", err)
+	}
+
+	logger.Info(fmt.Sprintf("starting http server using ngrok: %v", ln.URL()))
+
+	return srv.Serve(ln)
 }

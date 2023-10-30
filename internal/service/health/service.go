@@ -1,17 +1,31 @@
 package health
 
-import "context"
+import (
+	"context"
 
-type Service struct{}
+	"gitlab.eclipse.org/eclipse/xfsc/tsa/policy/gen/health"
+)
 
-func New() *Service {
-	return &Service{}
+type Service struct {
+	ver string
 }
 
-func (s *Service) Liveness(_ context.Context) error {
-	return nil
+func New(version string) *Service {
+	return &Service{ver: version}
 }
 
-func (s *Service) Readiness(_ context.Context) error {
-	return nil
+func (s *Service) Liveness(_ context.Context) (*health.HealthResponse, error) {
+	return &health.HealthResponse{
+		Service: "policy",
+		Status:  "up",
+		Version: s.ver,
+	}, nil
+}
+
+func (s *Service) Readiness(_ context.Context) (*health.HealthResponse, error) {
+	return &health.HealthResponse{
+		Service: "policy",
+		Status:  "up",
+		Version: s.ver,
+	}, nil
 }

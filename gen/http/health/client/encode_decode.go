@@ -51,7 +51,20 @@ func DecodeLivenessResponse(decoder func(*http.Response) goahttp.Decoder, restor
 		}
 		switch resp.StatusCode {
 		case http.StatusOK:
-			return nil, nil
+			var (
+				body LivenessResponseBody
+				err  error
+			)
+			err = decoder(resp).Decode(&body)
+			if err != nil {
+				return nil, goahttp.ErrDecodingError("health", "Liveness", err)
+			}
+			err = ValidateLivenessResponseBody(&body)
+			if err != nil {
+				return nil, goahttp.ErrValidationError("health", "Liveness", err)
+			}
+			res := NewLivenessHealthResponseOK(&body)
+			return res, nil
 		default:
 			body, _ := io.ReadAll(resp.Body)
 			return nil, goahttp.ErrInvalidResponse("health", "Liveness", resp.StatusCode, string(body))
@@ -93,7 +106,20 @@ func DecodeReadinessResponse(decoder func(*http.Response) goahttp.Decoder, resto
 		}
 		switch resp.StatusCode {
 		case http.StatusOK:
-			return nil, nil
+			var (
+				body ReadinessResponseBody
+				err  error
+			)
+			err = decoder(resp).Decode(&body)
+			if err != nil {
+				return nil, goahttp.ErrDecodingError("health", "Readiness", err)
+			}
+			err = ValidateReadinessResponseBody(&body)
+			if err != nil {
+				return nil, goahttp.ErrValidationError("health", "Readiness", err)
+			}
+			res := NewReadinessHealthResponseOK(&body)
+			return res, nil
 		default:
 			body, _ := io.ReadAll(resp.Body)
 			return nil, goahttp.ErrInvalidResponse("health", "Readiness", resp.StatusCode, string(body))
