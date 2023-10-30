@@ -82,7 +82,7 @@ var _ = Service("health", func() {
 
 	Method("Liveness", func() {
 		Payload(Empty)
-		Result(Empty)
+		Result(HealthResponse)
 		HTTP(func() {
 			GET("/liveness")
 			Response(StatusOK)
@@ -91,7 +91,7 @@ var _ = Service("health", func() {
 
 	Method("Readiness", func() {
 		Payload(Empty)
-		Result(Empty)
+		Result(HealthResponse)
 		HTTP(func() {
 			GET("/readiness")
 			Response(StatusOK)

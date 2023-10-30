@@ -68,7 +68,6 @@ func (s *Service) Evaluate(ctx context.Context, req *policy.EvaluateRequest) (*p
 	} else {
 		evaluationID = uuid.NewString()
 	}
-	fmt.Println(req)
 
 	logger := s.logger.With(
 		zap.String("group", req.Group),

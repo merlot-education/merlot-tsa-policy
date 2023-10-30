@@ -23,7 +23,7 @@ func BuildEvaluatePayload(policyEvaluateBody string, policyEvaluateRepository st
 	{
 		err = json.Unmarshal([]byte(policyEvaluateBody), &body)
 		if err != nil {
-			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "\"Quaerat deleniti non nihil.\"")
+			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "\"Ad omnis quasi aut consequuntur quibusdam.\"")
 		}
 	}
 	var repository string
