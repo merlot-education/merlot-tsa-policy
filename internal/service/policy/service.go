@@ -11,6 +11,7 @@ import (
 	"go.uber.org/zap"
 
 	"gitlab.eclipse.org/eclipse/xfsc/tsa/golib/errors"
+	"gitlab.eclipse.org/eclipse/xfsc/tsa/golib/ptr"
 	"gitlab.eclipse.org/eclipse/xfsc/tsa/policy/gen/policy"
 	"gitlab.eclipse.org/eclipse/xfsc/tsa/policy/internal/header"
 	"gitlab.eclipse.org/eclipse/xfsc/tsa/policy/internal/regofunc"
@@ -26,8 +27,9 @@ type Cache interface {
 }
 
 type Storage interface {
-	Policy(ctx context.Context, group, name, version string) (*storage.Policy, error)
-	SetPolicyLock(ctx context.Context, group, name, version string, lock bool) error
+	Policy(ctx context.Context, repository, group, name, version string) (*storage.Policy, error)
+	SetPolicyLock(ctx context.Context, repository, group, name, version string, lock bool) error
+	GetPolicies(ctx context.Context, locked *bool) ([]*storage.Policy, error)
 }
 
 type RegoCache interface {
@@ -68,6 +70,7 @@ func (s *Service) Evaluate(ctx context.Context, req *policy.EvaluateRequest) (*p
 	}
 
 	logger := s.logger.With(
+		zap.String("repository", req.Repository),
 		zap.String("group", req.Group),
 		zap.String("name", req.PolicyName),
 		zap.String("version", req.Version),
@@ -75,7 +78,7 @@ func (s *Service) Evaluate(ctx context.Context, req *policy.EvaluateRequest) (*p
 	)
 
 	headers, _ := header.FromContext(ctx)
-	query, err := s.prepareQuery(ctx, req.Group, req.PolicyName, req.Version, headers)
+	query, err := s.prepareQuery(ctx, req.Repository, req.Group, req.PolicyName, req.Version, headers)
 	if err != nil {
 		logger.Error("error getting prepared query", zap.Error(err))
 		return nil, errors.New("error evaluating policy", err)
@@ -140,12 +143,13 @@ func (s *Service) Evaluate(ctx context.Context, req *policy.EvaluateRequest) (*p
 // Lock a policy so that it cannot be evaluated.
 func (s *Service) Lock(ctx context.Context, req *policy.LockRequest) error {
 	logger := s.logger.With(
+		zap.String("repository", req.Repository),
 		zap.String("group", req.Group),
 		zap.String("name", req.PolicyName),
 		zap.String("version", req.Version),
 	)
 
-	pol, err := s.storage.Policy(ctx, req.Group, req.PolicyName, req.Version)
+	pol, err := s.storage.Policy(ctx, req.Repository, req.Group, req.PolicyName, req.Version)
 	if err != nil {
 		logger.Error("error getting policy from storage", zap.Error(err))
 		if errors.Is(errors.NotFound, err) {
@@ -158,7 +162,7 @@ func (s *Service) Lock(ctx context.Context, req *policy.LockRequest) error {
 		return errors.New(errors.Forbidden, "policy is already locked")
 	}
 
-	if err := s.storage.SetPolicyLock(ctx, req.Group, req.PolicyName, req.Version, true); err != nil {
+	if err := s.storage.SetPolicyLock(ctx, req.Repository, req.Group, req.PolicyName, req.Version, true); err != nil {
 		logger.Error("error locking policy", zap.Error(err))
 		return errors.New("error locking policy", err)
 	}
@@ -171,12 +175,13 @@ func (s *Service) Lock(ctx context.Context, req *policy.LockRequest) error {
 // Unlock a policy so it can be evaluated again.
 func (s *Service) Unlock(ctx context.Context, req *policy.UnlockRequest) error {
 	logger := s.logger.With(
+		zap.String("repository", req.Repository),
 		zap.String("group", req.Group),
 		zap.String("name", req.PolicyName),
 		zap.String("version", req.Version),
 	)
 
-	pol, err := s.storage.Policy(ctx, req.Group, req.PolicyName, req.Version)
+	pol, err := s.storage.Policy(ctx, req.Repository, req.Group, req.PolicyName, req.Version)
 	if err != nil {
 		logger.Error("error getting policy from storage", zap.Error(err))
 		if errors.Is(errors.NotFound, err) {
@@ -189,7 +194,7 @@ func (s *Service) Unlock(ctx context.Context, req *policy.UnlockRequest) error {
 		return errors.New(errors.Forbidden, "policy is unlocked")
 	}
 
-	if err := s.storage.SetPolicyLock(ctx, req.Group, req.PolicyName, req.Version, false); err != nil {
+	if err := s.storage.SetPolicyLock(ctx, req.Repository, req.Group, req.PolicyName, req.Version, false); err != nil {
 		logger.Error("error unlocking policy", zap.Error(err))
 		return errors.New("error unlocking policy", err)
 	}
@@ -199,17 +204,58 @@ func (s *Service) Unlock(ctx context.Context, req *policy.UnlockRequest) error {
 	return nil
 }
 
+func (s *Service) ListPolicies(ctx context.Context, req *policy.PoliciesRequest) (*policy.PoliciesResult, error) {
+	logger := s.logger.With(
+		zap.String("operation", "listPolicies"),
+	)
+
+	policies, err := s.storage.GetPolicies(ctx, req.Locked)
+	if err != nil {
+		logger.Error("error retrieving policies", zap.Error(err))
+		return nil, errors.New("error retrieving policies", err)
+	}
+
+	policiesResult := make([]*policy.Policy, 0, len(policies))
+
+	for _, p := range policies {
+		policy := &policy.Policy{
+			Repository: p.Repository,
+			PolicyName: p.Name,
+			Group:      p.Group,
+			Version:    p.Version,
+			Locked:     p.Locked,
+			LastUpdate: p.LastUpdate.Unix(),
+		}
+
+		if req.Rego != nil && *req.Rego {
+			policy.Rego = ptr.String(p.Rego)
+		}
+
+		if req.Data != nil && *req.Data {
+			policy.Data = ptr.String(p.Data)
+		}
+
+		if req.DataConfig != nil && *req.DataConfig {
+			policy.DataConfig = ptr.String(p.DataConfig)
+		}
+
+		policiesResult = append(policiesResult, policy)
+	}
+
+	return &policy.PoliciesResult{Policies: policiesResult}, nil
+}
+
 // prepareQuery tries to get a prepared query from the regocache.
 // If the policyCache entry is not found, it will try to prepare a new
 // query and will set it into the policyCache for future use.
-func (s *Service) prepareQuery(ctx context.Context, group, policyName, version string, headers map[string]string) (*rego.PreparedEvalQuery, error) {
+func (s *Service) prepareQuery(ctx context.Context, repository, group, policyName, version string, headers map[string]string) (*rego.PreparedEvalQuery, error) {
 	// retrieve policy from cache
-	key := s.queryCacheKey(group, policyName, version)
+	key := s.queryCacheKey(repository, group, policyName, version)
 	pol, ok := s.policyCache.Get(key)
 	if !ok {
 		// retrieve policy from database storage
 		var err error
-		pol, err = s.storage.Policy(ctx, group, policyName, version)
+		pol, err = s.storage.Policy(ctx, repository, group, policyName, version)
 		if err != nil {
 			if errors.Is(errors.NotFound, err) {
 				return nil, err
@@ -273,6 +319,6 @@ func (s *Service) buildRegoArgs(filename, regoPolicy, regoQuery, regoData string
 	return availableFuncs, nil
 }
 
-func (s *Service) queryCacheKey(group, policyName, version string) string {
-	return fmt.Sprintf("%s,%s,%s", group, policyName, version)
+func (s *Service) queryCacheKey(repository, group, policyName, version string) string {
+	return fmt.Sprintf("%s,%s,%s,%s", repository, group, policyName, version)
 }

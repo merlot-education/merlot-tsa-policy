@@ -2,6 +2,7 @@ package policy_test
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -26,6 +27,7 @@ func TestNew(t *testing.T) {
 
 func TestService_Evaluate(t *testing.T) {
 	testPolicy := &storage.Policy{
+		Repository: "policies",
 		Filename:   "policy.rego",
 		Name:       "example",
 		Group:      "testgroup",
@@ -51,6 +53,7 @@ func TestService_Evaluate(t *testing.T) {
 		var body interface{} = input
 
 		return &goapolicy.EvaluateRequest{
+			Repository: "policies",
 			Group:      "testgroup",
 			PolicyName: "example",
 			Version:    "1.0",
@@ -64,6 +67,7 @@ func TestService_Evaluate(t *testing.T) {
 		var body interface{}
 
 		return &goapolicy.EvaluateRequest{
+			Repository: "policies",
 			Group:      "testgroup",
 			PolicyName: "example",
 			Version:    "1.0",
@@ -125,7 +129,7 @@ func TestService_Evaluate(t *testing.T) {
 				},
 			},
 			storage: &policyfakes.FakeStorage{
-				PolicyStub: func(ctx context.Context, s string, s2 string, s3 string) (*storage.Policy, error) {
+				PolicyStub: func(ctx context.Context, s string, s2 string, s3 string, s4 string) (*storage.Policy, error) {
 					return nil, errors.New(errors.NotFound)
 				},
 			},
@@ -142,7 +146,7 @@ func TestService_Evaluate(t *testing.T) {
 				},
 			},
 			storage: &policyfakes.FakeStorage{
-				PolicyStub: func(ctx context.Context, s string, s2 string, s3 string) (*storage.Policy, error) {
+				PolicyStub: func(ctx context.Context, s string, s2 string, s3 string, s4 string) (*storage.Policy, error) {
 					return nil, errors.New("some error")
 				},
 			},
@@ -159,7 +163,7 @@ func TestService_Evaluate(t *testing.T) {
 				},
 			},
 			storage: &policyfakes.FakeStorage{
-				PolicyStub: func(ctx context.Context, s string, s2 string, s3 string) (*storage.Policy, error) {
+				PolicyStub: func(ctx context.Context, s string, s2 string, s3 string, s4 string) (*storage.Policy, error) {
 					return &storage.Policy{Locked: true}, nil
 				},
 			},
@@ -177,7 +181,7 @@ func TestService_Evaluate(t *testing.T) {
 				},
 			},
 			storage: &policyfakes.FakeStorage{
-				PolicyStub: func(ctx context.Context, s string, s2 string, s3 string) (*storage.Policy, error) {
+				PolicyStub: func(ctx context.Context, s string, s2 string, s3 string, s4 string) (*storage.Policy, error) {
 					return testPolicy, nil
 				},
 			},
@@ -200,7 +204,7 @@ func TestService_Evaluate(t *testing.T) {
 				},
 			},
 			storage: &policyfakes.FakeStorage{
-				PolicyStub: func(ctx context.Context, s string, s2 string, s3 string) (*storage.Policy, error) {
+				PolicyStub: func(ctx context.Context, s string, s2 string, s3 string, s4 string) (*storage.Policy, error) {
 					return testPolicy, nil
 				},
 			},
@@ -222,8 +226,9 @@ func TestService_Evaluate(t *testing.T) {
 				},
 			},
 			storage: &policyfakes.FakeStorage{
-				PolicyStub: func(ctx context.Context, s string, s2 string, s3 string) (*storage.Policy, error) {
+				PolicyStub: func(ctx context.Context, s string, s2 string, s3 string, s4 string) (*storage.Policy, error) {
 					return &storage.Policy{
+						Repository: "policies",
 						Name:       "example",
 						Group:      "testgroup",
 						Version:    "1.0",
@@ -252,8 +257,9 @@ func TestService_Evaluate(t *testing.T) {
 				},
 			},
 			storage: &policyfakes.FakeStorage{
-				PolicyStub: func(ctx context.Context, s string, s2 string, s3 string) (*storage.Policy, error) {
+				PolicyStub: func(ctx context.Context, s string, s2 string, s3 string, s4 string) (*storage.Policy, error) {
 					return &storage.Policy{
+						Repository: "policies",
 						Name:       "example",
 						Group:      "testgroup",
 						Version:    "1.0",
@@ -282,8 +288,9 @@ func TestService_Evaluate(t *testing.T) {
 				},
 			},
 			storage: &policyfakes.FakeStorage{
-				PolicyStub: func(ctx context.Context, s string, s2 string, s3 string) (*storage.Policy, error) {
+				PolicyStub: func(ctx context.Context, s string, s2 string, s3 string, s4 string) (*storage.Policy, error) {
 					return &storage.Policy{
+						Repository: "policies",
 						Name:       "example",
 						Group:      "testgroup",
 						Version:    "1.0",
@@ -313,8 +320,9 @@ func TestService_Evaluate(t *testing.T) {
 				},
 			},
 			storage: &policyfakes.FakeStorage{
-				PolicyStub: func(ctx context.Context, s string, s2 string, s3 string) (*storage.Policy, error) {
+				PolicyStub: func(ctx context.Context, s string, s2 string, s3 string, s4 string) (*storage.Policy, error) {
 					return &storage.Policy{
+						Repository: "policies",
 						Name:       "example",
 						Group:      "testgroup",
 						Version:    "1.0",
@@ -343,7 +351,7 @@ func TestService_Evaluate(t *testing.T) {
 				},
 			},
 			storage: &policyfakes.FakeStorage{
-				PolicyStub: func(ctx context.Context, s string, s2 string, s3 string) (*storage.Policy, error) {
+				PolicyStub: func(ctx context.Context, s string, s2 string, s3 string, s4 string) (*storage.Policy, error) {
 					return testPolicy, nil
 				},
 			},
@@ -406,7 +414,7 @@ func TestService_Lock(t *testing.T) {
 			name: "policy is not found",
 			req:  testReq(),
 			storage: &policyfakes.FakeStorage{
-				PolicyStub: func(ctx context.Context, s string, s2 string, s3 string) (*storage.Policy, error) {
+				PolicyStub: func(ctx context.Context, s string, s2 string, s3 string, s4 string) (*storage.Policy, error) {
 					return nil, errors.New(errors.NotFound)
 				},
 			},
@@ -417,7 +425,7 @@ func TestService_Lock(t *testing.T) {
 			name: "error getting policy from storage",
 			req:  testReq(),
 			storage: &policyfakes.FakeStorage{
-				PolicyStub: func(ctx context.Context, s string, s2 string, s3 string) (*storage.Policy, error) {
+				PolicyStub: func(ctx context.Context, s string, s2 string, s3 string, s4 string) (*storage.Policy, error) {
 					return nil, errors.New("some error")
 				},
 			},
@@ -428,7 +436,7 @@ func TestService_Lock(t *testing.T) {
 			name: "policy is already locked",
 			req:  testReq(),
 			storage: &policyfakes.FakeStorage{
-				PolicyStub: func(ctx context.Context, s string, s2 string, s3 string) (*storage.Policy, error) {
+				PolicyStub: func(ctx context.Context, s string, s2 string, s3 string, s4 string) (*storage.Policy, error) {
 					return &storage.Policy{Locked: true}, nil
 				},
 			},
@@ -439,10 +447,10 @@ func TestService_Lock(t *testing.T) {
 			name: "fail to lock policy",
 			req:  testReq(),
 			storage: &policyfakes.FakeStorage{
-				PolicyStub: func(ctx context.Context, s string, s2 string, s3 string) (*storage.Policy, error) {
+				PolicyStub: func(ctx context.Context, s string, s2 string, s3 string, s4 string) (*storage.Policy, error) {
 					return &storage.Policy{Locked: false}, nil
 				},
-				SetPolicyLockStub: func(ctx context.Context, name, group, version string, lock bool) error {
+				SetPolicyLockStub: func(ctx context.Context, repository, name, group, version string, lock bool) error {
 					return errors.New(errors.Internal, "error locking policy")
 				},
 			},
@@ -453,10 +461,10 @@ func TestService_Lock(t *testing.T) {
 			name: "policy is locked successfully",
 			req:  testReq(),
 			storage: &policyfakes.FakeStorage{
-				PolicyStub: func(ctx context.Context, s string, s2 string, s3 string) (*storage.Policy, error) {
+				PolicyStub: func(ctx context.Context, s string, s2 string, s3 string, s4 string) (*storage.Policy, error) {
 					return &storage.Policy{Locked: false}, nil
 				},
-				SetPolicyLockStub: func(ctx context.Context, name, group, version string, lock bool) error {
+				SetPolicyLockStub: func(ctx context.Context, repository, name, group, version string, lock bool) error {
 					return nil
 				},
 			},
@@ -485,6 +493,7 @@ func TestService_Unlock(t *testing.T) {
 	// prepare test request to be used in tests
 	testReq := func() *goapolicy.UnlockRequest {
 		return &goapolicy.UnlockRequest{
+			Repository: "policies",
 			Group:      "testgroup",
 			PolicyName: "example",
 			Version:    "1.0",
@@ -503,7 +512,7 @@ func TestService_Unlock(t *testing.T) {
 			name: "policy is not found",
 			req:  testReq(),
 			storage: &policyfakes.FakeStorage{
-				PolicyStub: func(ctx context.Context, s string, s2 string, s3 string) (*storage.Policy, error) {
+				PolicyStub: func(ctx context.Context, s string, s2 string, s3 string, s4 string) (*storage.Policy, error) {
 					return nil, errors.New(errors.NotFound)
 				},
 			},
@@ -514,7 +523,7 @@ func TestService_Unlock(t *testing.T) {
 			name: "error getting policy from storage",
 			req:  testReq(),
 			storage: &policyfakes.FakeStorage{
-				PolicyStub: func(ctx context.Context, s string, s2 string, s3 string) (*storage.Policy, error) {
+				PolicyStub: func(ctx context.Context, s string, s2 string, s3 string, s4 string) (*storage.Policy, error) {
 					return nil, errors.New("some error")
 				},
 			},
@@ -525,7 +534,7 @@ func TestService_Unlock(t *testing.T) {
 			name: "policy is unlocked",
 			req:  testReq(),
 			storage: &policyfakes.FakeStorage{
-				PolicyStub: func(ctx context.Context, s string, s2 string, s3 string) (*storage.Policy, error) {
+				PolicyStub: func(ctx context.Context, s string, s2 string, s3 string, s4 string) (*storage.Policy, error) {
 					return &storage.Policy{Locked: false}, nil
 				},
 			},
@@ -536,10 +545,10 @@ func TestService_Unlock(t *testing.T) {
 			name: "fail to unlock policy",
 			req:  testReq(),
 			storage: &policyfakes.FakeStorage{
-				PolicyStub: func(ctx context.Context, s string, s2 string, s3 string) (*storage.Policy, error) {
+				PolicyStub: func(ctx context.Context, s string, s2 string, s3 string, s4 string) (*storage.Policy, error) {
 					return &storage.Policy{Locked: true}, nil
 				},
-				SetPolicyLockStub: func(ctx context.Context, name, group, version string, lock bool) error {
+				SetPolicyLockStub: func(ctx context.Context, repository, name, group, version string, lock bool) error {
 					return errors.New(errors.Internal, "error unlocking policy")
 				},
 			},
@@ -550,10 +559,10 @@ func TestService_Unlock(t *testing.T) {
 			name: "policy is unlocked successfully",
 			req:  testReq(),
 			storage: &policyfakes.FakeStorage{
-				PolicyStub: func(ctx context.Context, s string, s2 string, s3 string) (*storage.Policy, error) {
+				PolicyStub: func(ctx context.Context, s string, s2 string, s3 string, s4 string) (*storage.Policy, error) {
 					return &storage.Policy{Locked: true}, nil
 				},
-				SetPolicyLockStub: func(ctx context.Context, name, group, version string, lock bool) error {
+				SetPolicyLockStub: func(ctx context.Context, repository, name, group, version string, lock bool) error {
 					return nil
 				},
 			},
@@ -573,6 +582,237 @@ func TestService_Unlock(t *testing.T) {
 
 				assert.Contains(t, e.Error(), test.errtext)
 				assert.Equal(t, test.errkind, e.Kind)
+			}
+		})
+	}
+}
+
+func TestService_ListPolicies(t *testing.T) {
+	strPointer := func(str string) *string {
+		return &str
+	}
+	boolTrue := true
+	boolFalse := false
+	tests := []struct {
+		name    string
+		storage policy.Storage
+		request *goapolicy.PoliciesRequest
+
+		response *goapolicy.PoliciesResult
+		errText  string
+	}{
+		{
+			name: "storage return error",
+			storage: &policyfakes.FakeStorage{GetPoliciesStub: func(ctx context.Context, b *bool) ([]*storage.Policy, error) {
+				return nil, fmt.Errorf("some error")
+			}},
+			request: &goapolicy.PoliciesRequest{
+				Locked:     new(bool),
+				Rego:       new(bool),
+				Data:       new(bool),
+				DataConfig: new(bool),
+			},
+
+			errText: "some error",
+		},
+		{
+			name: "request without errors and any additional request parameter return all policies",
+			storage: &policyfakes.FakeStorage{GetPoliciesStub: func(ctx context.Context, b *bool) ([]*storage.Policy, error) {
+				return []*storage.Policy{{
+					Repository: "policies",
+					Name:       "example",
+					Group:      "example",
+					Version:    "example",
+					Rego:       "some rego",
+					Data:       "some Data",
+					DataConfig: "data config",
+					Locked:     false,
+					LastUpdate: time.Time{},
+				}, {
+					Repository: "policies",
+					Name:       "example",
+					Group:      "example",
+					Version:    "example",
+					Rego:       "some rego",
+					Data:       "some data",
+					DataConfig: "data config",
+					Locked:     true,
+					LastUpdate: time.Time{},
+				}}, nil
+			}},
+			request: &goapolicy.PoliciesRequest{},
+
+			response: &goapolicy.PoliciesResult{
+				Policies: []*goapolicy.Policy{
+					{
+						Repository: "policies",
+						PolicyName: "example",
+						Group:      "example",
+						Version:    "example",
+						Locked:     false,
+						LastUpdate: time.Time{}.Unix(),
+					},
+					{
+						Repository: "policies",
+						PolicyName: "example",
+						Group:      "example",
+						Version:    "example",
+						Locked:     true,
+						LastUpdate: time.Time{}.Unix(),
+					},
+				},
+			},
+		},
+		{
+			name: "request with only locked parameter equal to true returns only locked policies",
+			storage: &policyfakes.FakeStorage{GetPoliciesStub: func(ctx context.Context, b *bool) ([]*storage.Policy, error) {
+				return []*storage.Policy{{
+					Repository: "policies",
+					Name:       "example",
+					Group:      "example",
+					Version:    "example",
+					Rego:       "some rego",
+					Data:       "some data",
+					DataConfig: "data config",
+					Locked:     true,
+					LastUpdate: time.Time{},
+				}}, nil
+			}},
+			request: &goapolicy.PoliciesRequest{
+				Locked: &boolTrue,
+			},
+
+			response: &goapolicy.PoliciesResult{
+				Policies: []*goapolicy.Policy{
+					{
+						Repository: "policies",
+						PolicyName: "example",
+						Group:      "example",
+						Version:    "example",
+						Locked:     true,
+						LastUpdate: time.Time{}.Unix(),
+					},
+				},
+			},
+		},
+		{
+			name: "request with only locked parameter equal to false returns only unlocked policies",
+			storage: &policyfakes.FakeStorage{GetPoliciesStub: func(ctx context.Context, b *bool) ([]*storage.Policy, error) {
+				return []*storage.Policy{{
+					Repository: "policies",
+					Name:       "example",
+					Group:      "example",
+					Version:    "example",
+					Rego:       "some rego",
+					Data:       "some data",
+					DataConfig: "data config",
+					Locked:     false,
+					LastUpdate: time.Time{},
+				}}, nil
+			}},
+			request: &goapolicy.PoliciesRequest{
+				Locked: &boolFalse,
+			},
+
+			response: &goapolicy.PoliciesResult{
+				Policies: []*goapolicy.Policy{
+					{
+						Repository: "policies",
+						PolicyName: "example",
+						Group:      "example",
+						Version:    "example",
+						Locked:     false,
+						LastUpdate: time.Time{}.Unix(),
+					},
+				},
+			},
+		},
+		{
+			name: "request with all additional params set to true",
+			storage: &policyfakes.FakeStorage{GetPoliciesStub: func(ctx context.Context, b *bool) ([]*storage.Policy, error) {
+				return []*storage.Policy{{
+					Repository: "policies",
+					Name:       "example",
+					Group:      "example",
+					Version:    "example",
+					Rego:       "some rego",
+					Data:       "some data",
+					DataConfig: "data config",
+					Locked:     false,
+					LastUpdate: time.Time{},
+				}}, nil
+			}},
+			request: &goapolicy.PoliciesRequest{
+				Locked:     new(bool),
+				Rego:       &boolTrue,
+				Data:       &boolTrue,
+				DataConfig: &boolTrue,
+			},
+
+			response: &goapolicy.PoliciesResult{
+				Policies: []*goapolicy.Policy{
+					{
+						Repository: "policies",
+						PolicyName: "example",
+						Group:      "example",
+						Version:    "example",
+						Rego:       strPointer("some rego"),
+						Data:       strPointer("some data"),
+						DataConfig: strPointer("data config"),
+						Locked:     false,
+						LastUpdate: time.Time{}.Unix(),
+					},
+				},
+			},
+		},
+		{
+			name: "request with all additional params set to false",
+			storage: &policyfakes.FakeStorage{GetPoliciesStub: func(ctx context.Context, b *bool) ([]*storage.Policy, error) {
+				return []*storage.Policy{{
+					Repository: "policies",
+					Name:       "example",
+					Group:      "example",
+					Version:    "example",
+					Rego:       "some rego",
+					Data:       "some data",
+					DataConfig: "data config",
+					Locked:     false,
+					LastUpdate: time.Time{},
+				}}, nil
+			}},
+			request: &goapolicy.PoliciesRequest{
+				Locked:     new(bool),
+				Rego:       &boolFalse,
+				Data:       &boolFalse,
+				DataConfig: &boolFalse,
+			},
+
+			response: &goapolicy.PoliciesResult{
+				Policies: []*goapolicy.Policy{
+					{
+						Repository: "policies",
+						PolicyName: "example",
+						Group:      "example",
+						Version:    "example",
+						Locked:     false,
+						LastUpdate: time.Time{}.Unix(),
+					},
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			svc := policy.New(test.storage, nil, nil, zap.NewNop())
+			result, err := svc.ListPolicies(context.Background(), test.request)
+
+			if test.errText != "" {
+				assert.ErrorContains(t, err, test.errText)
+				assert.Nil(t, result)
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, result, test.response)
 			}
 		})
 	}

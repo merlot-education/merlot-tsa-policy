@@ -22,7 +22,6 @@ import (
 const (
 	pathSeperator      = string(os.PathSeparator)
 	cloneFolder        = "temp"
-	defaultRepoFolder  = "policies"
 	policyFilename     = "policy.rego"
 	dataFilename       = "data.json"
 	dataConfigFilename = "data-config.json"
@@ -30,6 +29,7 @@ const (
 )
 
 type Policy struct {
+	Repository string
 	Filename   string
 	Name       string
 	Group      string
@@ -87,14 +87,15 @@ func sync(cfg *Config, db *mongo.Client) error {
 	}
 
 	// clone policy repository
-	if err := cloneRepo(context.Background(), cfg.Repo.URL, cfg.Repo.User, cfg.Repo.Pass, cfg.Repo.Branch); err != nil {
+	repo, err := cloneRepo(context.Background(), cfg.Repo.URL, cfg.Repo.User, cfg.Repo.Pass, cfg.Repo.Branch)
+	if err != nil {
 		return fmt.Errorf("error cloning repo: %v", err)
 	}
 
 	log.Println("Repository is cloned successfully.")
 
 	// get all policies from the repository and the given directory
-	policies, err := iterateRepo(cfg.Repo.Folder)
+	policies, err := iterateRepo(cfg.Repo.Folder, repo)
 	if err != nil {
 		return fmt.Errorf("error iterating repo: %v", err)
 	}
@@ -107,7 +108,7 @@ func sync(cfg *Config, db *mongo.Client) error {
 	}
 
 	// delete policy repository folder
-	if err := os.RemoveAll(cfg.Repo.Folder); err != nil {
+	if err := os.RemoveAll(cloneFolder); err != nil {
 		return fmt.Errorf("error deleting policy repo folder: %v", err)
 	}
 
@@ -117,7 +118,7 @@ func sync(cfg *Config, db *mongo.Client) error {
 }
 
 // cloneRepo clones the Policy repository to repoFolder
-func cloneRepo(ctx context.Context, url, user, pass, branch string) error {
+func cloneRepo(ctx context.Context, url, user, pass, branch string) (string, error) {
 	log.Println("Cloning repository...")
 
 	opts := &git.CloneOptions{
@@ -139,12 +140,12 @@ func cloneRepo(ctx context.Context, url, user, pass, branch string) error {
 
 	_, err := git.PlainCloneContext(ctx, cloneFolder, false, opts)
 
-	return err
+	return getRepoName(url), err
 }
 
 // iterateRepo iterates over the repoFolder and returns a map
 // of Policy structs
-func iterateRepo(repoFolder string) (map[string]*Policy, error) {
+func iterateRepo(repoFolder, repository string) (map[string]*Policy, error) {
 	if repoFolder == "" {
 		repoFolder = cloneFolder
 	} else {
@@ -159,7 +160,7 @@ func iterateRepo(repoFolder string) (map[string]*Policy, error) {
 			return err
 		}
 		if !d.IsDir() && d.Name() == policyFilename {
-			policy, err := createPolicy(p)
+			policy, err := createPolicy(p, repository)
 			if err != nil {
 				return err
 			}
@@ -172,7 +173,7 @@ func iterateRepo(repoFolder string) (map[string]*Policy, error) {
 }
 
 // createPolicy instantiates a Policy struct out of a policy file on given path
-func createPolicy(p string) (*Policy, error) {
+func createPolicy(p, repository string) (*Policy, error) {
 	ex, err := os.Executable()
 	if err != nil {
 		return nil, fmt.Errorf("error getting executable path: %v", err)
@@ -216,6 +217,7 @@ func createPolicy(p string) (*Policy, error) {
 	}
 
 	return &Policy{
+		Repository: repository,
 		Filename:   dbFilename,
 		Name:       name,
 		Group:      group,
@@ -296,15 +298,16 @@ func compare(currPolicies map[string]*Policy, repoPolicies map[string]*Policy) [
 // upsert inserts or updates policies in MongoDB collection
 //
 // Decision whether to insert or update is taken based on the composition of
-// Policy "group", "name" and "version" fields
+// Policy "repository", "group", "name" and "version" fields
 func upsert(ctx context.Context, policies []*Policy, db *mongo.Collection) error {
 	var ops []mongo.WriteModel
 	for _, policy := range policies {
 		op := mongo.NewUpdateOneModel()
 		op.SetFilter(bson.M{
-			"group":   policy.Group,
-			"name":    policy.Name,
-			"version": policy.Version,
+			"repository": policy.Repository,
+			"group":      policy.Group,
+			"name":       policy.Name,
+			"version":    policy.Version,
 		})
 		op.SetUpdate(bson.M{
 			"$set": bson.M{
@@ -341,6 +344,7 @@ func (p1 *Policy) equals(p2 *Policy) bool {
 	if p1.Rego == p2.Rego &&
 		p1.Data == p2.Data &&
 		p1.DataConfig == p2.DataConfig &&
+		p1.Repository == p2.Repository &&
 		p1.Name == p2.Name &&
 		p1.Version == p2.Version &&
 		p1.Filename == p2.Filename &&
@@ -351,6 +355,15 @@ func (p1 *Policy) equals(p2 *Policy) bool {
 	return false
 }
 
+// getRepoName returns the repository name out of a clone url
+//
+// Example: clone url - `https://gitlab.example.com/policy.git`; repoName - `policy`
+func getRepoName(url string) string {
+	ss := strings.Split(strings.TrimSuffix(url, ".git"), "/")
+
+	return ss[len(ss)-1]
+}
+
 func constructKey(p *Policy) string {
-	return fmt.Sprintf("%s.%s.%s", p.Group, p.Name, p.Version)
+	return fmt.Sprintf("%s.%s.%s.%s", p.Repository, p.Group, p.Name, p.Version)
 }

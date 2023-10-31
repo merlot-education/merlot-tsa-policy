@@ -23,9 +23,9 @@ var _ = Service("policy", func() {
 		Payload(EvaluateRequest)
 		Result(EvaluateResult)
 		HTTP(func() {
-			GET("/policy/{group}/{policyName}/{version}/evaluation/did.json")
-			GET("/policy/{group}/{policyName}/{version}/evaluation")
-			POST("/policy/{group}/{policyName}/{version}/evaluation")
+			GET("/policy/{repository}/{group}/{policyName}/{version}/evaluation/did.json")
+			GET("/policy/{repository}/{group}/{policyName}/{version}/evaluation")
+			POST("/policy/{repository}/{group}/{policyName}/{version}/evaluation")
 			Header("evaluationID:x-evaluation-id", String, "EvaluationID allows overwriting the randomly generated evaluationID", func() {
 				Example("did:web:example.com")
 			})
@@ -45,7 +45,7 @@ var _ = Service("policy", func() {
 		Payload(LockRequest)
 		Result(Empty)
 		HTTP(func() {
-			POST("/policy/{group}/{policyName}/{version}/lock")
+			POST("/policy/{repository}/{group}/{policyName}/{version}/lock")
 			Response(StatusOK)
 		})
 	})
@@ -55,7 +55,23 @@ var _ = Service("policy", func() {
 		Payload(UnlockRequest)
 		Result(Empty)
 		HTTP(func() {
-			DELETE("/policy/{group}/{policyName}/{version}/lock")
+			DELETE("/policy/{repository}/{group}/{policyName}/{version}/lock")
+			Response(StatusOK)
+		})
+	})
+
+	Method("ListPolicies", func() {
+		Description("List policies from storage with optional filters.")
+		Payload(PoliciesRequest)
+		Result(PoliciesResult)
+		HTTP(func() {
+			GET("/v1/policies")
+			Params(func() {
+				Param("locked", Boolean, "Filter to return locked/unlocked policies (optional).")
+				Param("rego", Boolean, "Include policy source code in results (optional).")
+				Param("data", Boolean, "Include policy static data in results (optional). ")
+				Param("dataConfig", Boolean, "Include static data config (optional).")
+			})
 			Response(StatusOK)
 		})
 	})
@@ -66,7 +82,7 @@ var _ = Service("health", func() {
 
 	Method("Liveness", func() {
 		Payload(Empty)
-		Result(Empty)
+		Result(HealthResponse)
 		HTTP(func() {
 			GET("/liveness")
 			Response(StatusOK)
@@ -75,7 +91,7 @@ var _ = Service("health", func() {
 
 	Method("Readiness", func() {
 		Payload(Empty)
-		Result(Empty)
+		Result(HealthResponse)
 		HTTP(func() {
 			GET("/readiness")
 			Response(StatusOK)

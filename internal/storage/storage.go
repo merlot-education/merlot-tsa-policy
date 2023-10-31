@@ -8,24 +8,28 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 	zap "go.uber.org/zap"
 
 	"gitlab.eclipse.org/eclipse/xfsc/tsa/golib/errors"
+	"gitlab.eclipse.org/eclipse/xfsc/tsa/policy/internal/notify"
 )
 
 const (
+	lockedField              = "locked"
 	dataField                = "data"
 	nextDataRefreshTimeField = "nextDataRefreshTime"
 	refreshPostponePeriod    = 5 * time.Minute
 )
 
 type PolicyChangeSubscriber interface {
-	PolicyDataChange()
+	PolicyDataChange(ctx context.Context, event *notify.EventPolicyChange) error
 }
 
 type Policy struct {
 	ID                  primitive.ObjectID `bson:"_id"`
 	Filename            string
+	Repository          string
 	Name                string
 	Group               string
 	Version             string
@@ -38,10 +42,10 @@ type Policy struct {
 }
 
 type Storage struct {
-	db         *mongo.Client
-	policy     *mongo.Collection
-	subscriber PolicyChangeSubscriber
-	logger     *zap.Logger
+	db          *mongo.Client
+	policy      *mongo.Collection
+	subscribers []PolicyChangeSubscriber
+	logger      *zap.Logger
 }
 
 func New(db *mongo.Client, dbname, collection string, logger *zap.Logger) (*Storage, error) {
@@ -56,17 +60,19 @@ func New(db *mongo.Client, dbname, collection string, logger *zap.Logger) (*Stor
 	}, nil
 }
 
-func (s *Storage) Policy(ctx context.Context, group, name, version string) (*Policy, error) {
+func (s *Storage) Policy(ctx context.Context, repository, group, name, version string) (*Policy, error) {
 	s.logger.Debug("get policy from storage",
+		zap.String("repository", repository),
 		zap.String("group", group),
 		zap.String("policy", name),
 		zap.String("version", version),
 	)
 
 	result := s.policy.FindOne(ctx, bson.M{
-		"group":   group,
-		"name":    name,
-		"version": version,
+		"repository": repository,
+		"group":      group,
+		"name":       name,
+		"version":    version,
 	})
 
 	if result.Err() != nil {
@@ -84,13 +90,14 @@ func (s *Storage) Policy(ctx context.Context, group, name, version string) (*Pol
 	return &policy, nil
 }
 
-func (s *Storage) SetPolicyLock(ctx context.Context, group, name, version string, lock bool) error {
+func (s *Storage) SetPolicyLock(ctx context.Context, repository, group, name, version string, lock bool) error {
 	_, err := s.policy.UpdateOne(
 		ctx,
 		bson.M{
-			"group":   group,
-			"name":    name,
-			"version": version,
+			"repository": repository,
+			"group":      group,
+			"name":       name,
+			"version":    version,
 		},
 		bson.M{
 			"$set": bson.M{
@@ -102,24 +109,46 @@ func (s *Storage) SetPolicyLock(ctx context.Context, group, name, version string
 	return err
 }
 
+type PolicyEvent struct {
+	OperationType string `bson:"operationType"`
+	Policy        Policy `bson:"fullDocument"`
+}
+
 func (s *Storage) ListenPolicyDataChanges(ctx context.Context) error {
-	stream, err := s.policy.Watch(ctx, mongo.Pipeline{})
+	opts := options.ChangeStream().SetFullDocument(options.UpdateLookup)
+	stream, err := s.policy.Watch(ctx, mongo.Pipeline{}, opts)
 	if err != nil {
 		return errors.New("cannot subscribe for policy data changes", err)
 	}
+	defer stream.Close(ctx)
 
 	for stream.Next(ctx) {
-		s.logger.Info("mongo policy data changed")
-		if s.subscriber != nil {
-			s.subscriber.PolicyDataChange()
+		var policyEvent PolicyEvent
+		err := stream.Decode(&policyEvent)
+		if err != nil {
+			return err
 		}
+
+		policy := policyEvent.Policy
+
+		for _, subscriber := range s.subscribers {
+			err := subscriber.PolicyDataChange(
+				ctx,
+				&notify.EventPolicyChange{Repository: policy.Repository, Name: policy.Name, Version: policy.Version, Group: policy.Group},
+			)
+			if err != nil {
+				return err
+			}
+		}
+
+		s.logger.Info("mongo policy data changed")
 	}
 
 	return stream.Err()
 }
 
-func (s *Storage) AddPolicyChangeSubscriber(subscriber PolicyChangeSubscriber) {
-	s.subscriber = subscriber
+func (s *Storage) AddPolicyChangeSubscribers(subscribers ...PolicyChangeSubscriber) {
+	s.subscribers = subscribers
 }
 
 func (s *Storage) GetRefreshPolicies(ctx context.Context) ([]*Policy, error) {
@@ -164,9 +193,9 @@ func (s *Storage) GetRefreshPolicies(ctx context.Context) ([]*Policy, error) {
 // PostponeRefresh adds a refreshPostponePeriod Duration to each policy's
 // nextDataRefreshTimeField in order to prevent concurrent data refresh
 func (s *Storage) PostponeRefresh(ctx context.Context, policies []*Policy) error {
-	var ids []*primitive.ObjectID
+	var ids []primitive.ObjectID
 	for _, p := range policies {
-		ids = append(ids, &p.ID)
+		ids = append(ids, p.ID)
 	}
 
 	filter := bson.M{"_id": bson.M{"$in": ids}}
@@ -201,4 +230,23 @@ func (s *Storage) Transaction(ctx context.Context, callback func(mCtx mongo.Sess
 	}
 
 	return res, nil
+}
+
+func (s *Storage) GetPolicies(ctx context.Context, locked *bool) ([]*Policy, error) {
+	var filter bson.M
+	if locked != nil {
+		filter = bson.M{lockedField: locked}
+	}
+
+	cursor, err := s.policy.Find(ctx, filter)
+	if err != nil {
+		return nil, err
+	}
+
+	var policies []*Policy
+	if err := cursor.All(ctx, &policies); err != nil {
+		return nil, err
+	}
+
+	return policies, nil
 }

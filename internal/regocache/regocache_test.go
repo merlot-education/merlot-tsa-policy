@@ -1,6 +1,7 @@
 package regocache_test
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -72,7 +73,8 @@ func TestCache_PolicyDataChange(t *testing.T) {
 	cache := regocache.New()
 	cache.Set("key1", &p1)
 
-	cache.PolicyDataChange()
+	err := cache.PolicyDataChange(context.Background(), nil)
+	assert.Nil(t, err)
 	q2, ok := cache.Get("key1")
 	assert.False(t, ok)
 	assert.Nil(t, q2)

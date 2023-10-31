@@ -1,6 +1,7 @@
+---
 variables:
   HELPERS_FILE: docker-build.yml
-  HELM_HELPERS_FILE: helm.yml
+  HELM_HELPERS_FILE: helm-package.yml
   APP_HELM_NAME: policy
   DOCKER_FILE: deployment/ci/Dockerfile
 
@@ -8,32 +9,34 @@ stages:
   - compile
   - test
   - build
-  - helm
+  - manifest
+  - lint
+  - package
   - deploy
 
 include:
   - project: "${HELPERS_PATH}"
     file: "${HELPERS_FILE}"
   - template: "Workflows/Branch-Pipelines.gitlab-ci.yml"
-  - project: "$HELM_HELPERS_PATH}"
-    file: "${HELM_HELPERS_FILE}"
+  - project: 'gaiax/tsa/ci-helpers'
+    file: 'helm-package.yml'
 
 lint:
   image: golangci/golangci-lint:latest
   stage: test
   tags:
     - amd64-docker
+  before_script:
+    - ln -s /builds /go/src/code.vereign.com
+    - cd /go/src/code.vereign.com/${CI_PROJECT_PATH}
   script:
-    - ln -s /builds /go/src/gitlab.com
-    - cd /go/src/gitlab.com/${CI_PROJECT_PATH}
     - golangci-lint --version
     - golangci-lint run
     - cd ./cmd/sync
     - golangci-lint run
-  before_script: []
 
 unit tests:
-  image: golang:1.20.5
+  image: golang:1.21.3
   extends: .gotest
   stage: test
   tags:
@@ -42,13 +45,13 @@ unit tests:
   coverage: '/total:\s+\(statements\)\s+(\d+.\d+\%)/'
 
 govulncheck:
-  image: golang:1.20.5
+  image: golang:1.21.3
   stage: test
   tags:
     - amd64-docker
   before_script:
-    - ln -s /builds /go/src/gitlab.com
-    - cd /go/src/gitlab.com/${CI_PROJECT_PATH}
+    - ln -s /builds /go/src/code.vereign.com
+    - cd /go/src/code.vereign.com/${CI_PROJECT_PATH}
   script:
     - go version
     - go install golang.org/x/vuln/cmd/govulncheck@latest
@@ -66,7 +69,7 @@ dockerize sync:
     - amd64-docker
   script:
     - cd ./cmd/sync
-    - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
     - docker build -t "${CI_REGISTRY_IMAGE}/sync:${CI_COMMIT_REF_NAME}" .
     - docker push "${CI_REGISTRY_IMAGE}/sync:${CI_COMMIT_REF_NAME}"
   only:
@@ -74,8 +77,29 @@ dockerize sync:
     - tags
     - integration
 
+manifest:
+  extends: .manifest-amd64
+  stage: manifest
+
+cloud:
+  extends: .manifest-cloud
+  stage: manifest
+
+release:
+  extends: .manifest-release
+  stage: manifest
+
 helm-lint:
+  image: ${HELM_IMAGE}
   extends: .helm-lint
-  stage: helm
+  stage: lint
   tags:
     - amd64-docker
+
+helm-package:
+  image: ${HELM_IMAGE}
+  extends: .helm-package
+  stage: package
+  tags:
+    - amd64-docker
+  needs: ["helm-lint"]

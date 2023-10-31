@@ -34,7 +34,7 @@ func Test_Execute(t *testing.T) {
 		// test input
 		name       string
 		statusCode int
-		policy     storage.Policy
+		policy     *storage.Policy
 		storage    policydata.Storage
 		// expected result
 		logCnt   int
@@ -42,7 +42,7 @@ func Test_Execute(t *testing.T) {
 	}{
 		{
 			name:   "invalid data configuration",
-			policy: storage.Policy{DataConfig: "<invalid data configuration>"},
+			policy: &storage.Policy{DataConfig: "<invalid data configuration>"},
 			storage: &policydatafakes.FakeStorage{
 				UpdateNextRefreshTimeStub: func(ctx context.Context, policy *storage.Policy, t time.Time) error {
 					return nil
@@ -53,7 +53,7 @@ func Test_Execute(t *testing.T) {
 		},
 		{
 			name:   "data configuration is missing required fields",
-			policy: storage.Policy{DataConfig: `{"url": "https://example.com"}`},
+			policy: &storage.Policy{DataConfig: `{"url": "https://example.com"}`},
 			storage: &policydatafakes.FakeStorage{
 				UpdateNextRefreshTimeStub: func(ctx context.Context, policy *storage.Policy, t time.Time) error {
 					return nil
@@ -64,7 +64,7 @@ func Test_Execute(t *testing.T) {
 		},
 		{
 			name:   "error making an http request",
-			policy: storage.Policy{DataConfig: `{"url": "htt//example.com", "method": "GET", "period": "1h"}`},
+			policy: &storage.Policy{DataConfig: `{"url": "htt//example.com", "method": "GET", "period": "1h"}`},
 			storage: &policydatafakes.FakeStorage{
 				UpdateNextRefreshTimeStub: func(ctx context.Context, policy *storage.Policy, t time.Time) error {
 					return nil
@@ -76,7 +76,7 @@ func Test_Execute(t *testing.T) {
 		{
 			name:       "unexpected response code",
 			statusCode: 500,
-			policy:     storage.Policy{DataConfig: `{"url": "https://example.com", "method": "GET", "period": "1h"}`},
+			policy:     &storage.Policy{DataConfig: `{"url": "https://example.com", "method": "GET", "period": "1h"}`},
 			storage: &policydatafakes.FakeStorage{
 				UpdateNextRefreshTimeStub: func(ctx context.Context, policy *storage.Policy, t time.Time) error {
 					return nil
@@ -87,7 +87,7 @@ func Test_Execute(t *testing.T) {
 		},
 		{
 			name:   "error updating data after successful refresh request",
-			policy: storage.Policy{DataConfig: `{"url": "https://example.com", "method": "GET", "period": "1h"}`},
+			policy: &storage.Policy{DataConfig: `{"url": "https://example.com", "method": "GET", "period": "1h"}`},
 			storage: &policydatafakes.FakeStorage{
 				UpdateNextRefreshTimeStub: func(ctx context.Context, policy *storage.Policy, t time.Time) error {
 					return errors.New("storage error")
@@ -98,7 +98,7 @@ func Test_Execute(t *testing.T) {
 		},
 		{
 			name:   "data refresh is successfully executed",
-			policy: storage.Policy{DataConfig: `{"url": "https://example.com", "method": "GET", "period": "1h"}`},
+			policy: &storage.Policy{DataConfig: `{"url": "https://example.com", "method": "GET", "period": "1h"}`},
 			storage: &policydatafakes.FakeStorage{
 				UpdateNextRefreshTimeStub: func(ctx context.Context, policy *storage.Policy, t time.Time) error {
 					return nil
@@ -121,7 +121,7 @@ func Test_Execute(t *testing.T) {
 				})
 			}
 			refresher := policydata.NewRefresher(test.storage, time.Duration(0), httpClient, logger)
-			refresher.Execute(context.Background(), &test.policy)
+			refresher.Execute(context.Background(), test.policy)
 
 			assert.Equal(t, test.logCnt, observedLogs.Len())
 			if observedLogs.Len() > 0 {
