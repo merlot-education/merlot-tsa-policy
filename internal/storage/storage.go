@@ -29,6 +29,7 @@ type PolicyChangeSubscriber interface {
 type Policy struct {
 	ID                  primitive.ObjectID `bson:"_id"`
 	Filename            string
+	Repository          string
 	Name                string
 	Group               string
 	Version             string
@@ -59,17 +60,19 @@ func New(db *mongo.Client, dbname, collection string, logger *zap.Logger) (*Stor
 	}, nil
 }
 
-func (s *Storage) Policy(ctx context.Context, group, name, version string) (*Policy, error) {
+func (s *Storage) Policy(ctx context.Context, repository, group, name, version string) (*Policy, error) {
 	s.logger.Debug("get policy from storage",
+		zap.String("repository", repository),
 		zap.String("group", group),
 		zap.String("policy", name),
 		zap.String("version", version),
 	)
 
 	result := s.policy.FindOne(ctx, bson.M{
-		"group":   group,
-		"name":    name,
-		"version": version,
+		"repository": repository,
+		"group":      group,
+		"name":       name,
+		"version":    version,
 	})
 
 	if result.Err() != nil {
@@ -87,13 +90,14 @@ func (s *Storage) Policy(ctx context.Context, group, name, version string) (*Pol
 	return &policy, nil
 }
 
-func (s *Storage) SetPolicyLock(ctx context.Context, group, name, version string, lock bool) error {
+func (s *Storage) SetPolicyLock(ctx context.Context, repository, group, name, version string, lock bool) error {
 	_, err := s.policy.UpdateOne(
 		ctx,
 		bson.M{
-			"group":   group,
-			"name":    name,
-			"version": version,
+			"repository": repository,
+			"group":      group,
+			"name":       name,
+			"version":    version,
 		},
 		bson.M{
 			"$set": bson.M{
@@ -130,7 +134,7 @@ func (s *Storage) ListenPolicyDataChanges(ctx context.Context) error {
 		for _, subscriber := range s.subscribers {
 			err := subscriber.PolicyDataChange(
 				ctx,
-				&notify.EventPolicyChange{Name: policy.Name, Version: policy.Version, Group: policy.Group},
+				&notify.EventPolicyChange{Repository: policy.Repository, Name: policy.Name, Version: policy.Version, Group: policy.Group},
 			)
 			if err != nil {
 				return err

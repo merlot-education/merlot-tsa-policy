@@ -52,11 +52,11 @@ func New(
 ) *Server {
 	return &Server{
 		Mounts: []*MountPoint{
-			{"Evaluate", "GET", "/policy/{group}/{policyName}/{version}/evaluation/did.json"},
-			{"Evaluate", "GET", "/policy/{group}/{policyName}/{version}/evaluation"},
-			{"Evaluate", "POST", "/policy/{group}/{policyName}/{version}/evaluation"},
-			{"Lock", "POST", "/policy/{group}/{policyName}/{version}/lock"},
-			{"Unlock", "DELETE", "/policy/{group}/{policyName}/{version}/lock"},
+			{"Evaluate", "GET", "/policy/{repository}/{group}/{policyName}/{version}/evaluation/did.json"},
+			{"Evaluate", "GET", "/policy/{repository}/{group}/{policyName}/{version}/evaluation"},
+			{"Evaluate", "POST", "/policy/{repository}/{group}/{policyName}/{version}/evaluation"},
+			{"Lock", "POST", "/policy/{repository}/{group}/{policyName}/{version}/lock"},
+			{"Unlock", "DELETE", "/policy/{repository}/{group}/{policyName}/{version}/lock"},
 			{"ListPolicies", "GET", "/v1/policies"},
 		},
 		Evaluate:     NewEvaluateHandler(e.Evaluate, mux, decoder, encoder, errhandler, formatter),
@@ -102,9 +102,9 @@ func MountEvaluateHandler(mux goahttp.Muxer, h http.Handler) {
 			h.ServeHTTP(w, r)
 		}
 	}
-	mux.Handle("GET", "/policy/{group}/{policyName}/{version}/evaluation/did.json", f)
-	mux.Handle("GET", "/policy/{group}/{policyName}/{version}/evaluation", f)
-	mux.Handle("POST", "/policy/{group}/{policyName}/{version}/evaluation", f)
+	mux.Handle("GET", "/policy/{repository}/{group}/{policyName}/{version}/evaluation/did.json", f)
+	mux.Handle("GET", "/policy/{repository}/{group}/{policyName}/{version}/evaluation", f)
+	mux.Handle("POST", "/policy/{repository}/{group}/{policyName}/{version}/evaluation", f)
 }
 
 // NewEvaluateHandler creates a HTTP handler which loads the HTTP request and
@@ -155,7 +155,7 @@ func MountLockHandler(mux goahttp.Muxer, h http.Handler) {
 			h.ServeHTTP(w, r)
 		}
 	}
-	mux.Handle("POST", "/policy/{group}/{policyName}/{version}/lock", f)
+	mux.Handle("POST", "/policy/{repository}/{group}/{policyName}/{version}/lock", f)
 }
 
 // NewLockHandler creates a HTTP handler which loads the HTTP request and calls
@@ -206,7 +206,7 @@ func MountUnlockHandler(mux goahttp.Muxer, h http.Handler) {
 			h.ServeHTTP(w, r)
 		}
 	}
-	mux.Handle("DELETE", "/policy/{group}/{policyName}/{version}/lock", f)
+	mux.Handle("DELETE", "/policy/{repository}/{group}/{policyName}/{version}/lock", f)
 }
 
 // NewUnlockHandler creates a HTTP handler which loads the HTTP request and

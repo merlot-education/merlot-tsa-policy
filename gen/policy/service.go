@@ -35,6 +35,8 @@ var MethodNames = [4]string{"Evaluate", "Lock", "Unlock", "ListPolicies"}
 
 // EvaluateRequest is the payload type of the policy service Evaluate method.
 type EvaluateRequest struct {
+	// Policy repository.
+	Repository string
 	// Policy group.
 	Group string
 	// Policy name.
@@ -61,6 +63,8 @@ type EvaluateResult struct {
 
 // LockRequest is the payload type of the policy service Lock method.
 type LockRequest struct {
+	// Policy repository.
+	Repository string
 	// Policy group.
 	Group string
 	// Policy name.
@@ -85,6 +89,8 @@ type PoliciesResult struct {
 }
 
 type Policy struct {
+	// Policy repository.
+	Repository string
 	// Policy name.
 	PolicyName string
 	// Policy group.
@@ -105,6 +111,8 @@ type Policy struct {
 
 // UnlockRequest is the payload type of the policy service Unlock method.
 type UnlockRequest struct {
+	// Policy repository.
+	Repository string
 	// Policy group.
 	Group string
 	// Policy name.

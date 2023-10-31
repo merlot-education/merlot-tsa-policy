@@ -17,14 +17,18 @@ import (
 
 // BuildEvaluatePayload builds the payload for the policy Evaluate endpoint
 // from CLI flags.
-func BuildEvaluatePayload(policyEvaluateBody string, policyEvaluateGroup string, policyEvaluatePolicyName string, policyEvaluateVersion string, policyEvaluateEvaluationID string, policyEvaluateTTL string) (*policy.EvaluateRequest, error) {
+func BuildEvaluatePayload(policyEvaluateBody string, policyEvaluateRepository string, policyEvaluateGroup string, policyEvaluatePolicyName string, policyEvaluateVersion string, policyEvaluateEvaluationID string, policyEvaluateTTL string) (*policy.EvaluateRequest, error) {
 	var err error
 	var body any
 	{
 		err = json.Unmarshal([]byte(policyEvaluateBody), &body)
 		if err != nil {
-			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "\"At incidunt unde consequatur voluptas dolorem nisi.\"")
+			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "\"Ad omnis quasi aut consequuntur quibusdam.\"")
 		}
+	}
+	var repository string
+	{
+		repository = policyEvaluateRepository
 	}
 	var group string
 	{
@@ -60,6 +64,7 @@ func BuildEvaluatePayload(policyEvaluateBody string, policyEvaluateGroup string,
 	res := &policy.EvaluateRequest{
 		Input: &v,
 	}
+	res.Repository = repository
 	res.Group = group
 	res.PolicyName = policyName
 	res.Version = version
@@ -71,7 +76,11 @@ func BuildEvaluatePayload(policyEvaluateBody string, policyEvaluateGroup string,
 
 // BuildLockPayload builds the payload for the policy Lock endpoint from CLI
 // flags.
-func BuildLockPayload(policyLockGroup string, policyLockPolicyName string, policyLockVersion string) (*policy.LockRequest, error) {
+func BuildLockPayload(policyLockRepository string, policyLockGroup string, policyLockPolicyName string, policyLockVersion string) (*policy.LockRequest, error) {
+	var repository string
+	{
+		repository = policyLockRepository
+	}
 	var group string
 	{
 		group = policyLockGroup
@@ -85,6 +94,7 @@ func BuildLockPayload(policyLockGroup string, policyLockPolicyName string, polic
 		version = policyLockVersion
 	}
 	v := &policy.LockRequest{}
+	v.Repository = repository
 	v.Group = group
 	v.PolicyName = policyName
 	v.Version = version
@@ -94,7 +104,11 @@ func BuildLockPayload(policyLockGroup string, policyLockPolicyName string, polic
 
 // BuildUnlockPayload builds the payload for the policy Unlock endpoint from
 // CLI flags.
-func BuildUnlockPayload(policyUnlockGroup string, policyUnlockPolicyName string, policyUnlockVersion string) (*policy.UnlockRequest, error) {
+func BuildUnlockPayload(policyUnlockRepository string, policyUnlockGroup string, policyUnlockPolicyName string, policyUnlockVersion string) (*policy.UnlockRequest, error) {
+	var repository string
+	{
+		repository = policyUnlockRepository
+	}
 	var group string
 	{
 		group = policyUnlockGroup
@@ -108,6 +122,7 @@ func BuildUnlockPayload(policyUnlockGroup string, policyUnlockPolicyName string,
 		version = policyUnlockVersion
 	}
 	v := &policy.UnlockRequest{}
+	v.Repository = repository
 	v.Group = group
 	v.PolicyName = policyName
 	v.Version = version

@@ -15,9 +15,10 @@ type Notifier struct {
 }
 
 type EventPolicyChange struct {
-	Name    string `json:"name"`
-	Version string `json:"version"`
-	Group   string `json:"group"`
+	Repository string `json:"repository"`
+	Name       string `json:"name"`
+	Version    string `json:"version"`
+	Group      string `json:"group"`
 }
 
 // New creates a policy change notifier for interested subscribers.

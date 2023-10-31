@@ -30,7 +30,7 @@ paths:
                             - version
             schemes:
                 - http
-    /policy/{group}/{policyName}/{version}/evaluation:
+    /policy/{repository}/{group}/{policyName}/{version}/evaluation:
         get:
             tags:
                 - policy
@@ -38,6 +38,11 @@ paths:
             description: Evaluate executes a policy with the given 'data' as input.
             operationId: policy#Evaluate#1
             parameters:
+                - name: repository
+                  in: path
+                  description: Policy repository.
+                  required: true
+                  type: string
                 - name: group
                   in: path
                   description: Policy group.
@@ -89,6 +94,11 @@ paths:
             description: Evaluate executes a policy with the given 'data' as input.
             operationId: policy#Evaluate#2
             parameters:
+                - name: repository
+                  in: path
+                  description: Policy repository.
+                  required: true
+                  type: string
                 - name: group
                   in: path
                   description: Policy group.
@@ -133,7 +143,7 @@ paths:
                             type: string
             schemes:
                 - http
-    /policy/{group}/{policyName}/{version}/evaluation/did.json:
+    /policy/{repository}/{group}/{policyName}/{version}/evaluation/did.json:
         get:
             tags:
                 - policy
@@ -141,6 +151,11 @@ paths:
             description: Evaluate executes a policy with the given 'data' as input.
             operationId: policy#Evaluate
             parameters:
+                - name: repository
+                  in: path
+                  description: Policy repository.
+                  required: true
+                  type: string
                 - name: group
                   in: path
                   description: Policy group.
@@ -185,7 +200,7 @@ paths:
                             type: string
             schemes:
                 - http
-    /policy/{group}/{policyName}/{version}/lock:
+    /policy/{repository}/{group}/{policyName}/{version}/lock:
         post:
             tags:
                 - policy
@@ -193,6 +208,11 @@ paths:
             description: Lock a policy so that it cannot be evaluated.
             operationId: policy#Lock
             parameters:
+                - name: repository
+                  in: path
+                  description: Policy repository.
+                  required: true
+                  type: string
                 - name: group
                   in: path
                   description: Policy group.
@@ -220,6 +240,11 @@ paths:
             description: Unlock a policy so it can be evaluated again.
             operationId: policy#Unlock
             parameters:
+                - name: repository
+                  in: path
+                  description: Policy repository.
+                  required: true
+                  type: string
                 - name: group
                   in: path
                   description: Policy group.
@@ -302,19 +327,19 @@ definitions:
             service:
                 type: string
                 description: Service name.
-                example: Quasi delectus debitis consectetur rerum vel sunt.
+                example: Voluptatibus cupiditate ea repellat inventore.
             status:
                 type: string
                 description: Status message.
-                example: Ea architecto iure est similique architecto id.
+                example: Doloremque recusandae earum.
             version:
                 type: string
                 description: Service runtime version.
-                example: Ut est ut molestias sint ipsam.
+                example: Quis nisi.
         example:
-            service: At ut dolore.
-            status: Aperiam aut odio dolorum.
-            version: Quae et et unde.
+            service: Iure fugiat sed sit dolores iusto ut.
+            status: Et eaque.
+            version: Et mollitia.
         required:
             - service
             - status
@@ -326,19 +351,19 @@ definitions:
             service:
                 type: string
                 description: Service name.
-                example: Dolore ducimus accusamus et voluptatibus cupiditate.
+                example: Non quo ut molestias rerum sunt.
             status:
                 type: string
                 description: Status message.
-                example: Repellat inventore ut doloremque recusandae earum et.
+                example: Omnis dolores totam voluptatem rerum.
             version:
                 type: string
                 description: Service runtime version.
-                example: Nisi vitae iure fugiat sed sit dolores.
+                example: Architecto et enim omnis.
         example:
-            service: Ut quibusdam.
-            status: Eaque fugiat et.
-            version: Vel non quo.
+            service: Est impedit.
+            status: Consequatur ut suscipit.
+            version: Neque et sed modi accusantium.
         required:
             - service
             - status
@@ -353,40 +378,53 @@ definitions:
                     $ref: '#/definitions/PolicyResponseBody'
                 description: JSON array of policies.
                 example:
-                    - data: Optio quia et laborum.
-                      dataConfig: In libero perspiciatis voluptatum ut soluta.
-                      group: Commodi nemo fugiat id praesentium accusantium expedita.
-                      lastUpdate: 9002532952206938167
-                      locked: false
-                      policyName: Et aliquam sunt in et quia cum.
-                      rego: Error maxime quasi quia non voluptatibus error.
-                      version: Qui non quia.
-                    - data: Optio quia et laborum.
-                      dataConfig: In libero perspiciatis voluptatum ut soluta.
-                      group: Commodi nemo fugiat id praesentium accusantium expedita.
-                      lastUpdate: 9002532952206938167
-                      locked: false
-                      policyName: Et aliquam sunt in et quia cum.
-                      rego: Error maxime quasi quia non voluptatibus error.
-                      version: Qui non quia.
+                    - data: Voluptas ad corporis adipisci inventore ipsum.
+                      dataConfig: Recusandae dolorum nisi distinctio vitae ad.
+                      group: Accusamus enim.
+                      lastUpdate: 4303309286764032455
+                      locked: true
+                      policyName: Ut amet.
+                      rego: Quam dolores architecto itaque.
+                      repository: Reprehenderit in libero perspiciatis voluptatum ut soluta.
+                      version: Recusandae est rerum corrupti quia.
+                    - data: Voluptas ad corporis adipisci inventore ipsum.
+                      dataConfig: Recusandae dolorum nisi distinctio vitae ad.
+                      group: Accusamus enim.
+                      lastUpdate: 4303309286764032455
+                      locked: true
+                      policyName: Ut amet.
+                      rego: Quam dolores architecto itaque.
+                      repository: Reprehenderit in libero perspiciatis voluptatum ut soluta.
+                      version: Recusandae est rerum corrupti quia.
+                    - data: Voluptas ad corporis adipisci inventore ipsum.
+                      dataConfig: Recusandae dolorum nisi distinctio vitae ad.
+                      group: Accusamus enim.
+                      lastUpdate: 4303309286764032455
+                      locked: true
+                      policyName: Ut amet.
+                      rego: Quam dolores architecto itaque.
+                      repository: Reprehenderit in libero perspiciatis voluptatum ut soluta.
+                      version: Recusandae est rerum corrupti quia.
         example:
             policies:
-                - data: Optio quia et laborum.
-                  dataConfig: In libero perspiciatis voluptatum ut soluta.
-                  group: Commodi nemo fugiat id praesentium accusantium expedita.
-                  lastUpdate: 9002532952206938167
-                  locked: false
-                  policyName: Et aliquam sunt in et quia cum.
-                  rego: Error maxime quasi quia non voluptatibus error.
-                  version: Qui non quia.
-                - data: Optio quia et laborum.
-                  dataConfig: In libero perspiciatis voluptatum ut soluta.
-                  group: Commodi nemo fugiat id praesentium accusantium expedita.
-                  lastUpdate: 9002532952206938167
-                  locked: false
-                  policyName: Et aliquam sunt in et quia cum.
-                  rego: Error maxime quasi quia non voluptatibus error.
-                  version: Qui non quia.
+                - data: Voluptas ad corporis adipisci inventore ipsum.
+                  dataConfig: Recusandae dolorum nisi distinctio vitae ad.
+                  group: Accusamus enim.
+                  lastUpdate: 4303309286764032455
+                  locked: true
+                  policyName: Ut amet.
+                  rego: Quam dolores architecto itaque.
+                  repository: Reprehenderit in libero perspiciatis voluptatum ut soluta.
+                  version: Recusandae est rerum corrupti quia.
+                - data: Voluptas ad corporis adipisci inventore ipsum.
+                  dataConfig: Recusandae dolorum nisi distinctio vitae ad.
+                  group: Accusamus enim.
+                  lastUpdate: 4303309286764032455
+                  locked: true
+                  policyName: Ut amet.
+                  rego: Quam dolores architecto itaque.
+                  repository: Reprehenderit in libero perspiciatis voluptatum ut soluta.
+                  version: Recusandae est rerum corrupti quia.
         required:
             - policies
     PolicyResponseBody:
@@ -396,46 +434,52 @@ definitions:
             data:
                 type: string
                 description: Policy static data.
-                example: Voluptate amet.
+                example: Aut asperiores.
             dataConfig:
                 type: string
                 description: Policy static data optional configuration.
-                example: Aut et.
+                example: Vel dolores omnis molestiae tempora sed repellendus.
             group:
                 type: string
                 description: Policy group.
-                example: Totam officia necessitatibus tempore nulla animi.
+                example: Et dolores.
             lastUpdate:
                 type: integer
                 description: Last update (Unix timestamp).
-                example: 4355437808814429430
+                example: 8993739598055578473
                 format: int64
             locked:
                 type: boolean
                 description: Locked specifies if the policy is locked or allowed to execute.
-                example: true
+                example: false
             policyName:
                 type: string
                 description: Policy name.
-                example: Corporis est rem.
+                example: Veritatis quam qui nostrum eaque.
             rego:
                 type: string
                 description: Policy rego source code.
-                example: Vitae dolores quas et aperiam dolores reiciendis.
+                example: Ipsa ad voluptatum maxime ut.
+            repository:
+                type: string
+                description: Policy repository.
+                example: Maiores et minus.
             version:
                 type: string
                 description: Policy version.
-                example: Consequatur vel rerum rem ipsam nam.
+                example: Delectus rerum molestiae possimus cum laboriosam.
         example:
-            data: Aut asperiores.
-            dataConfig: Vel dolores omnis molestiae tempora sed repellendus.
-            group: Et dolores.
-            lastUpdate: 8993739598055578473
+            data: Aperiam aut odio dolorum.
+            dataConfig: Quae et et unde.
+            group: Ea architecto iure est similique architecto id.
+            lastUpdate: 2495518142683426670
             locked: false
-            policyName: Minus fugiat veritatis quam qui nostrum eaque.
-            rego: Ipsa ad voluptatum maxime ut.
-            version: Delectus rerum molestiae possimus cum laboriosam.
+            policyName: Consectetur rerum vel sunt.
+            rego: At ut dolore.
+            repository: Vel voluptate quasi delectus.
+            version: Ut est ut molestias sint ipsam.
         required:
+            - repository
             - group
             - policyName
             - version

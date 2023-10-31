@@ -25,6 +25,7 @@ import (
 // set to call the "policy" service "Evaluate" endpoint
 func (c *Client) BuildEvaluateRequest(ctx context.Context, v any) (*http.Request, error) {
 	var (
+		repository string
 		group      string
 		policyName string
 		version    string
@@ -34,11 +35,12 @@ func (c *Client) BuildEvaluateRequest(ctx context.Context, v any) (*http.Request
 		if !ok {
 			return nil, goahttp.ErrInvalidType("policy", "Evaluate", "*policy.EvaluateRequest", v)
 		}
+		repository = p.Repository
 		group = p.Group
 		policyName = p.PolicyName
 		version = p.Version
 	}
-	u := &url.URL{Scheme: c.scheme, Host: c.host, Path: EvaluatePolicyPath(group, policyName, version)}
+	u := &url.URL{Scheme: c.scheme, Host: c.host, Path: EvaluatePolicyPath(repository, group, policyName, version)}
 	req, err := http.NewRequest("GET", u.String(), nil)
 	if err != nil {
 		return nil, goahttp.ErrInvalidURL("policy", "Evaluate", u.String(), err)
@@ -126,6 +128,7 @@ func DecodeEvaluateResponse(decoder func(*http.Response) goahttp.Decoder, restor
 // to call the "policy" service "Lock" endpoint
 func (c *Client) BuildLockRequest(ctx context.Context, v any) (*http.Request, error) {
 	var (
+		repository string
 		group      string
 		policyName string
 		version    string
@@ -135,11 +138,12 @@ func (c *Client) BuildLockRequest(ctx context.Context, v any) (*http.Request, er
 		if !ok {
 			return nil, goahttp.ErrInvalidType("policy", "Lock", "*policy.LockRequest", v)
 		}
+		repository = p.Repository
 		group = p.Group
 		policyName = p.PolicyName
 		version = p.Version
 	}
-	u := &url.URL{Scheme: c.scheme, Host: c.host, Path: LockPolicyPath(group, policyName, version)}
+	u := &url.URL{Scheme: c.scheme, Host: c.host, Path: LockPolicyPath(repository, group, policyName, version)}
 	req, err := http.NewRequest("POST", u.String(), nil)
 	if err != nil {
 		return nil, goahttp.ErrInvalidURL("policy", "Lock", u.String(), err)
@@ -182,6 +186,7 @@ func DecodeLockResponse(decoder func(*http.Response) goahttp.Decoder, restoreBod
 // set to call the "policy" service "Unlock" endpoint
 func (c *Client) BuildUnlockRequest(ctx context.Context, v any) (*http.Request, error) {
 	var (
+		repository string
 		group      string
 		policyName string
 		version    string
@@ -191,11 +196,12 @@ func (c *Client) BuildUnlockRequest(ctx context.Context, v any) (*http.Request, 
 		if !ok {
 			return nil, goahttp.ErrInvalidType("policy", "Unlock", "*policy.UnlockRequest", v)
 		}
+		repository = p.Repository
 		group = p.Group
 		policyName = p.PolicyName
 		version = p.Version
 	}
-	u := &url.URL{Scheme: c.scheme, Host: c.host, Path: UnlockPolicyPath(group, policyName, version)}
+	u := &url.URL{Scheme: c.scheme, Host: c.host, Path: UnlockPolicyPath(repository, group, policyName, version)}
 	req, err := http.NewRequest("DELETE", u.String(), nil)
 	if err != nil {
 		return nil, goahttp.ErrInvalidURL("policy", "Unlock", u.String(), err)
@@ -319,6 +325,7 @@ func DecodeListPoliciesResponse(decoder func(*http.Response) goahttp.Decoder, re
 // *policy.Policy from a value of type *PolicyResponseBody.
 func unmarshalPolicyResponseBodyToPolicyPolicy(v *PolicyResponseBody) *policy.Policy {
 	res := &policy.Policy{
+		Repository: *v.Repository,
 		PolicyName: *v.PolicyName,
 		Group:      *v.Group,
 		Version:    *v.Version,

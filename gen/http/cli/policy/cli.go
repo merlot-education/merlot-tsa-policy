@@ -30,7 +30,7 @@ health (liveness|readiness)
 
 // UsageExamples produces an example of a valid invocation of the CLI tool.
 func UsageExamples() string {
-	return os.Args[0] + ` policy evaluate --body "At incidunt unde consequatur voluptas dolorem nisi." --group "example" --policy-name "example" --version "1.0" --evaluation-id "Illum est et hic." --ttl 5942762461305129155` + "\n" +
+	return os.Args[0] + ` policy evaluate --body "Ad omnis quasi aut consequuntur quibusdam." --repository "policies" --group "example" --policy-name "example" --version "1.0" --evaluation-id "Deleniti non nihil dolor aut sed." --ttl 380312255088624933` + "\n" +
 		os.Args[0] + ` health liveness` + "\n" +
 		""
 }
@@ -49,6 +49,7 @@ func ParseEndpoint(
 
 		policyEvaluateFlags            = flag.NewFlagSet("evaluate", flag.ExitOnError)
 		policyEvaluateBodyFlag         = policyEvaluateFlags.String("body", "REQUIRED", "")
+		policyEvaluateRepositoryFlag   = policyEvaluateFlags.String("repository", "REQUIRED", "Policy repository.")
 		policyEvaluateGroupFlag        = policyEvaluateFlags.String("group", "REQUIRED", "Policy group.")
 		policyEvaluatePolicyNameFlag   = policyEvaluateFlags.String("policy-name", "REQUIRED", "Policy name.")
 		policyEvaluateVersionFlag      = policyEvaluateFlags.String("version", "REQUIRED", "Policy version.")
@@ -56,11 +57,13 @@ func ParseEndpoint(
 		policyEvaluateTTLFlag          = policyEvaluateFlags.String("ttl", "", "")
 
 		policyLockFlags          = flag.NewFlagSet("lock", flag.ExitOnError)
+		policyLockRepositoryFlag = policyLockFlags.String("repository", "REQUIRED", "Policy repository.")
 		policyLockGroupFlag      = policyLockFlags.String("group", "REQUIRED", "Policy group.")
 		policyLockPolicyNameFlag = policyLockFlags.String("policy-name", "REQUIRED", "Policy name.")
 		policyLockVersionFlag    = policyLockFlags.String("version", "REQUIRED", "Policy version.")
 
 		policyUnlockFlags          = flag.NewFlagSet("unlock", flag.ExitOnError)
+		policyUnlockRepositoryFlag = policyUnlockFlags.String("repository", "REQUIRED", "Policy repository.")
 		policyUnlockGroupFlag      = policyUnlockFlags.String("group", "REQUIRED", "Policy group.")
 		policyUnlockPolicyNameFlag = policyUnlockFlags.String("policy-name", "REQUIRED", "Policy name.")
 		policyUnlockVersionFlag    = policyUnlockFlags.String("version", "REQUIRED", "Policy version.")
@@ -172,13 +175,13 @@ func ParseEndpoint(
 			switch epn {
 			case "evaluate":
 				endpoint = c.Evaluate()
-				data, err = policyc.BuildEvaluatePayload(*policyEvaluateBodyFlag, *policyEvaluateGroupFlag, *policyEvaluatePolicyNameFlag, *policyEvaluateVersionFlag, *policyEvaluateEvaluationIDFlag, *policyEvaluateTTLFlag)
+				data, err = policyc.BuildEvaluatePayload(*policyEvaluateBodyFlag, *policyEvaluateRepositoryFlag, *policyEvaluateGroupFlag, *policyEvaluatePolicyNameFlag, *policyEvaluateVersionFlag, *policyEvaluateEvaluationIDFlag, *policyEvaluateTTLFlag)
 			case "lock":
 				endpoint = c.Lock()
-				data, err = policyc.BuildLockPayload(*policyLockGroupFlag, *policyLockPolicyNameFlag, *policyLockVersionFlag)
+				data, err = policyc.BuildLockPayload(*policyLockRepositoryFlag, *policyLockGroupFlag, *policyLockPolicyNameFlag, *policyLockVersionFlag)
 			case "unlock":
 				endpoint = c.Unlock()
-				data, err = policyc.BuildUnlockPayload(*policyUnlockGroupFlag, *policyUnlockPolicyNameFlag, *policyUnlockVersionFlag)
+				data, err = policyc.BuildUnlockPayload(*policyUnlockRepositoryFlag, *policyUnlockGroupFlag, *policyUnlockPolicyNameFlag, *policyUnlockVersionFlag)
 			case "list-policies":
 				endpoint = c.ListPolicies()
 				data, err = policyc.BuildListPoliciesPayload(*policyListPoliciesLockedFlag, *policyListPoliciesRegoFlag, *policyListPoliciesDataFlag, *policyListPoliciesDataConfigFlag)
@@ -219,10 +222,11 @@ Additional help:
 `, os.Args[0])
 }
 func policyEvaluateUsage() {
-	fmt.Fprintf(os.Stderr, `%[1]s [flags] policy evaluate -body JSON -group STRING -policy-name STRING -version STRING -evaluation-id STRING -ttl INT
+	fmt.Fprintf(os.Stderr, `%[1]s [flags] policy evaluate -body JSON -repository STRING -group STRING -policy-name STRING -version STRING -evaluation-id STRING -ttl INT
 
 Evaluate executes a policy with the given 'data' as input.
     -body JSON: 
+    -repository STRING: Policy repository.
     -group STRING: Policy group.
     -policy-name STRING: Policy name.
     -version STRING: Policy version.
@@ -230,33 +234,35 @@ Evaluate executes a policy with the given 'data' as input.
     -ttl INT: 
 
 Example:
-    %[1]s policy evaluate --body "At incidunt unde consequatur voluptas dolorem nisi." --group "example" --policy-name "example" --version "1.0" --evaluation-id "Illum est et hic." --ttl 5942762461305129155
+    %[1]s policy evaluate --body "Ad omnis quasi aut consequuntur quibusdam." --repository "policies" --group "example" --policy-name "example" --version "1.0" --evaluation-id "Deleniti non nihil dolor aut sed." --ttl 380312255088624933
 `, os.Args[0])
 }
 
 func policyLockUsage() {
-	fmt.Fprintf(os.Stderr, `%[1]s [flags] policy lock -group STRING -policy-name STRING -version STRING
+	fmt.Fprintf(os.Stderr, `%[1]s [flags] policy lock -repository STRING -group STRING -policy-name STRING -version STRING
 
 Lock a policy so that it cannot be evaluated.
+    -repository STRING: Policy repository.
     -group STRING: Policy group.
     -policy-name STRING: Policy name.
     -version STRING: Policy version.
 
 Example:
-    %[1]s policy lock --group "At eos facilis molestias in voluptas rem." --policy-name "Ab accusantium ut ut aliquid sint animi." --version "Dolorem cumque laborum quis nesciunt."
+    %[1]s policy lock --repository "Dolorem cumque laborum quis nesciunt." --group "Aut voluptas." --policy-name "Sint nam voluptatem ea consequatur similique et." --version "Non mollitia nesciunt impedit facere."
 `, os.Args[0])
 }
 
 func policyUnlockUsage() {
-	fmt.Fprintf(os.Stderr, `%[1]s [flags] policy unlock -group STRING -policy-name STRING -version STRING
+	fmt.Fprintf(os.Stderr, `%[1]s [flags] policy unlock -repository STRING -group STRING -policy-name STRING -version STRING
 
 Unlock a policy so it can be evaluated again.
+    -repository STRING: Policy repository.
     -group STRING: Policy group.
     -policy-name STRING: Policy name.
     -version STRING: Policy version.
 
 Example:
-    %[1]s policy unlock --group "Ut commodi perspiciatis corporis." --policy-name "Accusamus autem sequi." --version "Et nulla."
+    %[1]s policy unlock --repository "Sunt in et quia cum." --group "Commodi nemo fugiat id praesentium accusantium expedita." --policy-name "Qui non quia." --version "Error maxime quasi quia non voluptatibus error."
 `, os.Args[0])
 }
 
@@ -270,7 +276,7 @@ List policies from storage with optional filters.
     -data-config BOOL: 
 
 Example:
-    %[1]s policy list-policies --locked true --rego true --data true --data-config false
+    %[1]s policy list-policies --locked false --rego false --data false --data-config true
 `, os.Args[0])
 }
 

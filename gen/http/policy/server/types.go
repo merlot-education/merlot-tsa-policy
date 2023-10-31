@@ -20,6 +20,8 @@ type ListPoliciesResponseBody struct {
 
 // PolicyResponseBody is used to define fields on response body types.
 type PolicyResponseBody struct {
+	// Policy repository.
+	Repository string `form:"repository" json:"repository" xml:"repository"`
 	// Policy name.
 	PolicyName string `form:"policyName" json:"policyName" xml:"policyName"`
 	// Policy group.
@@ -54,11 +56,12 @@ func NewListPoliciesResponseBody(res *policy.PoliciesResult) *ListPoliciesRespon
 }
 
 // NewEvaluateRequest builds a policy service Evaluate endpoint payload.
-func NewEvaluateRequest(body any, group string, policyName string, version string, evaluationID *string, ttl *int) *policy.EvaluateRequest {
+func NewEvaluateRequest(body any, repository string, group string, policyName string, version string, evaluationID *string, ttl *int) *policy.EvaluateRequest {
 	v := body
 	res := &policy.EvaluateRequest{
 		Input: &v,
 	}
+	res.Repository = repository
 	res.Group = group
 	res.PolicyName = policyName
 	res.Version = version
@@ -69,8 +72,9 @@ func NewEvaluateRequest(body any, group string, policyName string, version strin
 }
 
 // NewLockRequest builds a policy service Lock endpoint payload.
-func NewLockRequest(group string, policyName string, version string) *policy.LockRequest {
+func NewLockRequest(repository string, group string, policyName string, version string) *policy.LockRequest {
 	v := &policy.LockRequest{}
+	v.Repository = repository
 	v.Group = group
 	v.PolicyName = policyName
 	v.Version = version
@@ -79,8 +83,9 @@ func NewLockRequest(group string, policyName string, version string) *policy.Loc
 }
 
 // NewUnlockRequest builds a policy service Unlock endpoint payload.
-func NewUnlockRequest(group string, policyName string, version string) *policy.UnlockRequest {
+func NewUnlockRequest(repository string, group string, policyName string, version string) *policy.UnlockRequest {
 	v := &policy.UnlockRequest{}
+	v.Repository = repository
 	v.Group = group
 	v.PolicyName = policyName
 	v.Version = version
