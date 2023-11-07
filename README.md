@@ -81,6 +81,20 @@ Unlock a policy with DELETE request:
 curl -X DELETE http://localhost:8081/policy/xfsc/didresolve/1.0/lock
 ```
 
+### Policy Bundles
+
+A policy bundle contains a Policy source code, static data, configuration and some
+additional meta-info necessary for verifying the origin of the policy (who signed the bundle).
+
+The service allows to export a policy bundle by making HTTP request against a policy URL
+of the same format as is used for evaluation, but instead of using the `evaluation` word
+at the end, you replace it with `export`. That will pack the policy as ZIP bundle, 
+and the ZIP bundle will be returned to the client.
+
+```shell
+wget http://localhost:8081/repository/policy/xfsc/didresolve/1.0/export
+```
+
 ### Policy Storage
 
 Policies (rego source code and metadata) are stored in a MongoDB collection `policies`,
