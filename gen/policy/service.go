@@ -9,6 +9,7 @@ package policy
 
 import (
 	"context"
+	"io"
 )
 
 // Policy Service provides evaluation of policies through Open Policy Agent.
@@ -19,6 +20,8 @@ type Service interface {
 	Lock(context.Context, *LockRequest) (err error)
 	// Unlock a policy so it can be evaluated again.
 	Unlock(context.Context, *UnlockRequest) (err error)
+	// Export a signed policy bundle.
+	ExportBundle(context.Context, *ExportBundleRequest) (res *ExportBundleResult, body io.ReadCloser, err error)
 	// List policies from storage with optional filters.
 	ListPolicies(context.Context, *PoliciesRequest) (res *PoliciesResult, err error)
 	// Subscribe for policy change notifications by registering webhook callbacks
@@ -34,7 +37,7 @@ const ServiceName = "policy"
 // MethodNames lists the service method names as defined in the design. These
 // are the same values that are set in the endpoint request contexts under the
 // MethodKey key.
-var MethodNames = [5]string{"Evaluate", "Lock", "Unlock", "ListPolicies", "SubscribeForPolicyChange"}
+var MethodNames = [6]string{"Evaluate", "Lock", "Unlock", "ExportBundle", "ListPolicies", "SubscribeForPolicyChange"}
 
 // EvaluateRequest is the payload type of the policy service Evaluate method.
 type EvaluateRequest struct {
@@ -62,6 +65,30 @@ type EvaluateResult struct {
 	// ETag contains unique identifier of the policy evaluation and can be used to
 	// later retrieve the results from Cache.
 	ETag string
+}
+
+// ExportBundleRequest is the payload type of the policy service ExportBundle
+// method.
+type ExportBundleRequest struct {
+	// Policy repository.
+	Repository string
+	// Policy group.
+	Group string
+	// Policy name.
+	PolicyName string
+	// Policy version.
+	Version string
+}
+
+// ExportBundleResult is the result type of the policy service ExportBundle
+// method.
+type ExportBundleResult struct {
+	// Content-Type response header.
+	ContentType string
+	// Content-Length response header.
+	ContentLength int
+	// Content-Disposition response header containing the name of the file.
+	ContentDisposition string
 }
 
 // LockRequest is the payload type of the policy service Lock method.

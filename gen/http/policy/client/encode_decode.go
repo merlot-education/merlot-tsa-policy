@@ -240,6 +240,93 @@ func DecodeUnlockResponse(decoder func(*http.Response) goahttp.Decoder, restoreB
 	}
 }
 
+// BuildExportBundleRequest instantiates a HTTP request object with method and
+// path set to call the "policy" service "ExportBundle" endpoint
+func (c *Client) BuildExportBundleRequest(ctx context.Context, v any) (*http.Request, error) {
+	var (
+		repository string
+		group      string
+		policyName string
+		version    string
+	)
+	{
+		p, ok := v.(*policy.ExportBundleRequest)
+		if !ok {
+			return nil, goahttp.ErrInvalidType("policy", "ExportBundle", "*policy.ExportBundleRequest", v)
+		}
+		repository = p.Repository
+		group = p.Group
+		policyName = p.PolicyName
+		version = p.Version
+	}
+	u := &url.URL{Scheme: c.scheme, Host: c.host, Path: ExportBundlePolicyPath(repository, group, policyName, version)}
+	req, err := http.NewRequest("GET", u.String(), nil)
+	if err != nil {
+		return nil, goahttp.ErrInvalidURL("policy", "ExportBundle", u.String(), err)
+	}
+	if ctx != nil {
+		req = req.WithContext(ctx)
+	}
+
+	return req, nil
+}
+
+// DecodeExportBundleResponse returns a decoder for responses returned by the
+// policy ExportBundle endpoint. restoreBody controls whether the response body
+// should be restored after having been read.
+func DecodeExportBundleResponse(decoder func(*http.Response) goahttp.Decoder, restoreBody bool) func(*http.Response) (any, error) {
+	return func(resp *http.Response) (any, error) {
+		if restoreBody {
+			b, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return nil, err
+			}
+			resp.Body = io.NopCloser(bytes.NewBuffer(b))
+			defer func() {
+				resp.Body = io.NopCloser(bytes.NewBuffer(b))
+			}()
+		}
+		switch resp.StatusCode {
+		case http.StatusOK:
+			var (
+				contentType        string
+				contentLength      int
+				contentDisposition string
+				err                error
+			)
+			contentTypeRaw := resp.Header.Get("Content-Type")
+			if contentTypeRaw == "" {
+				err = goa.MergeErrors(err, goa.MissingFieldError("content-type", "header"))
+			}
+			contentType = contentTypeRaw
+			{
+				contentLengthRaw := resp.Header.Get("Content-Length")
+				if contentLengthRaw == "" {
+					return nil, goahttp.ErrValidationError("policy", "ExportBundle", goa.MissingFieldError("content-length", "header"))
+				}
+				v, err2 := strconv.ParseInt(contentLengthRaw, 10, strconv.IntSize)
+				if err2 != nil {
+					err = goa.MergeErrors(err, goa.InvalidFieldTypeError("content-length", contentLengthRaw, "integer"))
+				}
+				contentLength = int(v)
+			}
+			contentDispositionRaw := resp.Header.Get("Content-Disposition")
+			if contentDispositionRaw == "" {
+				err = goa.MergeErrors(err, goa.MissingFieldError("content-disposition", "header"))
+			}
+			contentDisposition = contentDispositionRaw
+			if err != nil {
+				return nil, goahttp.ErrValidationError("policy", "ExportBundle", err)
+			}
+			res := NewExportBundleResultOK(contentType, contentLength, contentDisposition)
+			return res, nil
+		default:
+			body, _ := io.ReadAll(resp.Body)
+			return nil, goahttp.ErrInvalidResponse("policy", "ExportBundle", resp.StatusCode, string(body))
+		}
+	}
+}
+
 // BuildListPoliciesRequest instantiates a HTTP request object with method and
 // path set to call the "policy" service "ListPolicies" endpoint
 func (c *Client) BuildListPoliciesRequest(ctx context.Context, v any) (*http.Request, error) {

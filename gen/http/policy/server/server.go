@@ -9,6 +9,7 @@ package server
 
 import (
 	"context"
+	"io"
 	"net/http"
 
 	policy "gitlab.eclipse.org/eclipse/xfsc/tsa/policy/gen/policy"
@@ -22,6 +23,7 @@ type Server struct {
 	Evaluate                 http.Handler
 	Lock                     http.Handler
 	Unlock                   http.Handler
+	ExportBundle             http.Handler
 	ListPolicies             http.Handler
 	SubscribeForPolicyChange http.Handler
 }
@@ -58,12 +60,14 @@ func New(
 			{"Evaluate", "POST", "/policy/{repository}/{group}/{policyName}/{version}/evaluation"},
 			{"Lock", "POST", "/policy/{repository}/{group}/{policyName}/{version}/lock"},
 			{"Unlock", "DELETE", "/policy/{repository}/{group}/{policyName}/{version}/lock"},
+			{"ExportBundle", "GET", "/policy/{repository}/{group}/{policyName}/{version}/export"},
 			{"ListPolicies", "GET", "/v1/policies"},
 			{"SubscribeForPolicyChange", "POST", "/policy/{repository}/{group}/{policyName}/{version}/notifychange"},
 		},
 		Evaluate:                 NewEvaluateHandler(e.Evaluate, mux, decoder, encoder, errhandler, formatter),
 		Lock:                     NewLockHandler(e.Lock, mux, decoder, encoder, errhandler, formatter),
 		Unlock:                   NewUnlockHandler(e.Unlock, mux, decoder, encoder, errhandler, formatter),
+		ExportBundle:             NewExportBundleHandler(e.ExportBundle, mux, decoder, encoder, errhandler, formatter),
 		ListPolicies:             NewListPoliciesHandler(e.ListPolicies, mux, decoder, encoder, errhandler, formatter),
 		SubscribeForPolicyChange: NewSubscribeForPolicyChangeHandler(e.SubscribeForPolicyChange, mux, decoder, encoder, errhandler, formatter),
 	}
@@ -77,6 +81,7 @@ func (s *Server) Use(m func(http.Handler) http.Handler) {
 	s.Evaluate = m(s.Evaluate)
 	s.Lock = m(s.Lock)
 	s.Unlock = m(s.Unlock)
+	s.ExportBundle = m(s.ExportBundle)
 	s.ListPolicies = m(s.ListPolicies)
 	s.SubscribeForPolicyChange = m(s.SubscribeForPolicyChange)
 }
@@ -89,6 +94,7 @@ func Mount(mux goahttp.Muxer, h *Server) {
 	MountEvaluateHandler(mux, h.Evaluate)
 	MountLockHandler(mux, h.Lock)
 	MountUnlockHandler(mux, h.Unlock)
+	MountExportBundleHandler(mux, h.ExportBundle)
 	MountListPoliciesHandler(mux, h.ListPolicies)
 	MountSubscribeForPolicyChangeHandler(mux, h.SubscribeForPolicyChange)
 }
@@ -249,6 +255,65 @@ func NewUnlockHandler(
 		}
 		if err := encodeResponse(ctx, w, res); err != nil {
 			errhandler(ctx, w, err)
+		}
+	})
+}
+
+// MountExportBundleHandler configures the mux to serve the "policy" service
+// "ExportBundle" endpoint.
+func MountExportBundleHandler(mux goahttp.Muxer, h http.Handler) {
+	f, ok := h.(http.HandlerFunc)
+	if !ok {
+		f = func(w http.ResponseWriter, r *http.Request) {
+			h.ServeHTTP(w, r)
+		}
+	}
+	mux.Handle("GET", "/policy/{repository}/{group}/{policyName}/{version}/export", f)
+}
+
+// NewExportBundleHandler creates a HTTP handler which loads the HTTP request
+// and calls the "policy" service "ExportBundle" endpoint.
+func NewExportBundleHandler(
+	endpoint goa.Endpoint,
+	mux goahttp.Muxer,
+	decoder func(*http.Request) goahttp.Decoder,
+	encoder func(context.Context, http.ResponseWriter) goahttp.Encoder,
+	errhandler func(context.Context, http.ResponseWriter, error),
+	formatter func(ctx context.Context, err error) goahttp.Statuser,
+) http.Handler {
+	var (
+		decodeRequest  = DecodeExportBundleRequest(mux, decoder)
+		encodeResponse = EncodeExportBundleResponse(encoder)
+		encodeError    = goahttp.ErrorEncoder(encoder, formatter)
+	)
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := context.WithValue(r.Context(), goahttp.AcceptTypeKey, r.Header.Get("Accept"))
+		ctx = context.WithValue(ctx, goa.MethodKey, "ExportBundle")
+		ctx = context.WithValue(ctx, goa.ServiceKey, "policy")
+		payload, err := decodeRequest(r)
+		if err != nil {
+			if err := encodeError(ctx, w, err); err != nil {
+				errhandler(ctx, w, err)
+			}
+			return
+		}
+		res, err := endpoint(ctx, payload)
+		if err != nil {
+			if err := encodeError(ctx, w, err); err != nil {
+				errhandler(ctx, w, err)
+			}
+			return
+		}
+		o := res.(*policy.ExportBundleResponseData)
+		defer o.Body.Close()
+		if err := encodeResponse(ctx, w, o.Result); err != nil {
+			errhandler(ctx, w, err)
+			return
+		}
+		if _, err := io.Copy(w, o.Body); err != nil {
+			if err := encodeError(ctx, w, err); err != nil {
+				errhandler(ctx, w, err)
+			}
 		}
 	})
 }

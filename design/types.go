@@ -46,6 +46,29 @@ var UnlockRequest = Type("UnlockRequest", func() {
 	Required("repository", "group", "policyName", "version")
 })
 
+var ExportBundleRequest = Type("ExportBundleRequest", func() {
+	Field(1, "repository", String, "Policy repository.", func() {
+		Example("policies")
+	})
+	Field(2, "group", String, "Policy group.", func() {
+		Example("example")
+	})
+	Field(3, "policyName", String, "Policy name.", func() {
+		Example("returnDID")
+	})
+	Field(4, "version", String, "Policy version.", func() {
+		Example("1.0")
+	})
+	Required("repository", "group", "policyName", "version")
+})
+
+var ExportBundleResult = Type("ExportBundleResult", func() {
+	Field(1, "content-type", String, "Content-Type response header.")
+	Field(2, "content-length", Int, "Content-Length response header.")
+	Field(3, "content-disposition", String, "Content-Disposition response header containing the name of the file.")
+	Required("content-type", "content-length", "content-disposition")
+})
+
 var Policy = Type("Policy", func() {
 	Field(1, "repository", String, "Policy repository.")
 	Field(2, "policyName", String, "Policy name.")

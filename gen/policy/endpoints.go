@@ -9,6 +9,7 @@ package policy
 
 import (
 	"context"
+	"io"
 
 	goa "goa.design/goa/v3/pkg"
 )
@@ -18,8 +19,18 @@ type Endpoints struct {
 	Evaluate                 goa.Endpoint
 	Lock                     goa.Endpoint
 	Unlock                   goa.Endpoint
+	ExportBundle             goa.Endpoint
 	ListPolicies             goa.Endpoint
 	SubscribeForPolicyChange goa.Endpoint
+}
+
+// ExportBundleResponseData holds both the result and the HTTP response body
+// reader of the "ExportBundle" method.
+type ExportBundleResponseData struct {
+	// Result is the method result.
+	Result *ExportBundleResult
+	// Body streams the HTTP response body.
+	Body io.ReadCloser
 }
 
 // NewEndpoints wraps the methods of the "policy" service with endpoints.
@@ -28,6 +39,7 @@ func NewEndpoints(s Service) *Endpoints {
 		Evaluate:                 NewEvaluateEndpoint(s),
 		Lock:                     NewLockEndpoint(s),
 		Unlock:                   NewUnlockEndpoint(s),
+		ExportBundle:             NewExportBundleEndpoint(s),
 		ListPolicies:             NewListPoliciesEndpoint(s),
 		SubscribeForPolicyChange: NewSubscribeForPolicyChangeEndpoint(s),
 	}
@@ -38,6 +50,7 @@ func (e *Endpoints) Use(m func(goa.Endpoint) goa.Endpoint) {
 	e.Evaluate = m(e.Evaluate)
 	e.Lock = m(e.Lock)
 	e.Unlock = m(e.Unlock)
+	e.ExportBundle = m(e.ExportBundle)
 	e.ListPolicies = m(e.ListPolicies)
 	e.SubscribeForPolicyChange = m(e.SubscribeForPolicyChange)
 }
@@ -66,6 +79,19 @@ func NewUnlockEndpoint(s Service) goa.Endpoint {
 	return func(ctx context.Context, req any) (any, error) {
 		p := req.(*UnlockRequest)
 		return nil, s.Unlock(ctx, p)
+	}
+}
+
+// NewExportBundleEndpoint returns an endpoint function that calls the method
+// "ExportBundle" of service "policy".
+func NewExportBundleEndpoint(s Service) goa.Endpoint {
+	return func(ctx context.Context, req any) (any, error) {
+		p := req.(*ExportBundleRequest)
+		res, body, err := s.ExportBundle(ctx, p)
+		if err != nil {
+			return nil, err
+		}
+		return &ExportBundleResponseData{Result: res, Body: body}, nil
 	}
 }
 
