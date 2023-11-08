@@ -1,7 +1,6 @@
 package notify_test
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"net/http"
@@ -10,7 +9,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
+	"go.uber.org/zap/zaptest/observer"
 
 	"gitlab.eclipse.org/eclipse/xfsc/tsa/policy/internal/notify"
 	"gitlab.eclipse.org/eclipse/xfsc/tsa/policy/internal/notify/notifyfakes"
@@ -61,7 +60,7 @@ func TestNotify_PolicyDataChange(t *testing.T) {
 				return nil
 			}},
 
-			errLogText: "some error",
+			errLogText: "error notifying subscribers",
 		},
 
 		{
@@ -80,11 +79,8 @@ func TestNotify_PolicyDataChange(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			buf := bytes.Buffer{}
-			logger := zap.New(zapcore.NewCore(
-				zapcore.NewJSONEncoder(zap.NewDevelopmentEncoderConfig()),
-				zapcore.AddSync(&buf),
-				zap.ErrorLevel))
+			core, logs := observer.New(zap.ErrorLevel)
+			logger := zap.New(core)
 
 			notifier := notify.New(test.events, test.storage, http.DefaultClient, logger)
 			err := notifier.PolicyDataChange(context.Background(),
@@ -98,7 +94,7 @@ func TestNotify_PolicyDataChange(t *testing.T) {
 			time.Sleep(10 * time.Millisecond)
 
 			if test.errLogText != "" {
-				assert.Contains(t, buf.String(), test.errLogText)
+				assert.Contains(t, logs.All()[0].Message, test.errLogText)
 			}
 
 			if test.errText != "" {
