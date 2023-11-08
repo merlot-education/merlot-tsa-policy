@@ -321,6 +321,89 @@ func DecodeListPoliciesResponse(decoder func(*http.Response) goahttp.Decoder, re
 	}
 }
 
+// BuildSubscribeForPolicyChangeRequest instantiates a HTTP request object with
+// method and path set to call the "policy" service "SubscribeForPolicyChange"
+// endpoint
+func (c *Client) BuildSubscribeForPolicyChangeRequest(ctx context.Context, v any) (*http.Request, error) {
+	var (
+		repository string
+		group      string
+		policyName string
+		version    string
+	)
+	{
+		p, ok := v.(*policy.SubscribeRequest)
+		if !ok {
+			return nil, goahttp.ErrInvalidType("policy", "SubscribeForPolicyChange", "*policy.SubscribeRequest", v)
+		}
+		repository = p.Repository
+		group = p.Group
+		policyName = p.PolicyName
+		version = p.Version
+	}
+	u := &url.URL{Scheme: c.scheme, Host: c.host, Path: SubscribeForPolicyChangePolicyPath(repository, group, policyName, version)}
+	req, err := http.NewRequest("POST", u.String(), nil)
+	if err != nil {
+		return nil, goahttp.ErrInvalidURL("policy", "SubscribeForPolicyChange", u.String(), err)
+	}
+	if ctx != nil {
+		req = req.WithContext(ctx)
+	}
+
+	return req, nil
+}
+
+// EncodeSubscribeForPolicyChangeRequest returns an encoder for requests sent
+// to the policy SubscribeForPolicyChange server.
+func EncodeSubscribeForPolicyChangeRequest(encoder func(*http.Request) goahttp.Encoder) func(*http.Request, any) error {
+	return func(req *http.Request, v any) error {
+		p, ok := v.(*policy.SubscribeRequest)
+		if !ok {
+			return goahttp.ErrInvalidType("policy", "SubscribeForPolicyChange", "*policy.SubscribeRequest", v)
+		}
+		body := NewSubscribeForPolicyChangeRequestBody(p)
+		if err := encoder(req).Encode(&body); err != nil {
+			return goahttp.ErrEncodingError("policy", "SubscribeForPolicyChange", err)
+		}
+		return nil
+	}
+}
+
+// DecodeSubscribeForPolicyChangeResponse returns a decoder for responses
+// returned by the policy SubscribeForPolicyChange endpoint. restoreBody
+// controls whether the response body should be restored after having been read.
+func DecodeSubscribeForPolicyChangeResponse(decoder func(*http.Response) goahttp.Decoder, restoreBody bool) func(*http.Response) (any, error) {
+	return func(resp *http.Response) (any, error) {
+		if restoreBody {
+			b, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return nil, err
+			}
+			resp.Body = io.NopCloser(bytes.NewBuffer(b))
+			defer func() {
+				resp.Body = io.NopCloser(bytes.NewBuffer(b))
+			}()
+		} else {
+			defer resp.Body.Close()
+		}
+		switch resp.StatusCode {
+		case http.StatusOK:
+			var (
+				body any
+				err  error
+			)
+			err = decoder(resp).Decode(&body)
+			if err != nil {
+				return nil, goahttp.ErrDecodingError("policy", "SubscribeForPolicyChange", err)
+			}
+			return body, nil
+		default:
+			body, _ := io.ReadAll(resp.Body)
+			return nil, goahttp.ErrInvalidResponse("policy", "SubscribeForPolicyChange", resp.StatusCode, string(body))
+		}
+	}
+}
+
 // unmarshalPolicyResponseBodyToPolicyPolicy builds a value of type
 // *policy.Policy from a value of type *PolicyResponseBody.
 func unmarshalPolicyResponseBodyToPolicyPolicy(v *PolicyResponseBody) *policy.Policy {

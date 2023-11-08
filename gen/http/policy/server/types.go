@@ -8,8 +8,20 @@
 package server
 
 import (
+	"unicode/utf8"
+
 	policy "gitlab.eclipse.org/eclipse/xfsc/tsa/policy/gen/policy"
+	goa "goa.design/goa/v3/pkg"
 )
+
+// SubscribeForPolicyChangeRequestBody is the type of the "policy" service
+// "SubscribeForPolicyChange" endpoint HTTP request body.
+type SubscribeForPolicyChangeRequestBody struct {
+	// Subscriber webhook url.
+	WebhookURL *string `form:"webhook_url,omitempty" json:"webhook_url,omitempty" xml:"webhook_url,omitempty"`
+	// Name of the subscriber for policy.
+	Subscriber *string `form:"subscriber,omitempty" json:"subscriber,omitempty" xml:"subscriber,omitempty"`
+}
 
 // ListPoliciesResponseBody is the type of the "policy" service "ListPolicies"
 // endpoint HTTP response body.
@@ -103,4 +115,44 @@ func NewListPoliciesPoliciesRequest(locked *bool, rego *bool, data *bool, dataCo
 	v.DataConfig = dataConfig
 
 	return v
+}
+
+// NewSubscribeForPolicyChangeSubscribeRequest builds a policy service
+// SubscribeForPolicyChange endpoint payload.
+func NewSubscribeForPolicyChangeSubscribeRequest(body *SubscribeForPolicyChangeRequestBody, repository string, group string, policyName string, version string) *policy.SubscribeRequest {
+	v := &policy.SubscribeRequest{
+		WebhookURL: *body.WebhookURL,
+		Subscriber: *body.Subscriber,
+	}
+	v.Repository = repository
+	v.Group = group
+	v.PolicyName = policyName
+	v.Version = version
+
+	return v
+}
+
+// ValidateSubscribeForPolicyChangeRequestBody runs the validations defined on
+// SubscribeForPolicyChangeRequestBody
+func ValidateSubscribeForPolicyChangeRequestBody(body *SubscribeForPolicyChangeRequestBody) (err error) {
+	if body.WebhookURL == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("webhook_url", "body"))
+	}
+	if body.Subscriber == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("subscriber", "body"))
+	}
+	if body.WebhookURL != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.webhook_url", *body.WebhookURL, goa.FormatURI))
+	}
+	if body.Subscriber != nil {
+		if utf8.RuneCountInString(*body.Subscriber) < 3 {
+			err = goa.MergeErrors(err, goa.InvalidLengthError("body.subscriber", *body.Subscriber, utf8.RuneCountInString(*body.Subscriber), 3, true))
+		}
+	}
+	if body.Subscriber != nil {
+		if utf8.RuneCountInString(*body.Subscriber) > 100 {
+			err = goa.MergeErrors(err, goa.InvalidLengthError("body.subscriber", *body.Subscriber, utf8.RuneCountInString(*body.Subscriber), 100, false))
+		}
+	}
+	return
 }

@@ -30,6 +30,7 @@ type Storage interface {
 	Policy(ctx context.Context, repository, group, name, version string) (*storage.Policy, error)
 	SetPolicyLock(ctx context.Context, repository, group, name, version string, lock bool) error
 	GetPolicies(ctx context.Context, locked *bool) ([]*storage.Policy, error)
+	CreateSubscriber(ctx context.Context, subscriber *storage.Subscriber) (*storage.Subscriber, error)
 }
 
 type RegoCache interface {
@@ -205,9 +206,7 @@ func (s *Service) Unlock(ctx context.Context, req *policy.UnlockRequest) error {
 }
 
 func (s *Service) ListPolicies(ctx context.Context, req *policy.PoliciesRequest) (*policy.PoliciesResult, error) {
-	logger := s.logger.With(
-		zap.String("operation", "listPolicies"),
-	)
+	logger := s.logger.With(zap.String("operation", "listPolicies"))
 
 	policies, err := s.storage.GetPolicies(ctx, req.Locked)
 	if err != nil {
@@ -243,6 +242,26 @@ func (s *Service) ListPolicies(ctx context.Context, req *policy.PoliciesRequest)
 	}
 
 	return &policy.PoliciesResult{Policies: policiesResult}, nil
+}
+
+// TODO unit testing
+func (s *Service) SubscribeForPolicyChange(ctx context.Context, req *policy.SubscribeRequest) (any, error) {
+	logger := s.logger.With(zap.String("operation", "subscribeForPolicyChange"))
+
+	subscriber, err := s.storage.CreateSubscriber(ctx, &storage.Subscriber{
+		Name:             req.Subscriber,
+		WebhookURL:       req.WebhookURL,
+		PolicyRepository: req.Repository,
+		PolicyName:       req.PolicyName,
+		PolicyGroup:      req.Group,
+		PolicyVersion:    req.Version,
+	})
+	if err != nil {
+		logger.Error("error storing policy change subscription", zap.Error(err))
+		return nil, err
+	}
+
+	return subscriber, nil
 }
 
 // prepareQuery tries to get a prepared query from the regocache.

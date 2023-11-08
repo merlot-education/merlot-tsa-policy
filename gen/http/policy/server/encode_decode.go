@@ -220,6 +220,56 @@ func DecodeListPoliciesRequest(mux goahttp.Muxer, decoder func(*http.Request) go
 	}
 }
 
+// EncodeSubscribeForPolicyChangeResponse returns an encoder for responses
+// returned by the policy SubscribeForPolicyChange endpoint.
+func EncodeSubscribeForPolicyChangeResponse(encoder func(context.Context, http.ResponseWriter) goahttp.Encoder) func(context.Context, http.ResponseWriter, any) error {
+	return func(ctx context.Context, w http.ResponseWriter, v any) error {
+		res, _ := v.(any)
+		enc := encoder(ctx, w)
+		body := res
+		w.WriteHeader(http.StatusOK)
+		return enc.Encode(body)
+	}
+}
+
+// DecodeSubscribeForPolicyChangeRequest returns a decoder for requests sent to
+// the policy SubscribeForPolicyChange endpoint.
+func DecodeSubscribeForPolicyChangeRequest(mux goahttp.Muxer, decoder func(*http.Request) goahttp.Decoder) func(*http.Request) (any, error) {
+	return func(r *http.Request) (any, error) {
+		var (
+			body SubscribeForPolicyChangeRequestBody
+			err  error
+		)
+		err = decoder(r).Decode(&body)
+		if err != nil {
+			if err == io.EOF {
+				return nil, goa.MissingPayloadError()
+			}
+			return nil, goa.DecodePayloadError(err.Error())
+		}
+		err = ValidateSubscribeForPolicyChangeRequestBody(&body)
+		if err != nil {
+			return nil, err
+		}
+
+		var (
+			repository string
+			group      string
+			policyName string
+			version    string
+
+			params = mux.Vars(r)
+		)
+		repository = params["repository"]
+		group = params["group"]
+		policyName = params["policyName"]
+		version = params["version"]
+		payload := NewSubscribeForPolicyChangeSubscribeRequest(&body, repository, group, policyName, version)
+
+		return payload, nil
+	}
+}
+
 // marshalPolicyPolicyToPolicyResponseBody builds a value of type
 // *PolicyResponseBody from a value of type *policy.Policy.
 func marshalPolicyPolicyToPolicyResponseBody(v *policy.Policy) *PolicyResponseBody {

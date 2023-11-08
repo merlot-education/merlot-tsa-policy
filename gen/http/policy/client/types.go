@@ -12,6 +12,15 @@ import (
 	goa "goa.design/goa/v3/pkg"
 )
 
+// SubscribeForPolicyChangeRequestBody is the type of the "policy" service
+// "SubscribeForPolicyChange" endpoint HTTP request body.
+type SubscribeForPolicyChangeRequestBody struct {
+	// Subscriber webhook url.
+	WebhookURL string `form:"webhook_url" json:"webhook_url" xml:"webhook_url"`
+	// Name of the subscriber for policy.
+	Subscriber string `form:"subscriber" json:"subscriber" xml:"subscriber"`
+}
+
 // ListPoliciesResponseBody is the type of the "policy" service "ListPolicies"
 // endpoint HTTP response body.
 type ListPoliciesResponseBody struct {
@@ -39,6 +48,16 @@ type PolicyResponseBody struct {
 	Locked *bool `form:"locked,omitempty" json:"locked,omitempty" xml:"locked,omitempty"`
 	// Last update (Unix timestamp).
 	LastUpdate *int64 `form:"lastUpdate,omitempty" json:"lastUpdate,omitempty" xml:"lastUpdate,omitempty"`
+}
+
+// NewSubscribeForPolicyChangeRequestBody builds the HTTP request body from the
+// payload of the "SubscribeForPolicyChange" endpoint of the "policy" service.
+func NewSubscribeForPolicyChangeRequestBody(p *policy.SubscribeRequest) *SubscribeForPolicyChangeRequestBody {
+	body := &SubscribeForPolicyChangeRequestBody{
+		WebhookURL: p.WebhookURL,
+		Subscriber: p.Subscriber,
+	}
+	return body
 }
 
 // NewEvaluateResultOK builds a "policy" service "Evaluate" endpoint result

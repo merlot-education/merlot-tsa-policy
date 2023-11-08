@@ -15,19 +15,21 @@ import (
 
 // Endpoints wraps the "policy" service endpoints.
 type Endpoints struct {
-	Evaluate     goa.Endpoint
-	Lock         goa.Endpoint
-	Unlock       goa.Endpoint
-	ListPolicies goa.Endpoint
+	Evaluate                 goa.Endpoint
+	Lock                     goa.Endpoint
+	Unlock                   goa.Endpoint
+	ListPolicies             goa.Endpoint
+	SubscribeForPolicyChange goa.Endpoint
 }
 
 // NewEndpoints wraps the methods of the "policy" service with endpoints.
 func NewEndpoints(s Service) *Endpoints {
 	return &Endpoints{
-		Evaluate:     NewEvaluateEndpoint(s),
-		Lock:         NewLockEndpoint(s),
-		Unlock:       NewUnlockEndpoint(s),
-		ListPolicies: NewListPoliciesEndpoint(s),
+		Evaluate:                 NewEvaluateEndpoint(s),
+		Lock:                     NewLockEndpoint(s),
+		Unlock:                   NewUnlockEndpoint(s),
+		ListPolicies:             NewListPoliciesEndpoint(s),
+		SubscribeForPolicyChange: NewSubscribeForPolicyChangeEndpoint(s),
 	}
 }
 
@@ -37,6 +39,7 @@ func (e *Endpoints) Use(m func(goa.Endpoint) goa.Endpoint) {
 	e.Lock = m(e.Lock)
 	e.Unlock = m(e.Unlock)
 	e.ListPolicies = m(e.ListPolicies)
+	e.SubscribeForPolicyChange = m(e.SubscribeForPolicyChange)
 }
 
 // NewEvaluateEndpoint returns an endpoint function that calls the method
@@ -72,5 +75,14 @@ func NewListPoliciesEndpoint(s Service) goa.Endpoint {
 	return func(ctx context.Context, req any) (any, error) {
 		p := req.(*PoliciesRequest)
 		return s.ListPolicies(ctx, p)
+	}
+}
+
+// NewSubscribeForPolicyChangeEndpoint returns an endpoint function that calls
+// the method "SubscribeForPolicyChange" of service "policy".
+func NewSubscribeForPolicyChangeEndpoint(s Service) goa.Endpoint {
+	return func(ctx context.Context, req any) (any, error) {
+		p := req.(*SubscribeRequest)
+		return s.SubscribeForPolicyChange(ctx, p)
 	}
 }

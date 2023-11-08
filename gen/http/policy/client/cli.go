@@ -11,8 +11,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"strconv"
+	"unicode/utf8"
 
 	policy "gitlab.eclipse.org/eclipse/xfsc/tsa/policy/gen/policy"
+	goa "goa.design/goa/v3/pkg"
 )
 
 // BuildEvaluatePayload builds the payload for the policy Evaluate endpoint
@@ -23,7 +25,7 @@ func BuildEvaluatePayload(policyEvaluateBody string, policyEvaluateRepository st
 	{
 		err = json.Unmarshal([]byte(policyEvaluateBody), &body)
 		if err != nil {
-			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "\"Ad omnis quasi aut consequuntur quibusdam.\"")
+			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "\"Sequi adipisci et nulla.\"")
 		}
 	}
 	var repository string
@@ -183,6 +185,55 @@ func BuildListPoliciesPayload(policyListPoliciesLocked string, policyListPolicie
 	v.Rego = rego
 	v.Data = data
 	v.DataConfig = dataConfig
+
+	return v, nil
+}
+
+// BuildSubscribeForPolicyChangePayload builds the payload for the policy
+// SubscribeForPolicyChange endpoint from CLI flags.
+func BuildSubscribeForPolicyChangePayload(policySubscribeForPolicyChangeBody string, policySubscribeForPolicyChangeRepository string, policySubscribeForPolicyChangeGroup string, policySubscribeForPolicyChangePolicyName string, policySubscribeForPolicyChangeVersion string) (*policy.SubscribeRequest, error) {
+	var err error
+	var body SubscribeForPolicyChangeRequestBody
+	{
+		err = json.Unmarshal([]byte(policySubscribeForPolicyChangeBody), &body)
+		if err != nil {
+			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"subscriber\": \"l5c\",\n      \"webhook_url\": \"http://kilback.com/delbert\"\n   }'")
+		}
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.webhook_url", body.WebhookURL, goa.FormatURI))
+		if utf8.RuneCountInString(body.Subscriber) < 3 {
+			err = goa.MergeErrors(err, goa.InvalidLengthError("body.subscriber", body.Subscriber, utf8.RuneCountInString(body.Subscriber), 3, true))
+		}
+		if utf8.RuneCountInString(body.Subscriber) > 100 {
+			err = goa.MergeErrors(err, goa.InvalidLengthError("body.subscriber", body.Subscriber, utf8.RuneCountInString(body.Subscriber), 100, false))
+		}
+		if err != nil {
+			return nil, err
+		}
+	}
+	var repository string
+	{
+		repository = policySubscribeForPolicyChangeRepository
+	}
+	var group string
+	{
+		group = policySubscribeForPolicyChangeGroup
+	}
+	var policyName string
+	{
+		policyName = policySubscribeForPolicyChangePolicyName
+	}
+	var version string
+	{
+		version = policySubscribeForPolicyChangeVersion
+	}
+	v := &policy.SubscribeRequest{
+		WebhookURL: body.WebhookURL,
+		Subscriber: body.Subscriber,
+	}
+	v.Repository = repository
+	v.Group = group
+	v.PolicyName = policyName
+	v.Version = version
 
 	return v, nil
 }

@@ -23,14 +23,14 @@ import (
 //
 //	command (subcommand1|subcommand2|...)
 func UsageCommands() string {
-	return `policy (evaluate|lock|unlock|list-policies)
+	return `policy (evaluate|lock|unlock|list-policies|subscribe-for-policy-change)
 health (liveness|readiness)
 `
 }
 
 // UsageExamples produces an example of a valid invocation of the CLI tool.
 func UsageExamples() string {
-	return os.Args[0] + ` policy evaluate --body "Ad omnis quasi aut consequuntur quibusdam." --repository "policies" --group "example" --policy-name "example" --version "1.0" --evaluation-id "Deleniti non nihil dolor aut sed." --ttl 380312255088624933` + "\n" +
+	return os.Args[0] + ` policy evaluate --body "Sequi adipisci et nulla." --repository "policies" --group "example" --policy-name "example" --version "1.0" --evaluation-id "Non mollitia nesciunt impedit facere." --ttl 5623715299141394569` + "\n" +
 		os.Args[0] + ` health liveness` + "\n" +
 		""
 }
@@ -74,6 +74,13 @@ func ParseEndpoint(
 		policyListPoliciesDataFlag       = policyListPoliciesFlags.String("data", "", "")
 		policyListPoliciesDataConfigFlag = policyListPoliciesFlags.String("data-config", "", "")
 
+		policySubscribeForPolicyChangeFlags          = flag.NewFlagSet("subscribe-for-policy-change", flag.ExitOnError)
+		policySubscribeForPolicyChangeBodyFlag       = policySubscribeForPolicyChangeFlags.String("body", "REQUIRED", "")
+		policySubscribeForPolicyChangeRepositoryFlag = policySubscribeForPolicyChangeFlags.String("repository", "REQUIRED", "Policy repository.")
+		policySubscribeForPolicyChangeGroupFlag      = policySubscribeForPolicyChangeFlags.String("group", "REQUIRED", "Policy group.")
+		policySubscribeForPolicyChangePolicyNameFlag = policySubscribeForPolicyChangeFlags.String("policy-name", "REQUIRED", "Policy name.")
+		policySubscribeForPolicyChangeVersionFlag    = policySubscribeForPolicyChangeFlags.String("version", "REQUIRED", "Policy version.")
+
 		healthFlags = flag.NewFlagSet("health", flag.ContinueOnError)
 
 		healthLivenessFlags = flag.NewFlagSet("liveness", flag.ExitOnError)
@@ -85,6 +92,7 @@ func ParseEndpoint(
 	policyLockFlags.Usage = policyLockUsage
 	policyUnlockFlags.Usage = policyUnlockUsage
 	policyListPoliciesFlags.Usage = policyListPoliciesUsage
+	policySubscribeForPolicyChangeFlags.Usage = policySubscribeForPolicyChangeUsage
 
 	healthFlags.Usage = healthUsage
 	healthLivenessFlags.Usage = healthLivenessUsage
@@ -138,6 +146,9 @@ func ParseEndpoint(
 			case "list-policies":
 				epf = policyListPoliciesFlags
 
+			case "subscribe-for-policy-change":
+				epf = policySubscribeForPolicyChangeFlags
+
 			}
 
 		case "health":
@@ -185,6 +196,9 @@ func ParseEndpoint(
 			case "list-policies":
 				endpoint = c.ListPolicies()
 				data, err = policyc.BuildListPoliciesPayload(*policyListPoliciesLockedFlag, *policyListPoliciesRegoFlag, *policyListPoliciesDataFlag, *policyListPoliciesDataConfigFlag)
+			case "subscribe-for-policy-change":
+				endpoint = c.SubscribeForPolicyChange()
+				data, err = policyc.BuildSubscribeForPolicyChangePayload(*policySubscribeForPolicyChangeBodyFlag, *policySubscribeForPolicyChangeRepositoryFlag, *policySubscribeForPolicyChangeGroupFlag, *policySubscribeForPolicyChangePolicyNameFlag, *policySubscribeForPolicyChangeVersionFlag)
 			}
 		case "health":
 			c := healthc.NewClient(scheme, host, doer, enc, dec, restore)
@@ -216,6 +230,7 @@ COMMAND:
     lock: Lock a policy so that it cannot be evaluated.
     unlock: Unlock a policy so it can be evaluated again.
     list-policies: List policies from storage with optional filters.
+    subscribe-for-policy-change: Subscribe for policy change notifications by registering webhook callbacks which the policy service will call.
 
 Additional help:
     %[1]s policy COMMAND --help
@@ -234,7 +249,7 @@ Evaluate executes a policy with the given 'data' as input.
     -ttl INT: 
 
 Example:
-    %[1]s policy evaluate --body "Ad omnis quasi aut consequuntur quibusdam." --repository "policies" --group "example" --policy-name "example" --version "1.0" --evaluation-id "Deleniti non nihil dolor aut sed." --ttl 380312255088624933
+    %[1]s policy evaluate --body "Sequi adipisci et nulla." --repository "policies" --group "example" --policy-name "example" --version "1.0" --evaluation-id "Non mollitia nesciunt impedit facere." --ttl 5623715299141394569
 `, os.Args[0])
 }
 
@@ -248,7 +263,7 @@ Lock a policy so that it cannot be evaluated.
     -version STRING: Policy version.
 
 Example:
-    %[1]s policy lock --repository "Dolorem cumque laborum quis nesciunt." --group "Aut voluptas." --policy-name "Sint nam voluptatem ea consequatur similique et." --version "Non mollitia nesciunt impedit facere."
+    %[1]s policy lock --repository "Ut amet." --group "Accusamus enim." --policy-name "Recusandae est rerum corrupti quia." --version "Quam dolores architecto itaque."
 `, os.Args[0])
 }
 
@@ -262,7 +277,7 @@ Unlock a policy so it can be evaluated again.
     -version STRING: Policy version.
 
 Example:
-    %[1]s policy unlock --repository "Sunt in et quia cum." --group "Commodi nemo fugiat id praesentium accusantium expedita." --policy-name "Qui non quia." --version "Error maxime quasi quia non voluptatibus error."
+    %[1]s policy unlock --repository "Totam officia necessitatibus tempore nulla animi." --group "Consequatur vel rerum rem ipsam nam." --policy-name "Vitae dolores quas et aperiam dolores reiciendis." --version "Voluptate amet."
 `, os.Args[0])
 }
 
@@ -276,7 +291,25 @@ List policies from storage with optional filters.
     -data-config BOOL: 
 
 Example:
-    %[1]s policy list-policies --locked false --rego false --data false --data-config true
+    %[1]s policy list-policies --locked true --rego false --data false --data-config true
+`, os.Args[0])
+}
+
+func policySubscribeForPolicyChangeUsage() {
+	fmt.Fprintf(os.Stderr, `%[1]s [flags] policy subscribe-for-policy-change -body JSON -repository STRING -group STRING -policy-name STRING -version STRING
+
+Subscribe for policy change notifications by registering webhook callbacks which the policy service will call.
+    -body JSON: 
+    -repository STRING: Policy repository.
+    -group STRING: Policy group.
+    -policy-name STRING: Policy name.
+    -version STRING: Policy version.
+
+Example:
+    %[1]s policy subscribe-for-policy-change --body '{
+      "subscriber": "l5c",
+      "webhook_url": "http://kilback.com/delbert"
+   }' --repository "Sunt eaque omnis." --group "Totam voluptatem." --policy-name "Sapiente architecto et enim omnis." --version "Est impedit."
 `, os.Args[0])
 }
 

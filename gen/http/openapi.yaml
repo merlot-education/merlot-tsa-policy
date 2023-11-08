@@ -265,6 +265,50 @@ paths:
                     description: OK response.
             schemes:
                 - http
+    /policy/{repository}/{group}/{policyName}/{version}/notifychange:
+        post:
+            tags:
+                - policy
+            summary: SubscribeForPolicyChange policy
+            description: Subscribe for policy change notifications by registering webhook callbacks which the policy service will call.
+            operationId: policy#SubscribeForPolicyChange
+            parameters:
+                - name: repository
+                  in: path
+                  description: Policy repository.
+                  required: true
+                  type: string
+                - name: group
+                  in: path
+                  description: Policy group.
+                  required: true
+                  type: string
+                - name: policyName
+                  in: path
+                  description: Policy name.
+                  required: true
+                  type: string
+                - name: version
+                  in: path
+                  description: Policy version.
+                  required: true
+                  type: string
+                - name: SubscribeForPolicyChangeRequestBody
+                  in: body
+                  required: true
+                  schema:
+                    $ref: '#/definitions/PolicySubscribeForPolicyChangeRequestBody'
+                    required:
+                        - webhook_url
+                        - subscriber
+            responses:
+                "200":
+                    description: OK response.
+                    schema:
+                        type: string
+                        format: binary
+            schemes:
+                - http
     /readiness:
         get:
             tags:
@@ -327,19 +371,19 @@ definitions:
             service:
                 type: string
                 description: Service name.
-                example: Voluptatibus cupiditate ea repellat inventore.
+                example: Doloremque voluptatem aut.
             status:
                 type: string
                 description: Status message.
-                example: Doloremque recusandae earum.
+                example: Aut quas eos qui minima.
             version:
                 type: string
                 description: Service runtime version.
-                example: Quis nisi.
+                example: Est non.
         example:
-            service: Iure fugiat sed sit dolores iusto ut.
-            status: Et eaque.
-            version: Et mollitia.
+            service: Minima aut in quis et qui.
+            status: Deleniti natus eos cumque asperiores.
+            version: Commodi illo quidem omnis eveniet et.
         required:
             - service
             - status
@@ -351,19 +395,19 @@ definitions:
             service:
                 type: string
                 description: Service name.
-                example: Non quo ut molestias rerum sunt.
+                example: Adipisci harum.
             status:
                 type: string
                 description: Status message.
-                example: Omnis dolores totam voluptatem rerum.
+                example: Ratione sit numquam non cupiditate sed omnis.
             version:
                 type: string
                 description: Service runtime version.
-                example: Architecto et enim omnis.
+                example: Accusamus dolores non temporibus est magni.
         example:
-            service: Est impedit.
-            status: Consequatur ut suscipit.
-            version: Neque et sed modi accusantium.
+            service: Earum quis odit eius saepe.
+            status: Delectus sit saepe dicta mollitia molestiae.
+            version: Deserunt blanditiis repudiandae quasi.
         required:
             - service
             - status
@@ -378,53 +422,53 @@ definitions:
                     $ref: '#/definitions/PolicyResponseBody'
                 description: JSON array of policies.
                 example:
-                    - data: Voluptas ad corporis adipisci inventore ipsum.
-                      dataConfig: Recusandae dolorum nisi distinctio vitae ad.
-                      group: Accusamus enim.
-                      lastUpdate: 4303309286764032455
+                    - data: Vel dolores omnis molestiae tempora sed repellendus.
+                      dataConfig: Error minus vel voluptate quasi.
+                      group: Rerum molestiae possimus cum laboriosam.
+                      lastUpdate: 4744199804826420990
                       locked: true
-                      policyName: Ut amet.
-                      rego: Quam dolores architecto itaque.
-                      repository: Reprehenderit in libero perspiciatis voluptatum ut soluta.
-                      version: Recusandae est rerum corrupti quia.
-                    - data: Voluptas ad corporis adipisci inventore ipsum.
-                      dataConfig: Recusandae dolorum nisi distinctio vitae ad.
-                      group: Accusamus enim.
-                      lastUpdate: 4303309286764032455
+                      policyName: Qui nostrum eaque nesciunt et dolores et.
+                      rego: Aut asperiores.
+                      repository: Et minus fugiat veritatis.
+                      version: Ipsa ad voluptatum maxime ut.
+                    - data: Vel dolores omnis molestiae tempora sed repellendus.
+                      dataConfig: Error minus vel voluptate quasi.
+                      group: Rerum molestiae possimus cum laboriosam.
+                      lastUpdate: 4744199804826420990
                       locked: true
-                      policyName: Ut amet.
-                      rego: Quam dolores architecto itaque.
-                      repository: Reprehenderit in libero perspiciatis voluptatum ut soluta.
-                      version: Recusandae est rerum corrupti quia.
-                    - data: Voluptas ad corporis adipisci inventore ipsum.
-                      dataConfig: Recusandae dolorum nisi distinctio vitae ad.
-                      group: Accusamus enim.
-                      lastUpdate: 4303309286764032455
-                      locked: true
-                      policyName: Ut amet.
-                      rego: Quam dolores architecto itaque.
-                      repository: Reprehenderit in libero perspiciatis voluptatum ut soluta.
-                      version: Recusandae est rerum corrupti quia.
+                      policyName: Qui nostrum eaque nesciunt et dolores et.
+                      rego: Aut asperiores.
+                      repository: Et minus fugiat veritatis.
+                      version: Ipsa ad voluptatum maxime ut.
         example:
             policies:
-                - data: Voluptas ad corporis adipisci inventore ipsum.
-                  dataConfig: Recusandae dolorum nisi distinctio vitae ad.
-                  group: Accusamus enim.
-                  lastUpdate: 4303309286764032455
+                - data: Vel dolores omnis molestiae tempora sed repellendus.
+                  dataConfig: Error minus vel voluptate quasi.
+                  group: Rerum molestiae possimus cum laboriosam.
+                  lastUpdate: 4744199804826420990
                   locked: true
-                  policyName: Ut amet.
-                  rego: Quam dolores architecto itaque.
-                  repository: Reprehenderit in libero perspiciatis voluptatum ut soluta.
-                  version: Recusandae est rerum corrupti quia.
-                - data: Voluptas ad corporis adipisci inventore ipsum.
-                  dataConfig: Recusandae dolorum nisi distinctio vitae ad.
-                  group: Accusamus enim.
-                  lastUpdate: 4303309286764032455
+                  policyName: Qui nostrum eaque nesciunt et dolores et.
+                  rego: Aut asperiores.
+                  repository: Et minus fugiat veritatis.
+                  version: Ipsa ad voluptatum maxime ut.
+                - data: Vel dolores omnis molestiae tempora sed repellendus.
+                  dataConfig: Error minus vel voluptate quasi.
+                  group: Rerum molestiae possimus cum laboriosam.
+                  lastUpdate: 4744199804826420990
                   locked: true
-                  policyName: Ut amet.
-                  rego: Quam dolores architecto itaque.
-                  repository: Reprehenderit in libero perspiciatis voluptatum ut soluta.
-                  version: Recusandae est rerum corrupti quia.
+                  policyName: Qui nostrum eaque nesciunt et dolores et.
+                  rego: Aut asperiores.
+                  repository: Et minus fugiat veritatis.
+                  version: Ipsa ad voluptatum maxime ut.
+                - data: Vel dolores omnis molestiae tempora sed repellendus.
+                  dataConfig: Error minus vel voluptate quasi.
+                  group: Rerum molestiae possimus cum laboriosam.
+                  lastUpdate: 4744199804826420990
+                  locked: true
+                  policyName: Qui nostrum eaque nesciunt et dolores et.
+                  rego: Aut asperiores.
+                  repository: Et minus fugiat veritatis.
+                  version: Ipsa ad voluptatum maxime ut.
         required:
             - policies
     PolicyResponseBody:
@@ -434,19 +478,19 @@ definitions:
             data:
                 type: string
                 description: Policy static data.
-                example: Aut asperiores.
+                example: Molestiae sapiente unde.
             dataConfig:
                 type: string
                 description: Policy static data optional configuration.
-                example: Vel dolores omnis molestiae tempora sed repellendus.
+                example: Quae ullam qui.
             group:
                 type: string
                 description: Policy group.
-                example: Et dolores.
+                example: Dolor dolorem modi aut officiis veritatis impedit.
             lastUpdate:
                 type: integer
                 description: Last update (Unix timestamp).
-                example: 8993739598055578473
+                example: 34754544732575751
                 format: int64
             locked:
                 type: boolean
@@ -455,29 +499,29 @@ definitions:
             policyName:
                 type: string
                 description: Policy name.
-                example: Veritatis quam qui nostrum eaque.
+                example: Dolorum cupiditate provident.
             rego:
                 type: string
                 description: Policy rego source code.
-                example: Ipsa ad voluptatum maxime ut.
+                example: Id quibusdam quia deserunt officiis.
             repository:
                 type: string
                 description: Policy repository.
-                example: Maiores et minus.
+                example: Nisi et praesentium ut reiciendis.
             version:
                 type: string
                 description: Policy version.
-                example: Delectus rerum molestiae possimus cum laboriosam.
+                example: Recusandae eligendi.
         example:
-            data: Aperiam aut odio dolorum.
-            dataConfig: Quae et et unde.
-            group: Ea architecto iure est similique architecto id.
-            lastUpdate: 2495518142683426670
+            data: Ad omnis possimus.
+            dataConfig: Cupiditate qui quo.
+            group: Dolorem aut accusantium.
+            lastUpdate: 2438708265142731750
             locked: false
-            policyName: Consectetur rerum vel sunt.
-            rego: At ut dolore.
-            repository: Vel voluptate quasi delectus.
-            version: Ut est ut molestias sint ipsam.
+            policyName: Sapiente laborum.
+            rego: Voluptatem culpa voluptates sed ea.
+            repository: Rerum non.
+            version: Dolor culpa.
         required:
             - repository
             - group
@@ -485,3 +529,24 @@ definitions:
             - version
             - locked
             - lastUpdate
+    PolicySubscribeForPolicyChangeRequestBody:
+        title: PolicySubscribeForPolicyChangeRequestBody
+        type: object
+        properties:
+            subscriber:
+                type: string
+                description: Name of the subscriber for policy.
+                example: 6ln
+                minLength: 3
+                maxLength: 100
+            webhook_url:
+                type: string
+                description: Subscriber webhook url.
+                example: http://stehr.org/alanis.swift
+                format: uri
+        example:
+            subscriber: hnh
+            webhook_url: http://howellgerlach.net/lexi
+        required:
+            - webhook_url
+            - subscriber

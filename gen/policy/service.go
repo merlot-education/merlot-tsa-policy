@@ -21,6 +21,9 @@ type Service interface {
 	Unlock(context.Context, *UnlockRequest) (err error)
 	// List policies from storage with optional filters.
 	ListPolicies(context.Context, *PoliciesRequest) (res *PoliciesResult, err error)
+	// Subscribe for policy change notifications by registering webhook callbacks
+	// which the policy service will call.
+	SubscribeForPolicyChange(context.Context, *SubscribeRequest) (res any, err error)
 }
 
 // ServiceName is the name of the service as defined in the design. This is the
@@ -31,7 +34,7 @@ const ServiceName = "policy"
 // MethodNames lists the service method names as defined in the design. These
 // are the same values that are set in the endpoint request contexts under the
 // MethodKey key.
-var MethodNames = [4]string{"Evaluate", "Lock", "Unlock", "ListPolicies"}
+var MethodNames = [5]string{"Evaluate", "Lock", "Unlock", "ListPolicies", "SubscribeForPolicyChange"}
 
 // EvaluateRequest is the payload type of the policy service Evaluate method.
 type EvaluateRequest struct {
@@ -107,6 +110,23 @@ type Policy struct {
 	Locked bool
 	// Last update (Unix timestamp).
 	LastUpdate int64
+}
+
+// SubscribeRequest is the payload type of the policy service
+// SubscribeForPolicyChange method.
+type SubscribeRequest struct {
+	// Subscriber webhook url.
+	WebhookURL string
+	// Name of the subscriber for policy.
+	Subscriber string
+	// Policy repository.
+	Repository string
+	// Policy name.
+	PolicyName string
+	// Policy group.
+	Group string
+	// Policy version.
+	Version string
 }
 
 // UnlockRequest is the payload type of the policy service Unlock method.

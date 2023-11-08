@@ -7,7 +7,6 @@ import (
 	"context"
 	"sync"
 
-	"gitlab.eclipse.org/eclipse/xfsc/tsa/policy/internal/notify"
 	"gitlab.eclipse.org/eclipse/xfsc/tsa/policy/internal/storage"
 )
 
@@ -43,7 +42,7 @@ func (c *Cache) Purge() {
 }
 
 // PolicyDataChange triggers purge on the cache.
-func (c *Cache) PolicyDataChange(_ context.Context, _ *notify.EventPolicyChange) error {
+func (c *Cache) PolicyDataChange(_ context.Context, _, _, _, _ string) error {
 	c.Purge()
 	return nil
 }

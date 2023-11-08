@@ -73,7 +73,7 @@ func TestCache_PolicyDataChange(t *testing.T) {
 	cache := regocache.New()
 	cache.Set("key1", &p1)
 
-	err := cache.PolicyDataChange(context.Background(), nil)
+	err := cache.PolicyDataChange(context.Background(), "", "", "", "")
 	assert.Nil(t, err)
 	q2, ok := cache.Get("key1")
 	assert.False(t, ok)

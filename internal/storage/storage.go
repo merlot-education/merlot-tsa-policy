@@ -12,10 +12,10 @@ import (
 	zap "go.uber.org/zap"
 
 	"gitlab.eclipse.org/eclipse/xfsc/tsa/golib/errors"
-	"gitlab.eclipse.org/eclipse/xfsc/tsa/policy/internal/notify"
 )
 
 const (
+	subscriberCollectionName = "subscribers"
 	lockedField              = "locked"
 	dataField                = "data"
 	nextDataRefreshTimeField = "nextDataRefreshTime"
@@ -23,7 +23,7 @@ const (
 )
 
 type PolicyChangeSubscriber interface {
-	PolicyDataChange(ctx context.Context, event *notify.EventPolicyChange) error
+	PolicyDataChange(ctx context.Context, policyRepository, policyName, policyGroup, policyVersion string) error
 }
 
 type Policy struct {
@@ -44,6 +44,7 @@ type Policy struct {
 type Storage struct {
 	db          *mongo.Client
 	policy      *mongo.Collection
+	subscriber  *mongo.Collection
 	subscribers []PolicyChangeSubscriber
 	logger      *zap.Logger
 }
@@ -53,10 +54,13 @@ func New(db *mongo.Client, dbname, collection string, logger *zap.Logger) (*Stor
 		return nil, err
 	}
 
+	database := db.Database(dbname)
+
 	return &Storage{
-		db:     db,
-		policy: db.Database(dbname).Collection(collection),
-		logger: logger,
+		db:         db,
+		policy:     database.Collection(collection),
+		subscriber: database.Collection(subscriberCollectionName),
+		logger:     logger,
 	}, nil
 }
 
@@ -132,12 +136,9 @@ func (s *Storage) ListenPolicyDataChanges(ctx context.Context) error {
 		policy := policyEvent.Policy
 
 		for _, subscriber := range s.subscribers {
-			err := subscriber.PolicyDataChange(
-				ctx,
-				&notify.EventPolicyChange{Repository: policy.Repository, Name: policy.Name, Version: policy.Version, Group: policy.Group},
-			)
+			err := subscriber.PolicyDataChange(ctx, policy.Repository, policy.Name, policy.Group, policy.Version)
 			if err != nil {
-				return err
+				s.logger.Error("error notifying policy change subscribers", zap.Error(err))
 			}
 		}
 

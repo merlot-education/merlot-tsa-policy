@@ -10,6 +10,20 @@ import (
 )
 
 type FakeStorage struct {
+	CreateSubscriberStub        func(context.Context, *storage.Subscriber) (*storage.Subscriber, error)
+	createSubscriberMutex       sync.RWMutex
+	createSubscriberArgsForCall []struct {
+		arg1 context.Context
+		arg2 *storage.Subscriber
+	}
+	createSubscriberReturns struct {
+		result1 *storage.Subscriber
+		result2 error
+	}
+	createSubscriberReturnsOnCall map[int]struct {
+		result1 *storage.Subscriber
+		result2 error
+	}
 	GetPoliciesStub        func(context.Context, *bool) ([]*storage.Policy, error)
 	getPoliciesMutex       sync.RWMutex
 	getPoliciesArgsForCall []struct {
@@ -59,6 +73,71 @@ type FakeStorage struct {
 	}
 	invocations      map[string][][]interface{}
 	invocationsMutex sync.RWMutex
+}
+
+func (fake *FakeStorage) CreateSubscriber(arg1 context.Context, arg2 *storage.Subscriber) (*storage.Subscriber, error) {
+	fake.createSubscriberMutex.Lock()
+	ret, specificReturn := fake.createSubscriberReturnsOnCall[len(fake.createSubscriberArgsForCall)]
+	fake.createSubscriberArgsForCall = append(fake.createSubscriberArgsForCall, struct {
+		arg1 context.Context
+		arg2 *storage.Subscriber
+	}{arg1, arg2})
+	stub := fake.CreateSubscriberStub
+	fakeReturns := fake.createSubscriberReturns
+	fake.recordInvocation("CreateSubscriber", []interface{}{arg1, arg2})
+	fake.createSubscriberMutex.Unlock()
+	if stub != nil {
+		return stub(arg1, arg2)
+	}
+	if specificReturn {
+		return ret.result1, ret.result2
+	}
+	return fakeReturns.result1, fakeReturns.result2
+}
+
+func (fake *FakeStorage) CreateSubscriberCallCount() int {
+	fake.createSubscriberMutex.RLock()
+	defer fake.createSubscriberMutex.RUnlock()
+	return len(fake.createSubscriberArgsForCall)
+}
+
+func (fake *FakeStorage) CreateSubscriberCalls(stub func(context.Context, *storage.Subscriber) (*storage.Subscriber, error)) {
+	fake.createSubscriberMutex.Lock()
+	defer fake.createSubscriberMutex.Unlock()
+	fake.CreateSubscriberStub = stub
+}
+
+func (fake *FakeStorage) CreateSubscriberArgsForCall(i int) (context.Context, *storage.Subscriber) {
+	fake.createSubscriberMutex.RLock()
+	defer fake.createSubscriberMutex.RUnlock()
+	argsForCall := fake.createSubscriberArgsForCall[i]
+	return argsForCall.arg1, argsForCall.arg2
+}
+
+func (fake *FakeStorage) CreateSubscriberReturns(result1 *storage.Subscriber, result2 error) {
+	fake.createSubscriberMutex.Lock()
+	defer fake.createSubscriberMutex.Unlock()
+	fake.CreateSubscriberStub = nil
+	fake.createSubscriberReturns = struct {
+		result1 *storage.Subscriber
+		result2 error
+	}{result1, result2}
+}
+
+func (fake *FakeStorage) CreateSubscriberReturnsOnCall(i int, result1 *storage.Subscriber, result2 error) {
+	fake.createSubscriberMutex.Lock()
+	defer fake.createSubscriberMutex.Unlock()
+	fake.CreateSubscriberStub = nil
+	if fake.createSubscriberReturnsOnCall == nil {
+		fake.createSubscriberReturnsOnCall = make(map[int]struct {
+			result1 *storage.Subscriber
+			result2 error
+		})
+	}
+	fake.createSubscriberReturnsOnCall[i] = struct {
+		result1 *storage.Subscriber
+		result2 error
+	}{result1, result2}
 }
 
 func (fake *FakeStorage) GetPolicies(arg1 context.Context, arg2 *bool) ([]*storage.Policy, error) {
@@ -263,6 +342,8 @@ func (fake *FakeStorage) SetPolicyLockReturnsOnCall(i int, result1 error) {
 func (fake *FakeStorage) Invocations() map[string][][]interface{} {
 	fake.invocationsMutex.RLock()
 	defer fake.invocationsMutex.RUnlock()
+	fake.createSubscriberMutex.RLock()
+	defer fake.createSubscriberMutex.RUnlock()
 	fake.getPoliciesMutex.RLock()
 	defer fake.getPoliciesMutex.RUnlock()
 	fake.policyMutex.RLock()
