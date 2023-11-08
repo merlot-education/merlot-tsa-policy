@@ -1,26 +1,38 @@
 package notify_test
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"net/http"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
+
 	"gitlab.eclipse.org/eclipse/xfsc/tsa/policy/internal/notify"
 	"gitlab.eclipse.org/eclipse/xfsc/tsa/policy/internal/notify/notifyfakes"
+	"gitlab.eclipse.org/eclipse/xfsc/tsa/policy/internal/storage"
 )
 
 func TestNotify_PolicyDataChange(t *testing.T) {
 	tests := []struct {
 		name              string
 		events            notify.Events
+		storage           notify.Storage
 		eventPolicyChange *notify.EventPolicyChange
 
-		errText string
+		errText    string
+		errLogText string
 	}{
 		{
 			name:              "error when sending event",
-			eventPolicyChange: &notify.EventPolicyChange{Name: "exampleName", Version: "exampleVersion", Group: "exampleGroup"},
+			eventPolicyChange: &notify.EventPolicyChange{Repository: "exampleRepo", Name: "exampleName", Version: "exampleVersion", Group: "exampleGroup"},
+			storage: &notifyfakes.FakeStorage{PolicyChangeSubscribersStub: func(ctx context.Context, s1, s2, s3, s4 string) ([]*storage.Subscriber, error) {
+				return []*storage.Subscriber{}, nil
+			}},
 			events: &notifyfakes.FakeEvents{SendStub: func(ctx context.Context, a any) error {
 				return fmt.Errorf("some error")
 			}},
@@ -30,17 +42,65 @@ func TestNotify_PolicyDataChange(t *testing.T) {
 
 		{
 			name:              "sending event is successful",
-			eventPolicyChange: &notify.EventPolicyChange{Name: "exampleName", Version: "exampleVersion", Group: "exampleGroup"},
+			eventPolicyChange: &notify.EventPolicyChange{Repository: "exampleRepo", Name: "exampleName", Version: "exampleVersion", Group: "exampleGroup"},
+			storage: &notifyfakes.FakeStorage{PolicyChangeSubscribersStub: func(ctx context.Context, s1, s2, s3, s4 string) ([]*storage.Subscriber, error) {
+				return []*storage.Subscriber{}, nil
+			}},
 			events: &notifyfakes.FakeEvents{SendStub: func(ctx context.Context, a any) error {
 				return nil
 			}},
+		},
+
+		{
+			name:              "storage return error",
+			eventPolicyChange: &notify.EventPolicyChange{Repository: "exampleRepo", Name: "exampleName", Version: "exampleVersion", Group: "exampleGroup"},
+			storage: &notifyfakes.FakeStorage{PolicyChangeSubscribersStub: func(ctx context.Context, s1, s2, s3, s4 string) ([]*storage.Subscriber, error) {
+				return []*storage.Subscriber{}, fmt.Errorf("some error")
+			}},
+			events: &notifyfakes.FakeEvents{SendStub: func(ctx context.Context, a any) error {
+				return nil
+			}},
+
+			errLogText: "some error",
+		},
+
+		{
+			name:              "wrong webhook url return error",
+			eventPolicyChange: &notify.EventPolicyChange{Repository: "exampleRepo", Name: "exampleName", Version: "exampleVersion", Group: "exampleGroup"},
+			storage: &notifyfakes.FakeStorage{PolicyChangeSubscribersStub: func(ctx context.Context, s1, s2, s3, s4 string) ([]*storage.Subscriber, error) {
+				return []*storage.Subscriber{{WebhookURL: "wrong/url"}}, nil
+			}},
+			events: &notifyfakes.FakeEvents{SendStub: func(ctx context.Context, a any) error {
+				return nil
+			}},
+
+			errLogText: "error notifying subscriber webhook",
 		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			notifier := notify.New(test.events)
-			err := notifier.PolicyDataChange(context.Background(), test.eventPolicyChange)
+			buf := bytes.Buffer{}
+			logger := zap.New(zapcore.NewCore(
+				zapcore.NewJSONEncoder(zap.NewDevelopmentEncoderConfig()),
+				zapcore.AddSync(&buf),
+				zap.ErrorLevel))
+
+			notifier := notify.New(test.events, test.storage, http.DefaultClient, logger)
+			err := notifier.PolicyDataChange(context.Background(),
+				test.eventPolicyChange.Repository,
+				test.eventPolicyChange.Name,
+				test.eventPolicyChange.Group,
+				test.eventPolicyChange.Version)
+
+			// we need to sleep a little, as notifier.PolicyDataChange(...)
+			// spawns a new go routine which needs some time to start and execute
+			time.Sleep(10 * time.Millisecond)
+
+			if test.errLogText != "" {
+				assert.Contains(t, buf.String(), test.errLogText)
+			}
+
 			if test.errText != "" {
 				assert.ErrorContains(t, err, test.errText)
 			} else {
@@ -48,4 +108,5 @@ func TestNotify_PolicyDataChange(t *testing.T) {
 			}
 		})
 	}
+
 }

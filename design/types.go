@@ -1,7 +1,9 @@
 // nolint:revive
 package design
 
-import . "goa.design/goa/v3/dsl"
+import (
+	. "goa.design/goa/v3/dsl"
+)
 
 var EvaluateRequest = Type("EvaluateRequest", func() {
 	Field(1, "repository", String, "Policy repository.", func() {
@@ -67,6 +69,21 @@ var PoliciesRequest = Type("PoliciesRequest", func() {
 var PoliciesResult = Type("PoliciesResult", func() {
 	Field(1, "policies", ArrayOf(Policy), "JSON array of policies.")
 	Required("policies")
+})
+
+var SubscribeRequest = Type("SubscribeRequest", func() {
+	Field(1, "webhook_url", String, "Subscriber webhook url.", func() {
+		Format(FormatURI)
+	})
+	Field(2, "subscriber", String, "Name of the subscriber for policy.", func() {
+		MinLength(3)
+		MaxLength(100)
+	})
+	Field(3, "repository", String, "Policy repository.")
+	Field(4, "policyName", String, "Policy name.")
+	Field(5, "group", String, "Policy group.")
+	Field(6, "version", String, "Policy version.")
+	Required("webhook_url", "subscriber", "repository", "policyName", "group", "version")
 })
 
 var HealthResponse = Type("HealthResponse", func() {

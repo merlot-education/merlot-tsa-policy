@@ -1,7 +1,9 @@
 // nolint:revive
 package design
 
-import . "goa.design/goa/v3/dsl"
+import (
+	. "goa.design/goa/v3/dsl"
+)
 
 var _ = API("policy", func() {
 	Title("Policy Service")
@@ -72,6 +74,16 @@ var _ = Service("policy", func() {
 				Param("data", Boolean, "Include policy static data in results (optional). ")
 				Param("dataConfig", Boolean, "Include static data config (optional).")
 			})
+			Response(StatusOK)
+		})
+	})
+
+	Method("SubscribeForPolicyChange", func() {
+		Description("Subscribe for policy change notifications by registering webhook callbacks which the policy service will call.")
+		Payload(SubscribeRequest)
+		Result(Any)
+		HTTP(func() {
+			POST("/policy/{repository}/{group}/{policyName}/{version}/notifychange")
 			Response(StatusOK)
 		})
 	})

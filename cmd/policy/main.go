@@ -89,9 +89,6 @@ func main() {
 	// create rego policy cache
 	regocache := regocache.New()
 
-	// create policy changes notifier
-	notifier := notify.New(events)
-
 	// connect to mongo db
 	db, err := mongo.Connect(
 		context.Background(),
@@ -111,6 +108,9 @@ func main() {
 	if err != nil {
 		logger.Fatal("error connecting to database", zap.Error(err))
 	}
+
+	// create policy changes notifier
+	notifier := notify.New(events, storage, httpClient, logger)
 
 	// subscribe the cache for policy data changes
 	storage.AddPolicyChangeSubscribers(regocache, notifier)

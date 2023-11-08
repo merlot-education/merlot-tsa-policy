@@ -40,3 +40,8 @@ func UnlockPolicyPath(repository string, group string, policyName string, versio
 func ListPoliciesPolicyPath() string {
 	return "/v1/policies"
 }
+
+// SubscribeForPolicyChangePolicyPath returns the URL path to the policy service SubscribeForPolicyChange HTTP endpoint.
+func SubscribeForPolicyChangePolicyPath(repository string, group string, policyName string, version string) string {
+	return fmt.Sprintf("/policy/%v/%v/%v/%v/notifychange", repository, group, policyName, version)
+}

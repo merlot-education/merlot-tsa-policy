@@ -15,19 +15,21 @@ import (
 
 // Client is the "policy" service client.
 type Client struct {
-	EvaluateEndpoint     goa.Endpoint
-	LockEndpoint         goa.Endpoint
-	UnlockEndpoint       goa.Endpoint
-	ListPoliciesEndpoint goa.Endpoint
+	EvaluateEndpoint                 goa.Endpoint
+	LockEndpoint                     goa.Endpoint
+	UnlockEndpoint                   goa.Endpoint
+	ListPoliciesEndpoint             goa.Endpoint
+	SubscribeForPolicyChangeEndpoint goa.Endpoint
 }
 
 // NewClient initializes a "policy" service client given the endpoints.
-func NewClient(evaluate, lock, unlock, listPolicies goa.Endpoint) *Client {
+func NewClient(evaluate, lock, unlock, listPolicies, subscribeForPolicyChange goa.Endpoint) *Client {
 	return &Client{
-		EvaluateEndpoint:     evaluate,
-		LockEndpoint:         lock,
-		UnlockEndpoint:       unlock,
-		ListPoliciesEndpoint: listPolicies,
+		EvaluateEndpoint:                 evaluate,
+		LockEndpoint:                     lock,
+		UnlockEndpoint:                   unlock,
+		ListPoliciesEndpoint:             listPolicies,
+		SubscribeForPolicyChangeEndpoint: subscribeForPolicyChange,
 	}
 }
 
@@ -61,4 +63,15 @@ func (c *Client) ListPolicies(ctx context.Context, p *PoliciesRequest) (res *Pol
 		return
 	}
 	return ires.(*PoliciesResult), nil
+}
+
+// SubscribeForPolicyChange calls the "SubscribeForPolicyChange" endpoint of
+// the "policy" service.
+func (c *Client) SubscribeForPolicyChange(ctx context.Context, p *SubscribeRequest) (res any, err error) {
+	var ires any
+	ires, err = c.SubscribeForPolicyChangeEndpoint(ctx, p)
+	if err != nil {
+		return
+	}
+	return ires.(any), nil
 }

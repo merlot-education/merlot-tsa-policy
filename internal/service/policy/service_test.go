@@ -817,3 +817,67 @@ func TestService_ListPolicies(t *testing.T) {
 		})
 	}
 }
+
+func TestService_SubscribeForPolicyChange(t *testing.T) {
+	tests := []struct {
+		name    string
+		storage policy.Storage
+		request *goapolicy.SubscribeRequest
+
+		errText string
+	}{
+		{
+			name: "error while creating subscriber",
+			storage: &policyfakes.FakeStorage{CreateSubscriberStub: func(ctx context.Context, s *storage.Subscriber) (*storage.Subscriber, error) {
+				return nil, fmt.Errorf("some error")
+			}},
+			request: &goapolicy.SubscribeRequest{
+				WebhookURL: "http://some.url/example",
+				Subscriber: "Subscriber Name",
+				Repository: "policy repo",
+				PolicyName: "policy name",
+				Group:      "policy group",
+				Version:    "policy version",
+			},
+
+			errText: "some error",
+		},
+		{
+			name: "subscriber is created successfully",
+			storage: &policyfakes.FakeStorage{CreateSubscriberStub: func(ctx context.Context, s *storage.Subscriber) (*storage.Subscriber, error) {
+				return &storage.Subscriber{
+					Name:             "Subscriber Name",
+					WebhookURL:       "http://some.url/example",
+					PolicyRepository: "policy repo",
+					PolicyName:       "policy name",
+					PolicyGroup:      "policy group",
+					PolicyVersion:    "policy version",
+					CreatedAt:        time.Time{},
+					UpdatedAt:        time.Time{},
+				}, nil
+			}},
+			request: &goapolicy.SubscribeRequest{
+				WebhookURL: "http://some.url/example",
+				Subscriber: "Subscriber Name",
+				Repository: "policy repo",
+				PolicyName: "policy name",
+				Group:      "policy group",
+				Version:    "policy version",
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			svc := policy.New(test.storage, nil, nil, zap.NewNop())
+			res, err := svc.SubscribeForPolicyChange(context.Background(), test.request)
+			if test.errText != "" {
+				assert.ErrorContains(t, err, test.errText)
+				assert.Nil(t, res)
+			} else {
+				assert.NotNil(t, res)
+				assert.NoError(t, err)
+			}
+		})
+	}
+}

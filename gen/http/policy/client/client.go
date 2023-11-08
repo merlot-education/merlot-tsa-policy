@@ -31,6 +31,10 @@ type Client struct {
 	// ListPolicies endpoint.
 	ListPoliciesDoer goahttp.Doer
 
+	// SubscribeForPolicyChange Doer is the HTTP client used to make requests to
+	// the SubscribeForPolicyChange endpoint.
+	SubscribeForPolicyChangeDoer goahttp.Doer
+
 	// RestoreResponseBody controls whether the response bodies are reset after
 	// decoding so they can be read again.
 	RestoreResponseBody bool
@@ -51,15 +55,16 @@ func NewClient(
 	restoreBody bool,
 ) *Client {
 	return &Client{
-		EvaluateDoer:        doer,
-		LockDoer:            doer,
-		UnlockDoer:          doer,
-		ListPoliciesDoer:    doer,
-		RestoreResponseBody: restoreBody,
-		scheme:              scheme,
-		host:                host,
-		decoder:             dec,
-		encoder:             enc,
+		EvaluateDoer:                 doer,
+		LockDoer:                     doer,
+		UnlockDoer:                   doer,
+		ListPoliciesDoer:             doer,
+		SubscribeForPolicyChangeDoer: doer,
+		RestoreResponseBody:          restoreBody,
+		scheme:                       scheme,
+		host:                         host,
+		decoder:                      dec,
+		encoder:                      enc,
 	}
 }
 
@@ -144,6 +149,30 @@ func (c *Client) ListPolicies() goa.Endpoint {
 		resp, err := c.ListPoliciesDoer.Do(req)
 		if err != nil {
 			return nil, goahttp.ErrRequestError("policy", "ListPolicies", err)
+		}
+		return decodeResponse(resp)
+	}
+}
+
+// SubscribeForPolicyChange returns an endpoint that makes HTTP requests to the
+// policy service SubscribeForPolicyChange server.
+func (c *Client) SubscribeForPolicyChange() goa.Endpoint {
+	var (
+		encodeRequest  = EncodeSubscribeForPolicyChangeRequest(c.encoder)
+		decodeResponse = DecodeSubscribeForPolicyChangeResponse(c.decoder, c.RestoreResponseBody)
+	)
+	return func(ctx context.Context, v any) (any, error) {
+		req, err := c.BuildSubscribeForPolicyChangeRequest(ctx, v)
+		if err != nil {
+			return nil, err
+		}
+		err = encodeRequest(req, v)
+		if err != nil {
+			return nil, err
+		}
+		resp, err := c.SubscribeForPolicyChangeDoer.Do(req)
+		if err != nil {
+			return nil, goahttp.ErrRequestError("policy", "SubscribeForPolicyChange", err)
 		}
 		return decodeResponse(resp)
 	}
