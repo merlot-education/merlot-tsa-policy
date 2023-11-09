@@ -11,6 +11,7 @@ import (
 	"context"
 	"net/http"
 
+	policy "gitlab.eclipse.org/eclipse/xfsc/tsa/policy/gen/policy"
 	goahttp "goa.design/goa/v3/http"
 	goa "goa.design/goa/v3/pkg"
 )
@@ -26,6 +27,10 @@ type Client struct {
 
 	// Unlock Doer is the HTTP client used to make requests to the Unlock endpoint.
 	UnlockDoer goahttp.Doer
+
+	// ExportBundle Doer is the HTTP client used to make requests to the
+	// ExportBundle endpoint.
+	ExportBundleDoer goahttp.Doer
 
 	// ListPolicies Doer is the HTTP client used to make requests to the
 	// ListPolicies endpoint.
@@ -58,6 +63,7 @@ func NewClient(
 		EvaluateDoer:                 doer,
 		LockDoer:                     doer,
 		UnlockDoer:                   doer,
+		ExportBundleDoer:             doer,
 		ListPoliciesDoer:             doer,
 		SubscribeForPolicyChangeDoer: doer,
 		RestoreResponseBody:          restoreBody,
@@ -127,6 +133,30 @@ func (c *Client) Unlock() goa.Endpoint {
 			return nil, goahttp.ErrRequestError("policy", "Unlock", err)
 		}
 		return decodeResponse(resp)
+	}
+}
+
+// ExportBundle returns an endpoint that makes HTTP requests to the policy
+// service ExportBundle server.
+func (c *Client) ExportBundle() goa.Endpoint {
+	var (
+		decodeResponse = DecodeExportBundleResponse(c.decoder, c.RestoreResponseBody)
+	)
+	return func(ctx context.Context, v any) (any, error) {
+		req, err := c.BuildExportBundleRequest(ctx, v)
+		if err != nil {
+			return nil, err
+		}
+		resp, err := c.ExportBundleDoer.Do(req)
+		if err != nil {
+			return nil, goahttp.ErrRequestError("policy", "ExportBundle", err)
+		}
+		res, err := decodeResponse(resp)
+		if err != nil {
+			resp.Body.Close()
+			return nil, err
+		}
+		return &policy.ExportBundleResponseData{Result: res.(*policy.ExportBundleResult), Body: resp.Body}, nil
 	}
 }
 

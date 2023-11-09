@@ -1,14 +1,18 @@
 package policy_test
 
 import (
+	"archive/zip"
+	"bytes"
 	"context"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 
 	"gitlab.eclipse.org/eclipse/xfsc/tsa/golib/errors"
@@ -880,4 +884,91 @@ func TestService_SubscribeForPolicyChange(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestService_ExportBundle(t *testing.T) {
+	t.Run("policy not found in storage", func(t *testing.T) {
+		storage := &policyfakes.FakeStorage{
+			PolicyStub: func(ctx context.Context, s string, s2 string, s3 string, s4 string) (*storage.Policy, error) {
+				return nil, errors.New(errors.NotFound, "policy not found")
+			},
+		}
+		svc := policy.New(storage, nil, nil, zap.NewNop())
+		res, reader, err := svc.ExportBundle(context.Background(), &goapolicy.ExportBundleRequest{})
+		assert.Nil(t, res)
+		assert.Nil(t, reader)
+		require.Error(t, err)
+		assert.ErrorContains(t, err, "policy not found")
+		e, ok := err.(*errors.Error)
+		assert.True(t, ok)
+		assert.True(t, errors.Is(errors.NotFound, e))
+	})
+
+	t.Run("error getting policy from storage", func(t *testing.T) {
+		storage := &policyfakes.FakeStorage{
+			PolicyStub: func(ctx context.Context, s string, s2 string, s3 string, s4 string) (*storage.Policy, error) {
+				return nil, errors.New("unexpected error")
+			},
+		}
+		svc := policy.New(storage, nil, nil, zap.NewNop())
+		res, reader, err := svc.ExportBundle(context.Background(), &goapolicy.ExportBundleRequest{})
+		assert.Nil(t, res)
+		assert.Nil(t, reader)
+		require.Error(t, err)
+		assert.ErrorContains(t, err, "unexpected error")
+		e, ok := err.(*errors.Error)
+		assert.True(t, ok)
+		assert.True(t, errors.Is(errors.Unknown, e))
+	})
+
+	t.Run("successful export of policy bundle", func(t *testing.T) {
+		storage := &policyfakes.FakeStorage{
+			PolicyStub: func(ctx context.Context, s string, s2 string, s3 string, s4 string) (*storage.Policy, error) {
+				return &storage.Policy{
+					Repository: "myrepo",
+					Name:       "myname",
+					Group:      "mygroup",
+					Version:    "1.52",
+					Rego:       "package test",
+					Data:       `{"key":"value"}`,
+					DataConfig: `{"new":"value"}`,
+					Locked:     false,
+					LastUpdate: time.Date(2023, 10, 8, 0, 0, 0, 0, time.UTC),
+				}, nil
+			},
+		}
+		svc := policy.New(storage, nil, nil, zap.NewNop())
+		res, reader, err := svc.ExportBundle(context.Background(), &goapolicy.ExportBundleRequest{})
+		require.NoError(t, err)
+		require.NotNil(t, res)
+		require.NotNil(t, reader)
+
+		assert.Equal(t, "application/zip", res.ContentType)
+		assert.Equal(t, `attachment; filename="myrepo_mygroup_myname_1.52.zip"`, res.ContentDisposition)
+		assert.NotZero(t, res.ContentLength)
+
+		archive, err := io.ReadAll(reader)
+		require.NoError(t, err)
+		require.NotNil(t, archive)
+
+		r, err := zip.NewReader(bytes.NewReader(archive), int64(res.ContentLength))
+		require.NoError(t, err)
+		require.NotNil(t, r)
+
+		// check metadata
+		require.NotNil(t, r.File[0])
+		require.Equal(t, "metadata.json", r.File[0].Name)
+
+		// check policy source code
+		assert.NotNil(t, r.File[1])
+		assert.Equal(t, "policy.rego", r.File[1].Name)
+
+		// check static data
+		assert.NotNil(t, r.File[2])
+		assert.Equal(t, "data.json", r.File[2].Name)
+
+		// check static data configuration
+		assert.NotNil(t, r.File[3])
+		assert.Equal(t, "data-config.json", r.File[3].Name)
+	})
 }

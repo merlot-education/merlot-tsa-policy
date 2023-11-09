@@ -9,6 +9,7 @@ package policy
 
 import (
 	"context"
+	"io"
 
 	goa "goa.design/goa/v3/pkg"
 )
@@ -18,16 +19,18 @@ type Client struct {
 	EvaluateEndpoint                 goa.Endpoint
 	LockEndpoint                     goa.Endpoint
 	UnlockEndpoint                   goa.Endpoint
+	ExportBundleEndpoint             goa.Endpoint
 	ListPoliciesEndpoint             goa.Endpoint
 	SubscribeForPolicyChangeEndpoint goa.Endpoint
 }
 
 // NewClient initializes a "policy" service client given the endpoints.
-func NewClient(evaluate, lock, unlock, listPolicies, subscribeForPolicyChange goa.Endpoint) *Client {
+func NewClient(evaluate, lock, unlock, exportBundle, listPolicies, subscribeForPolicyChange goa.Endpoint) *Client {
 	return &Client{
 		EvaluateEndpoint:                 evaluate,
 		LockEndpoint:                     lock,
 		UnlockEndpoint:                   unlock,
+		ExportBundleEndpoint:             exportBundle,
 		ListPoliciesEndpoint:             listPolicies,
 		SubscribeForPolicyChangeEndpoint: subscribeForPolicyChange,
 	}
@@ -53,6 +56,17 @@ func (c *Client) Lock(ctx context.Context, p *LockRequest) (err error) {
 func (c *Client) Unlock(ctx context.Context, p *UnlockRequest) (err error) {
 	_, err = c.UnlockEndpoint(ctx, p)
 	return
+}
+
+// ExportBundle calls the "ExportBundle" endpoint of the "policy" service.
+func (c *Client) ExportBundle(ctx context.Context, p *ExportBundleRequest) (res *ExportBundleResult, resp io.ReadCloser, err error) {
+	var ires any
+	ires, err = c.ExportBundleEndpoint(ctx, p)
+	if err != nil {
+		return
+	}
+	o := ires.(*ExportBundleResponseData)
+	return o.Result, o.Body, nil
 }
 
 // ListPolicies calls the "ListPolicies" endpoint of the "policy" service.

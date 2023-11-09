@@ -1,4 +1,4 @@
-FROM golang:1.19.4-alpine3.17 as build
+FROM golang:1.21.3-alpine3.17 as build
 
 WORKDIR /app
 
@@ -6,7 +6,7 @@ ADD . .
 
 RUN CGO_ENABLED=0 GOOS=linux go build -mod=vendor
 
-FROM alpine:3.15 as runner
+FROM alpine:3.17 as runner
 
 COPY --from=build /app/sync /opt/sync
 

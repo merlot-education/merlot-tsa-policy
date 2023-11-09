@@ -36,6 +36,11 @@ func UnlockPolicyPath(repository string, group string, policyName string, versio
 	return fmt.Sprintf("/policy/%v/%v/%v/%v/lock", repository, group, policyName, version)
 }
 
+// ExportBundlePolicyPath returns the URL path to the policy service ExportBundle HTTP endpoint.
+func ExportBundlePolicyPath(repository string, group string, policyName string, version string) string {
+	return fmt.Sprintf("/policy/%v/%v/%v/%v/export", repository, group, policyName, version)
+}
+
 // ListPoliciesPolicyPath returns the URL path to the policy service ListPolicies HTTP endpoint.
 func ListPoliciesPolicyPath() string {
 	return "/v1/policies"

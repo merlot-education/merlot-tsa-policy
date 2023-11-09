@@ -25,7 +25,7 @@ func BuildEvaluatePayload(policyEvaluateBody string, policyEvaluateRepository st
 	{
 		err = json.Unmarshal([]byte(policyEvaluateBody), &body)
 		if err != nil {
-			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "\"Sequi adipisci et nulla.\"")
+			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "\"Fugiat id praesentium.\"")
 		}
 	}
 	var repository string
@@ -132,6 +132,34 @@ func BuildUnlockPayload(policyUnlockRepository string, policyUnlockGroup string,
 	return v, nil
 }
 
+// BuildExportBundlePayload builds the payload for the policy ExportBundle
+// endpoint from CLI flags.
+func BuildExportBundlePayload(policyExportBundleRepository string, policyExportBundleGroup string, policyExportBundlePolicyName string, policyExportBundleVersion string) (*policy.ExportBundleRequest, error) {
+	var repository string
+	{
+		repository = policyExportBundleRepository
+	}
+	var group string
+	{
+		group = policyExportBundleGroup
+	}
+	var policyName string
+	{
+		policyName = policyExportBundlePolicyName
+	}
+	var version string
+	{
+		version = policyExportBundleVersion
+	}
+	v := &policy.ExportBundleRequest{}
+	v.Repository = repository
+	v.Group = group
+	v.PolicyName = policyName
+	v.Version = version
+
+	return v, nil
+}
+
 // BuildListPoliciesPayload builds the payload for the policy ListPolicies
 // endpoint from CLI flags.
 func BuildListPoliciesPayload(policyListPoliciesLocked string, policyListPoliciesRego string, policyListPoliciesData string, policyListPoliciesDataConfig string) (*policy.PoliciesRequest, error) {
@@ -197,7 +225,7 @@ func BuildSubscribeForPolicyChangePayload(policySubscribeForPolicyChangeBody str
 	{
 		err = json.Unmarshal([]byte(policySubscribeForPolicyChangeBody), &body)
 		if err != nil {
-			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"subscriber\": \"l5c\",\n      \"webhook_url\": \"http://kilback.com/delbert\"\n   }'")
+			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"subscriber\": \"nn6\",\n      \"webhook_url\": \"http://white.com/grover\"\n   }'")
 		}
 		err = goa.MergeErrors(err, goa.ValidateFormat("body.webhook_url", body.WebhookURL, goa.FormatURI))
 		if utf8.RuneCountInString(body.Subscriber) < 3 {

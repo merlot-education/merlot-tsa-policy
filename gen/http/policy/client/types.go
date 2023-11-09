@@ -72,6 +72,17 @@ func NewEvaluateResultOK(body any, eTag string) *policy.EvaluateResult {
 	return res
 }
 
+// NewExportBundleResultOK builds a "policy" service "ExportBundle" endpoint
+// result from a HTTP "OK" response.
+func NewExportBundleResultOK(contentType string, contentLength int, contentDisposition string) *policy.ExportBundleResult {
+	v := &policy.ExportBundleResult{}
+	v.ContentType = contentType
+	v.ContentLength = contentLength
+	v.ContentDisposition = contentDisposition
+
+	return v
+}
+
 // NewListPoliciesPoliciesResultOK builds a "policy" service "ListPolicies"
 // endpoint result from a HTTP "OK" response.
 func NewListPoliciesPoliciesResultOK(body *ListPoliciesResponseBody) *policy.PoliciesResult {

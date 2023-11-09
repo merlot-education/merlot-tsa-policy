@@ -105,6 +105,17 @@ func NewUnlockRequest(repository string, group string, policyName string, versio
 	return v
 }
 
+// NewExportBundleRequest builds a policy service ExportBundle endpoint payload.
+func NewExportBundleRequest(repository string, group string, policyName string, version string) *policy.ExportBundleRequest {
+	v := &policy.ExportBundleRequest{}
+	v.Repository = repository
+	v.Group = group
+	v.PolicyName = policyName
+	v.Version = version
+
+	return v
+}
+
 // NewListPoliciesPoliciesRequest builds a policy service ListPolicies endpoint
 // payload.
 func NewListPoliciesPoliciesRequest(locked *bool, rego *bool, data *bool, dataConfig *bool) *policy.PoliciesRequest {

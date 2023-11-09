@@ -1,9 +1,12 @@
 package policy
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
+	"strings"
 
 	"github.com/google/uuid"
 	"github.com/open-policy-agent/opa/rego"
@@ -71,6 +74,7 @@ func (s *Service) Evaluate(ctx context.Context, req *policy.EvaluateRequest) (*p
 	}
 
 	logger := s.logger.With(
+		zap.String("operation", "evaluate"),
 		zap.String("repository", req.Repository),
 		zap.String("group", req.Group),
 		zap.String("name", req.PolicyName),
@@ -144,6 +148,7 @@ func (s *Service) Evaluate(ctx context.Context, req *policy.EvaluateRequest) (*p
 // Lock a policy so that it cannot be evaluated.
 func (s *Service) Lock(ctx context.Context, req *policy.LockRequest) error {
 	logger := s.logger.With(
+		zap.String("operation", "lock"),
 		zap.String("repository", req.Repository),
 		zap.String("group", req.Group),
 		zap.String("name", req.PolicyName),
@@ -176,6 +181,7 @@ func (s *Service) Lock(ctx context.Context, req *policy.LockRequest) error {
 // Unlock a policy so it can be evaluated again.
 func (s *Service) Unlock(ctx context.Context, req *policy.UnlockRequest) error {
 	logger := s.logger.With(
+		zap.String("operation", "unlock"),
 		zap.String("repository", req.Repository),
 		zap.String("group", req.Group),
 		zap.String("name", req.PolicyName),
@@ -203,6 +209,37 @@ func (s *Service) Unlock(ctx context.Context, req *policy.UnlockRequest) error {
 	logger.Debug("policy is unlocked")
 
 	return nil
+}
+
+func (s *Service) ExportBundle(ctx context.Context, req *policy.ExportBundleRequest) (*policy.ExportBundleResult, io.ReadCloser, error) {
+	logger := s.logger.With(
+		zap.String("operation", "exportBundle"),
+		zap.String("repository", req.Repository),
+		zap.String("group", req.Group),
+		zap.String("name", req.PolicyName),
+		zap.String("version", req.Version),
+	)
+
+	pol, err := s.storage.Policy(ctx, req.Repository, req.Group, req.PolicyName, req.Version)
+	if err != nil {
+		logger.Error("error getting policy from storage", zap.Error(err))
+		return nil, nil, err
+	}
+
+	bundle, err := createPolicyBundle(pol)
+	if err != nil {
+		logger.Error("error creating policy bundle", zap.Error(err))
+		return nil, nil, err
+	}
+
+	filename := fmt.Sprintf("%s_%s_%s_%s.zip", pol.Repository, pol.Group, pol.Name, pol.Version)
+	filename = strings.TrimSpace(filename)
+
+	return &policy.ExportBundleResult{
+		ContentType:        "application/zip",
+		ContentLength:      len(bundle),
+		ContentDisposition: fmt.Sprintf(`attachment; filename="%s"`, filename),
+	}, io.NopCloser(bytes.NewReader(bundle)), nil
 }
 
 func (s *Service) ListPolicies(ctx context.Context, req *policy.PoliciesRequest) (*policy.PoliciesResult, error) {

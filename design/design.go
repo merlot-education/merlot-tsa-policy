@@ -62,6 +62,27 @@ var _ = Service("policy", func() {
 		})
 	})
 
+	Method("ExportBundle", func() {
+		Description("Export a signed policy bundle.")
+		Payload(ExportBundleRequest)
+		Result(ExportBundleResult)
+		HTTP(func() {
+			GET("/policy/{repository}/{group}/{policyName}/{version}/export")
+
+			// bypass response body encoder code generation, so that
+			// a zip bytes buffer (io.ReadCloser) can be returned to the client
+			// while specific response headers can be specified
+			// in the ExportBundleResult type.
+			SkipResponseBodyEncodeDecode()
+
+			Response(StatusOK, func() {
+				Header("content-type")
+				Header("content-length")
+				Header("content-disposition")
+			})
+		})
+	})
+
 	Method("ListPolicies", func() {
 		Description("List policies from storage with optional filters.")
 		Payload(PoliciesRequest)

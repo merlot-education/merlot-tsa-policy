@@ -148,6 +148,45 @@ func DecodeUnlockRequest(mux goahttp.Muxer, decoder func(*http.Request) goahttp.
 	}
 }
 
+// EncodeExportBundleResponse returns an encoder for responses returned by the
+// policy ExportBundle endpoint.
+func EncodeExportBundleResponse(encoder func(context.Context, http.ResponseWriter) goahttp.Encoder) func(context.Context, http.ResponseWriter, any) error {
+	return func(ctx context.Context, w http.ResponseWriter, v any) error {
+		res, _ := v.(*policy.ExportBundleResult)
+		w.Header().Set("Content-Type", res.ContentType)
+		{
+			val := res.ContentLength
+			contentLengths := strconv.Itoa(val)
+			w.Header().Set("Content-Length", contentLengths)
+		}
+		w.Header().Set("Content-Disposition", res.ContentDisposition)
+		w.WriteHeader(http.StatusOK)
+		return nil
+	}
+}
+
+// DecodeExportBundleRequest returns a decoder for requests sent to the policy
+// ExportBundle endpoint.
+func DecodeExportBundleRequest(mux goahttp.Muxer, decoder func(*http.Request) goahttp.Decoder) func(*http.Request) (any, error) {
+	return func(r *http.Request) (any, error) {
+		var (
+			repository string
+			group      string
+			policyName string
+			version    string
+
+			params = mux.Vars(r)
+		)
+		repository = params["repository"]
+		group = params["group"]
+		policyName = params["policyName"]
+		version = params["version"]
+		payload := NewExportBundleRequest(repository, group, policyName, version)
+
+		return payload, nil
+	}
+}
+
 // EncodeListPoliciesResponse returns an encoder for responses returned by the
 // policy ListPolicies endpoint.
 func EncodeListPoliciesResponse(encoder func(context.Context, http.ResponseWriter) goahttp.Encoder) func(context.Context, http.ResponseWriter, any) error {
