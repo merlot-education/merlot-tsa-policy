@@ -36,6 +36,7 @@ import (
 	goapolicy "gitlab.eclipse.org/eclipse/xfsc/tsa/policy/gen/policy"
 	"gitlab.eclipse.org/eclipse/xfsc/tsa/policy/internal/clients/cache"
 	"gitlab.eclipse.org/eclipse/xfsc/tsa/policy/internal/clients/nats"
+	"gitlab.eclipse.org/eclipse/xfsc/tsa/policy/internal/clone"
 	"gitlab.eclipse.org/eclipse/xfsc/tsa/policy/internal/config"
 	"gitlab.eclipse.org/eclipse/xfsc/tsa/policy/internal/header"
 	"gitlab.eclipse.org/eclipse/xfsc/tsa/policy/internal/notify"
@@ -46,6 +47,8 @@ import (
 	"gitlab.eclipse.org/eclipse/xfsc/tsa/policy/internal/service/policy"
 	"gitlab.eclipse.org/eclipse/xfsc/tsa/policy/internal/service/policy/policydata"
 	"gitlab.eclipse.org/eclipse/xfsc/tsa/policy/internal/storage"
+	"gitlab.eclipse.org/eclipse/xfsc/tsa/policy/internal/storage/memory"
+	"gitlab.eclipse.org/eclipse/xfsc/tsa/policy/internal/storage/mongodb"
 )
 
 var Version = "0.0.0+development"
@@ -70,7 +73,7 @@ func main() {
 
 	oauthClient := httpClient
 	if cfg.Auth.Enabled {
-		// Create an HTTP Events which automatically issues and carries an OAuth2 token.
+		// Create an HTTP Client which automatically issues and carries an OAuth2 token.
 		// The token will auto-refresh when its expiration is near.
 		oauthCtx := context.WithValue(context.Background(), oauth2.HTTPClient, httpClient)
 		oauthClient = newOAuth2Client(oauthCtx, cfg.OAuth.ClientID, cfg.OAuth.ClientSecret, cfg.OAuth.TokenURL)
@@ -86,42 +89,43 @@ func main() {
 	}
 	defer events.Close(context.Background())
 
+	// create policy change subscribers collection
+	var subscribers []storage.PolicyChangeSubscriber
+
 	// create rego policy cache
 	regocache := regocache.New()
+	subscribers = append(subscribers, regocache)
 
-	// connect to mongo db
-	db, err := mongo.Connect(
-		context.Background(),
-		options.Client().ApplyURI(cfg.Mongo.Addr).SetAuth(options.Credential{
-			AuthMechanism: cfg.Mongo.AuthMechanism,
-			Username:      cfg.Mongo.User,
-			Password:      cfg.Mongo.Pass,
-		}),
-	)
+	storage, err := makeStorage(cfg, logger)
 	if err != nil {
-		logger.Fatal("error connecting to mongodb", zap.Error(err))
+		logger.Fatal("error creating storage", zap.Error(err))
 	}
-	defer db.Disconnect(context.Background()) //nolint:errcheck
-
-	// create storage
-	storage, err := storage.New(db, cfg.Mongo.DB, cfg.Mongo.Collection, logger)
-	if err != nil {
-		logger.Fatal("error connecting to database", zap.Error(err))
-	}
+	defer storage.Close(context.Background())
 
 	// create policy changes notifier
-	notifier := notify.New(events, storage, httpClient, logger)
+	var notifier *notify.Notifier
+	subscriberStorage, ok := storage.(notify.Storage)
+	if ok {
+		notifier = notify.New(events, subscriberStorage, httpClient, logger)
+		subscribers = append(subscribers, notifier)
+	} else {
+		logger.Info("policy storage does not support policy change notifications")
+	}
 
 	// subscribe the cache for policy data changes
-	storage.AddPolicyChangeSubscribers(regocache, notifier)
+	storage.AddPolicyChangeSubscribers(subscribers...)
 
 	// create policy data refresher
-	dataRefresher := policydata.NewRefresher(
-		storage,
-		cfg.Refresher.PollInterval,
-		httpClient,
-		logger,
-	)
+	var dataRefresher *policydata.Refresher
+	dataStorage, ok := storage.(policydata.Storage)
+	if ok {
+		dataRefresher = policydata.NewRefresher(
+			dataStorage,
+			cfg.Refresher.PollInterval,
+			httpClient,
+			logger,
+		)
+	}
 
 	// register rego extension functions
 	{
@@ -260,9 +264,12 @@ func main() {
 		}
 		return nil
 	})
-	g.Go(func() error {
-		return dataRefresher.Start(ctx)
-	})
+	if dataRefresher != nil {
+		g.Go(func() error {
+			return dataRefresher.Start(ctx)
+		})
+	}
+
 	if err := g.Wait(); err != nil {
 		logger.Error("run group stopped", zap.Error(err))
 	}
@@ -355,4 +362,50 @@ func ngrokListenAndServe(ctx context.Context, srv *http.Server, logger *zap.Logg
 	logger.Info(fmt.Sprintf("starting http server using ngrok: %v", ln.URL()))
 
 	return srv.Serve(ln)
+}
+
+func makeStorage(cfg config.Config, logger *zap.Logger) (policy.Storage, error) {
+	if cfg.Mongo.Addr != "" { // create MongoDB storage
+		// connect to mongo db
+		db, err := mongo.Connect(
+			context.Background(),
+			options.Client().ApplyURI(cfg.Mongo.Addr).SetAuth(options.Credential{
+				AuthMechanism: cfg.Mongo.AuthMechanism,
+				Username:      cfg.Mongo.User,
+				Password:      cfg.Mongo.Pass,
+			}),
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		storage, err := mongodb.New(db, cfg.Mongo.DB, cfg.Mongo.Collection, logger)
+		if err != nil {
+			return nil, err
+		}
+
+		return storage, nil
+	} else if cfg.Policy.CloneURL != "" { // create memory storage
+		cloner, err := clone.New()
+		if err != nil {
+			return nil, err
+		}
+		defer cloner.Cleanup() //nolint:errcheck
+
+		repo, err := cloner.Clone(context.Background(), cfg.Policy.CloneURL, cfg.Policy.User, cfg.Policy.Pass, cfg.Policy.Branch)
+		if err != nil {
+			return nil, err
+		}
+
+		policies, err := cloner.IterateRepo("", repo)
+		if err != nil {
+			return nil, err
+		}
+
+		storage := memory.New(cloner, policies, logger)
+
+		return storage, nil
+	}
+
+	return nil, errors.New("storage configuration is not provided")
 }

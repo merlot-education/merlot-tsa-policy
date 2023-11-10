@@ -102,6 +102,10 @@ type (
 	// ValidationFormat is the type used to enumerate the possible string
 	// formats.
 	ValidationFormat string
+
+	// CookieSameSiteValue is the type used to enumerate the possible cookie
+	// SameSite values.
+	CookieSameSiteValue string
 )
 
 const (
@@ -148,8 +152,15 @@ const (
 	FormatRFC1123 = "rfc1123"
 )
 
+const (
+	CookieSameSiteStrict  CookieSameSiteValue = "strict"
+	CookieSameSiteLax     CookieSameSiteValue = "lax"
+	CookieSameSiteNone    CookieSameSiteValue = "none"
+	CookieSameSiteDefault CookieSameSiteValue = "default"
+)
+
 // EvalName returns the name used by the DSL evaluation.
-func (a *AttributeExpr) EvalName() string {
+func (*AttributeExpr) EvalName() string {
 	return "attribute"
 }
 
@@ -925,7 +936,7 @@ func (v *ValidationExpr) Debug(title, prefix, indent string) {
 }
 
 // IsSupportedValidationFormat checks if the validation format is supported by goa.
-func (a *AttributeExpr) IsSupportedValidationFormat(vf ValidationFormat) bool {
+func (*AttributeExpr) IsSupportedValidationFormat(vf ValidationFormat) bool {
 	switch vf {
 	case FormatDate:
 		return true

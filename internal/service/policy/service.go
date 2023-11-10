@@ -29,13 +29,6 @@ type Cache interface {
 	Set(ctx context.Context, key, namespace, scope string, value []byte, ttl int) error
 }
 
-type Storage interface {
-	Policy(ctx context.Context, repository, group, name, version string) (*storage.Policy, error)
-	SetPolicyLock(ctx context.Context, repository, group, name, version string, lock bool) error
-	GetPolicies(ctx context.Context, locked *bool) ([]*storage.Policy, error)
-	CreateSubscriber(ctx context.Context, subscriber *storage.Subscriber) (*storage.Subscriber, error)
-}
-
 type RegoCache interface {
 	Set(key string, policy *storage.Policy)
 	Get(key string) (policy *storage.Policy, found bool)

@@ -7,25 +7,19 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"path/filepath"
-	"strings"
 	"time"
 
-	git "github.com/go-git/go-git/v5"
-	"github.com/go-git/go-git/v5/plumbing"
-	"github.com/go-git/go-git/v5/plumbing/transport/http"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+
+	"gitlab.eclipse.org/eclipse/xfsc/tsa/policy/internal/clone"
+	"gitlab.eclipse.org/eclipse/xfsc/tsa/policy/internal/storage"
 )
 
 const (
-	pathSeperator      = string(os.PathSeparator)
-	cloneFolder        = "temp"
-	policyFilename     = "policy.rego"
-	dataFilename       = "data.json"
-	dataConfigFilename = "data-config.json"
-	policyCollection   = "policies"
+	cloneFolder      = "temp"
+	policyCollection = "policies"
 )
 
 type Policy struct {
@@ -87,7 +81,13 @@ func sync(cfg *Config, db *mongo.Client) error {
 	}
 
 	// clone policy repository
-	repo, err := cloneRepo(context.Background(), cfg.Repo.URL, cfg.Repo.User, cfg.Repo.Pass, cfg.Repo.Branch)
+	cloner, err := clone.New()
+	if err != nil {
+		return err
+	}
+
+	log.Println("Cloning repository...")
+	repo, err := cloner.Clone(context.Background(), cfg.Repo.URL, cfg.Repo.User, cfg.Repo.Pass, cfg.Repo.Branch)
 	if err != nil {
 		return fmt.Errorf("error cloning repo: %v", err)
 	}
@@ -95,7 +95,10 @@ func sync(cfg *Config, db *mongo.Client) error {
 	log.Println("Repository is cloned successfully.")
 
 	// get all policies from the repository and the given directory
-	policies, err := iterateRepo(cfg.Repo.Folder, repo)
+
+	log.Println("Getting policies from the cloned repository...")
+
+	policies, err := cloner.IterateRepo(cfg.Repo.Folder, repo)
 	if err != nil {
 		return fmt.Errorf("error iterating repo: %v", err)
 	}
@@ -103,7 +106,7 @@ func sync(cfg *Config, db *mongo.Client) error {
 	log.Println("Policies are extracted successfully.")
 
 	// insert or update policies in Mongo DB
-	if err := upsertPolicies(context.Background(), db, policies, cfg.DB.Name); err != nil {
+	if err := upsertPolicies(context.Background(), db, policies, cfg.DB.Name, cloner); err != nil {
 		return fmt.Errorf("error updating policies: %v", err)
 	}
 
@@ -117,125 +120,13 @@ func sync(cfg *Config, db *mongo.Client) error {
 	return nil
 }
 
-// cloneRepo clones the Policy repository to repoFolder
-func cloneRepo(ctx context.Context, url, user, pass, branch string) (string, error) {
-	log.Println("Cloning repository...")
-
-	opts := &git.CloneOptions{
-		URL:   url,
-		Depth: 1,
-	}
-
-	if user != "" && pass != "" {
-		opts.Auth = &http.BasicAuth{
-			Username: user,
-			Password: pass,
-		}
-	}
-
-	if branch != "" {
-		opts.ReferenceName = plumbing.NewBranchReferenceName(branch)
-		opts.SingleBranch = true
-	}
-
-	_, err := git.PlainCloneContext(ctx, cloneFolder, false, opts)
-
-	return getRepoName(url), err
-}
-
-// iterateRepo iterates over the repoFolder and returns a map
-// of Policy structs
-func iterateRepo(repoFolder, repository string) (map[string]*Policy, error) {
-	if repoFolder == "" {
-		repoFolder = cloneFolder
-	} else {
-		repoFolder = filepath.Join(cloneFolder, repoFolder)
-	}
-
-	log.Println("Getting policies from the cloned repository...")
-
-	policies := make(map[string]*Policy)
-	err := filepath.WalkDir(repoFolder, func(p string, d os.DirEntry, err error) error {
-		if err != nil {
-			return err
-		}
-		if !d.IsDir() && d.Name() == policyFilename {
-			policy, err := createPolicy(p, repository)
-			if err != nil {
-				return err
-			}
-			policies[constructKey(policy)] = policy
-		}
-		return nil
-	})
-
-	return policies, err
-}
-
-// createPolicy instantiates a Policy struct out of a policy file on given path
-func createPolicy(p, repository string) (*Policy, error) {
-	ex, err := os.Executable()
-	if err != nil {
-		return nil, fmt.Errorf("error getting executable path: %v", err)
-	}
-
-	exPath := filepath.Dir(ex)
-	// path to Rego policy must be {group}/{name}/{version}/policy.rego
-	// strings.Split on the path give us an array containing at least group, name, version and filename
-	ss := strings.Split(p, pathSeperator)
-	if len(ss) < 4 {
-		return nil, fmt.Errorf("failed to get policy filename, name, version and group out of policy path: %s", p)
-	}
-
-	version := ss[len(ss)-2] // second last element is the version
-	name := ss[len(ss)-3]    // third last element is the policy name
-	group := ss[len(ss)-4]   // fourth last element is the policy group
-	bytes, err := os.ReadFile(p)
-	if err != nil {
-		return nil, err
-	}
-	regoSrc := string(bytes)
-
-	// generate policy filename for DB from pattern {group}/{name}/{version}/policy.rego
-	dbFilename := group + "/" + name + "/" + version + "/" + policyFilename
-
-	// check if there is a data.json file in the same folder as the policy
-	dataBytes, err := os.ReadFile(filepath.Join(exPath, strings.TrimSuffix(p, policyFilename)+dataFilename))
-	if err != nil && !os.IsNotExist(err) {
-		return nil, err
-	}
-
-	// check if there is a data-config.json file in the same folder as the policy
-	configBytes, err := os.ReadFile(strings.TrimSuffix(p, policyFilename) + dataConfigFilename)
-	if err != nil && !os.IsNotExist(err) {
-		return nil, err
-	}
-
-	// if both data.json and data-config.json files exist, log a warning message
-	if len(dataBytes) > 0 && len(configBytes) > 0 {
-		log.Printf("[WARNING] policy data will be overwritten by a data configuration execution for policy %q, group %q and version %q\n", name, group, version)
-	}
-
-	return &Policy{
-		Repository: repository,
-		Filename:   dbFilename,
-		Name:       name,
-		Group:      group,
-		Version:    version,
-		Rego:       regoSrc,
-		Data:       string(dataBytes),
-		DataConfig: string(configBytes),
-		Locked:     false,
-	}, nil
-}
-
 // upsertPolicies compares policies from Git repository and MongoDB
 // and then updates the modified policies and inserts new ones.
-func upsertPolicies(ctx context.Context, db *mongo.Client, repoPolicies map[string]*Policy, policyDatabase string) error {
+func upsertPolicies(ctx context.Context, db *mongo.Client, repoPolicies map[string]*storage.Policy, policyDatabase string, cloner *clone.Cloner) error {
 	log.Println("Updating policies in Database...")
 	collection := db.Database(policyDatabase).Collection(policyCollection)
 
-	currPolicies, err := fetchCurrPolicies(ctx, collection)
+	currPolicies, err := fetchCurrPolicies(ctx, collection, cloner)
 	if err != nil {
 		return err
 	}
@@ -251,21 +142,21 @@ func upsertPolicies(ctx context.Context, db *mongo.Client, repoPolicies map[stri
 // fetchCurrPolicies fetches all policies currently stored in MongoDB
 // and returns a map with keys constructed out of the "group", "name" and
 // "version" fields of a Policy and value - a reference to the Policy
-func fetchCurrPolicies(ctx context.Context, db *mongo.Collection) (map[string]*Policy, error) {
+func fetchCurrPolicies(ctx context.Context, db *mongo.Collection, cloner *clone.Cloner) (map[string]*storage.Policy, error) {
 	results, err := db.Find(ctx, bson.D{})
 	if err != nil {
 		return nil, err
 	}
 	defer results.Close(ctx)
 
-	currPolicies := make(map[string]*Policy)
+	currPolicies := make(map[string]*storage.Policy)
 	for results.Next(ctx) {
-		var p Policy
+		var p storage.Policy
 		err := results.Decode(&p)
 		if err != nil {
 			return nil, err
 		}
-		currPolicies[constructKey(&p)] = &p
+		currPolicies[cloner.ConstructKey(p.Repository, p.Group, p.Name, p.Version)] = &p
 	}
 	if results.Err() != nil {
 		return nil, results.Err()
@@ -276,13 +167,13 @@ func fetchCurrPolicies(ctx context.Context, db *mongo.Collection) (map[string]*P
 
 // compare analyzes policies from Git repository and policies from MongoDB
 // and returns a slice containing new and modified policies
-func compare(currPolicies map[string]*Policy, repoPolicies map[string]*Policy) []*Policy {
-	var forUpsert []*Policy
+func compare(currPolicies map[string]*storage.Policy, repoPolicies map[string]*storage.Policy) []*storage.Policy {
+	var forUpsert []*storage.Policy
 	for k, rPolicy := range repoPolicies {
 		// check if the policy from GIT (by key) exists in MongoDB
 		if cPolicy, ok := currPolicies[k]; ok {
 			// if GIT policy exists in MongoDB, check if it is modified
-			if !cPolicy.equals(rPolicy) {
+			if !equal(cPolicy, rPolicy) {
 				// if GIT policy is modified, save the 'lock' state before updating in MongoDB
 				rPolicy.Locked = cPolicy.Locked
 				forUpsert = append(forUpsert, rPolicy)
@@ -299,7 +190,7 @@ func compare(currPolicies map[string]*Policy, repoPolicies map[string]*Policy) [
 //
 // Decision whether to insert or update is taken based on the composition of
 // Policy "repository", "group", "name" and "version" fields
-func upsert(ctx context.Context, policies []*Policy, db *mongo.Collection) error {
+func upsert(ctx context.Context, policies []*storage.Policy, db *mongo.Collection) error {
 	var ops []mongo.WriteModel
 	for _, policy := range policies {
 		op := mongo.NewUpdateOneModel()
@@ -332,7 +223,7 @@ func upsert(ctx context.Context, policies []*Policy, db *mongo.Collection) error
 	return nil
 }
 
-func nextDataRefreshTime(p *Policy) time.Time {
+func nextDataRefreshTime(p *storage.Policy) time.Time {
 	if p.DataConfig != "" {
 		return time.Now()
 	}
@@ -340,7 +231,7 @@ func nextDataRefreshTime(p *Policy) time.Time {
 	return time.Time{}
 }
 
-func (p1 *Policy) equals(p2 *Policy) bool {
+func equal(p1 *storage.Policy, p2 *storage.Policy) bool {
 	if p1.Rego == p2.Rego &&
 		p1.Data == p2.Data &&
 		p1.DataConfig == p2.DataConfig &&
@@ -353,17 +244,4 @@ func (p1 *Policy) equals(p2 *Policy) bool {
 	}
 
 	return false
-}
-
-// getRepoName returns the repository name out of a clone url
-//
-// Example: clone url - `https://gitlab.example.com/policy.git`; repoName - `policy`
-func getRepoName(url string) string {
-	ss := strings.Split(strings.TrimSuffix(url, ".git"), "/")
-
-	return ss[len(ss)-1]
-}
-
-func constructKey(p *Policy) string {
-	return fmt.Sprintf("%s.%s.%s.%s", p.Repository, p.Group, p.Name, p.Version)
 }

@@ -19,7 +19,6 @@ import (
 
 type Storage interface {
 	GetRefreshPolicies(ctx context.Context) ([]*storage.Policy, error)
-	PostponeRefresh(ctx context.Context, policies []*storage.Policy) error
 	UpdateNextRefreshTime(ctx context.Context, p *storage.Policy, nextDataRefreshTime time.Time) error
 }
 

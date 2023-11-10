@@ -25,6 +25,8 @@ type (
 		Services []string
 		// Hosts list the server hosts.
 		Hosts []*HostExpr
+		// Meta is a set of key/value pairs.
+		Meta MetaExpr
 	}
 
 	// HostExpr describes a server host.
@@ -40,6 +42,8 @@ type (
 		URIs []URIExpr
 		// Variables defines the URI variables if any.
 		Variables *AttributeExpr
+		// Meta is a set of key/value pairs.
+		Meta MetaExpr
 	}
 
 	// URIExpr represents a parameterized URI.
@@ -247,7 +251,7 @@ func (h *HostExpr) URIString(u URIExpr) (string, error) {
 				if def == nil {
 					def = v.Attribute.Validation.Values[0]
 				}
-				uri = strings.Replace(uri, fmt.Sprintf("{%s}", p), fmt.Sprintf("%v", def), -1)
+				uri = strings.ReplaceAll(uri, fmt.Sprintf("{%s}", p), fmt.Sprintf("%v", def))
 			}
 		}
 	}

@@ -16,6 +16,7 @@ type Config struct {
 	Auth        authConfig
 	IPFilter    ipFilterConfig
 	Nats        natsConfig
+	Policy      policyConfig
 
 	LogLevel string `envconfig:"LOG_LEVEL" default:"INFO"`
 }
@@ -45,12 +46,24 @@ type didResolverConfig struct {
 }
 
 type mongoConfig struct {
-	Addr          string `envconfig:"MONGO_ADDR" required:"true"`
-	User          string `envconfig:"MONGO_USER" required:"true"`
-	Pass          string `envconfig:"MONGO_PASS" required:"true"`
+	Addr          string `envconfig:"MONGO_ADDR"` // required if POLICY_REPOSITORY_CLONE_URL is not set
+	User          string `envconfig:"MONGO_USER"`
+	Pass          string `envconfig:"MONGO_PASS"`
 	DB            string `envconfig:"MONGO_DBNAME" default:"policy"`
 	Collection    string `envconfig:"MONGO_COLLECTION" default:"policies"`
 	AuthMechanism string `envconfig:"MONGO_AUTH_MECHANISM" default:"SCRAM-SHA-1"`
+}
+
+type policyConfig struct {
+	CloneURL string `envconfig:"POLICY_REPOSITORY_CLONE_URL"` // required if MONGO_ADDR is not set
+	User     string `envconfig:"POLICY_REPOSITORY_USER"`
+	Pass     string `envconfig:"POLICY_REPOSITORY_PASS"` // an Access Token is strongly recommended
+	Branch   string `envconfig:"POLICY_REPOSITORY_BRANCH"`
+
+	// Folder inside the policy repository containing
+	// needed policies. If present, only policies inside this folder
+	// are going to be fetched and used for evaluation.
+	Folder string `envconfig:"POLICY_REPOSITORY_FOLDER"`
 }
 
 type metricsConfig struct {

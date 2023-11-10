@@ -1,0 +1,140 @@
+package memory_test
+
+import (
+	"context"
+	"testing"
+	"time"
+
+	"github.com/stretchr/testify/assert"
+	"gitlab.eclipse.org/eclipse/xfsc/tsa/golib/errors"
+	"go.uber.org/zap"
+
+	"gitlab.eclipse.org/eclipse/xfsc/tsa/policy/internal/storage"
+	"gitlab.eclipse.org/eclipse/xfsc/tsa/policy/internal/storage/memory"
+	"gitlab.eclipse.org/eclipse/xfsc/tsa/policy/internal/storage/memory/memoryfakes"
+)
+
+const validKey = "policies,example,foo,1.0"
+
+func TestStorage_Policy(t *testing.T) {
+	// policy is not found in memory storage
+	keyConstructor := &memoryfakes.FakeKeyConstructor{ConstructKeyStub: func(s string, s2 string, s3 string, s4 string) string {
+		return "non-existing policy key"
+	}}
+
+	storage := memory.New(keyConstructor, makePolicies(), zap.NewNop())
+
+	p, err := storage.Policy(context.Background(), "repo", "group", "name", "version")
+	assert.Error(t, err)
+	assert.Nil(t, p)
+
+	e, ok := err.(*errors.Error)
+	assert.True(t, ok)
+	assert.Equal(t, errors.NotFound, e.Kind)
+	assert.Contains(t, e.Error(), "policy not found in memory storage")
+
+	// policy is successfully found in memory storage
+	keyConstructor = &memoryfakes.FakeKeyConstructor{ConstructKeyStub: func(s string, s2 string, s3 string, s4 string) string {
+		return validKey
+	}}
+
+	storage = memory.New(keyConstructor, makePolicies(), zap.NewNop())
+
+	p, err = storage.Policy(context.Background(), "repo", "group", "name", "version")
+	assert.NoError(t, err)
+	assert.Equal(t, "policies", p.Repository)
+	assert.Equal(t, "example", p.Group)
+	assert.Equal(t, "foo", p.Name)
+	assert.Equal(t, "1.0", p.Version)
+}
+
+func TestStorage_SetPolicyLock(t *testing.T) {
+	// policy is not found in memory storage
+	keyConstructor := &memoryfakes.FakeKeyConstructor{ConstructKeyStub: func(s string, s2 string, s3 string, s4 string) string {
+		return "non-existing policy key"
+	}}
+
+	storage := memory.New(keyConstructor, makePolicies(), zap.NewNop())
+
+	err := storage.SetPolicyLock(context.Background(), "repo", "group", "name", "version", true)
+	assert.Error(t, err)
+
+	e, ok := err.(*errors.Error)
+	assert.True(t, ok)
+	assert.Equal(t, errors.NotFound, e.Kind)
+	assert.Contains(t, e.Error(), "policy not found in memory storage")
+
+	// policy is locked successfully
+	keyConstructor = &memoryfakes.FakeKeyConstructor{ConstructKeyStub: func(s string, s2 string, s3 string, s4 string) string {
+		return validKey
+	}}
+
+	policies := makePolicies()
+	storage = memory.New(keyConstructor, policies, zap.NewNop())
+
+	// lock the policy
+	err = storage.SetPolicyLock(context.Background(), "repo", "group", "name", "version", true)
+	assert.NoError(t, err)
+	assert.Equal(t, true, policies[validKey].Locked)
+}
+
+func TestStorage_GetPolicies(t *testing.T) {
+	policies := makePolicies()
+	storage := memory.New(nil, policies, zap.NewNop())
+
+	// get all policies
+	res, err := storage.GetPolicies(context.Background(), nil)
+	assert.NoError(t, err)
+	assert.Equal(t, len(policies), len(res))
+
+	// get locked policies
+	locked := true
+	res, err = storage.GetPolicies(context.Background(), &locked)
+	assert.NoError(t, err)
+	assert.Equal(t, 1, len(res))
+	assert.Equal(t, locked, res[0].Locked)
+
+	// get unlocked policies
+	locked = false
+	res, err = storage.GetPolicies(context.Background(), &locked)
+	assert.NoError(t, err)
+	assert.Equal(t, 1, len(res))
+	assert.Equal(t, locked, res[0].Locked)
+}
+
+func TestStorage_GetRefreshPolicies(t *testing.T) {
+	nextDataRefreshTime := time.Now().Add(-5 * time.Minute) // time must be in the past
+
+	policies := makePolicies()
+	policies[validKey].NextDataRefreshTime = nextDataRefreshTime
+
+	storage := memory.New(nil, policies, zap.NewNop())
+
+	res, err := storage.GetRefreshPolicies(context.Background())
+	assert.NoError(t, err)
+	assert.Equal(t, 1, len(res))
+
+	// GetRefreshPolicies function adds storage.RefreshPostponePeriod Duration
+	// to the stored policy's NextDataRefreshTime
+	assert.Greater(t, policies[validKey].NextDataRefreshTime, nextDataRefreshTime)
+}
+
+// makePolicies makes a valid policies map
+func makePolicies() map[string]*storage.Policy {
+	return map[string]*storage.Policy{
+		"policies,example,foo,1.0": {
+			Repository: "policies",
+			Name:       "foo",
+			Group:      "example",
+			Version:    "1.0",
+			Locked:     false,
+		},
+		"policies,example,bar,1.1": {
+			Repository: "policies",
+			Name:       "bar",
+			Group:      "example",
+			Version:    "1.1",
+			Locked:     true,
+		},
+	}
+}
