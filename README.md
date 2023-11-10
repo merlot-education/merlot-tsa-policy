@@ -36,15 +36,15 @@ The example URL below is given for the local docker-compose environment.
 The `host` and `port` parts will be different for the different environments.
 
 ```
-# URL with example policy group, name and version
-http://localhost:8081/policy/xfsc/didresolve/1.0/evaluation
+# URL with example policy repository, group, name and version
+http://localhost:8081/policy/policies/xfsc/didresolve/1.0/evaluation
 
 # URL with parameter placeholders
-http://localhost:8081/policy/{group}/{policy}/{version}/evaluation
+http://localhost:8081/policy/{repository}/{group}/{policy}/{version}/evaluation
 ```
 
-There are three parameters in the URL specifying which exact policy 
-should be evaluated - `group`, `policy` and `version`. These parameters 
+There are four parameters in the URL specifying which exact policy 
+should be evaluated - `repository`, `group`, `policy` and `version`. These parameters 
 are also important during policy development (see below) as `group` 
 and `policy` **must** be used as package name inside the policy 
 source code file.
@@ -62,7 +62,7 @@ it will be accessible by `input.message`:
 
 Here is a complete example CURL request:
 ```shell
-curl -X POST http://localhost:8081/policy/xfsc/didresolve/1.0/evaluation -d '{"message":"hello world"}'
+curl -X POST http://localhost:8081/policy/policies/xfsc/didresolve/1.0/evaluation -d '{"message":"hello world"}'
 ```
 
 ### Policy Locking
@@ -73,12 +73,12 @@ its evaluation/execution to proceed normally.
 
 Lock a policy with POST request:
 ```shell
-curl -X POST http://localhost:8081/policy/xfsc/didresolve/1.0/lock
+curl -X POST http://localhost:8081/policy/policies/xfsc/didresolve/1.0/lock
 ```
 
 Unlock a policy with DELETE request:
 ```shell
-curl -X DELETE http://localhost:8081/policy/xfsc/didresolve/1.0/lock
+curl -X DELETE http://localhost:8081/policy/policies/xfsc/didresolve/1.0/lock
 ```
 
 ### Policy Bundles
@@ -97,15 +97,15 @@ wget http://localhost:8081/repository/policy/xfsc/didresolve/1.0/export
 
 ### Policy Storage
 
-Policies (rego source code and metadata) are stored in a MongoDB collection `policies`,
-with one collection document representing one policy. A document contains additional 
-policy state un-related to OPA and Rego, but necessary for implementing the TSA 
-requirements (e.g. policy lock/unlock).
+Policies (rego source code and metadata) are stored in a storage, which is an interface
+and different implementations could be used. You can check the interface
+[here](./internal/service/policy/storage.go).
 
-The database is used as read-only source of truth for the current policy state when
-policies need to be evaluated. Policy storage is updated externally from a separate
-component. The update process is automatically triggered by updating policy source 
-code files in an external Git server.
+Currently, there are two implementations of the storage interface:
+ - [MongoDB](./doc/mongodb_storage.md)
+ - [Memory](./doc/memory-storage.md)
+
+In order to use another storage technology, one should implement the [Storage interface](./internal/service/policy/storage.go).
 
 ```mermaid
 flowchart LR

@@ -104,7 +104,6 @@ paths:
                     headers:
                         ETag:
                             description: ETag contains unique identifier of the policy evaluation and can be used to later retrieve the results from Cache.
-                            required: true
                             schema:
                                 type: string
                                 description: ETag contains unique identifier of the policy evaluation and can be used to later retrieve the results from Cache.
@@ -197,7 +196,6 @@ paths:
                     headers:
                         ETag:
                             description: ETag contains unique identifier of the policy evaluation and can be used to later retrieve the results from Cache.
-                            required: true
                             schema:
                                 type: string
                                 description: ETag contains unique identifier of the policy evaluation and can be used to later retrieve the results from Cache.
@@ -291,7 +289,6 @@ paths:
                     headers:
                         ETag:
                             description: ETag contains unique identifier of the policy evaluation and can be used to later retrieve the results from Cache.
-                            required: true
                             schema:
                                 type: string
                                 description: ETag contains unique identifier of the policy evaluation and can be used to later retrieve the results from Cache.
@@ -355,7 +352,6 @@ paths:
                     headers:
                         content-disposition:
                             description: Content-Disposition response header containing the name of the file.
-                            required: true
                             schema:
                                 type: string
                                 description: Content-Disposition response header containing the name of the file.
@@ -363,7 +359,6 @@ paths:
                             example: Illum porro mollitia ducimus assumenda rerum.
                         content-length:
                             description: Content-Length response header.
-                            required: true
                             schema:
                                 type: integer
                                 description: Content-Length response header.
@@ -372,7 +367,6 @@ paths:
                             example: 2727357281425983130
                         content-type:
                             description: Content-Type response header.
-                            required: true
                             schema:
                                 type: string
                                 description: Content-Type response header.

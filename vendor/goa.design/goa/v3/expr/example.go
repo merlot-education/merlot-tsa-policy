@@ -6,8 +6,8 @@ import (
 	"regexp"
 	"time"
 
+	regen "github.com/AnatolyRugalev/goregen"
 	googleuuid "github.com/google/uuid"
-	regen "github.com/zach-klippenstein/goregen"
 )
 
 const (
@@ -24,6 +24,10 @@ func (a *AttributeExpr) Example(r *ExampleGenerator) any {
 		// in the DSL. Overridden examples are always appended to the UserExamples
 		// slice.
 		return ex[len(ex)-1].Value
+	}
+
+	if r.Randomizer == nil {
+		return nil
 	}
 
 	value, ok := a.Meta.Last("openapi:example")
@@ -240,7 +244,7 @@ func byMinMax(a *AttributeExpr, r *ExampleGenerator) any {
 		return nil
 	}
 	var (
-		min  = math.Inf(-1)
+		min  float64
 		max  = math.Inf(1)
 		sign = 1
 	)

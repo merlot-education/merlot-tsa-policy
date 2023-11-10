@@ -24,18 +24,6 @@ type FakeStorage struct {
 		result1 []*storage.Policy
 		result2 error
 	}
-	PostponeRefreshStub        func(context.Context, []*storage.Policy) error
-	postponeRefreshMutex       sync.RWMutex
-	postponeRefreshArgsForCall []struct {
-		arg1 context.Context
-		arg2 []*storage.Policy
-	}
-	postponeRefreshReturns struct {
-		result1 error
-	}
-	postponeRefreshReturnsOnCall map[int]struct {
-		result1 error
-	}
 	UpdateNextRefreshTimeStub        func(context.Context, *storage.Policy, time.Time) error
 	updateNextRefreshTimeMutex       sync.RWMutex
 	updateNextRefreshTimeArgsForCall []struct {
@@ -117,73 +105,6 @@ func (fake *FakeStorage) GetRefreshPoliciesReturnsOnCall(i int, result1 []*stora
 	}{result1, result2}
 }
 
-func (fake *FakeStorage) PostponeRefresh(arg1 context.Context, arg2 []*storage.Policy) error {
-	var arg2Copy []*storage.Policy
-	if arg2 != nil {
-		arg2Copy = make([]*storage.Policy, len(arg2))
-		copy(arg2Copy, arg2)
-	}
-	fake.postponeRefreshMutex.Lock()
-	ret, specificReturn := fake.postponeRefreshReturnsOnCall[len(fake.postponeRefreshArgsForCall)]
-	fake.postponeRefreshArgsForCall = append(fake.postponeRefreshArgsForCall, struct {
-		arg1 context.Context
-		arg2 []*storage.Policy
-	}{arg1, arg2Copy})
-	stub := fake.PostponeRefreshStub
-	fakeReturns := fake.postponeRefreshReturns
-	fake.recordInvocation("PostponeRefresh", []interface{}{arg1, arg2Copy})
-	fake.postponeRefreshMutex.Unlock()
-	if stub != nil {
-		return stub(arg1, arg2)
-	}
-	if specificReturn {
-		return ret.result1
-	}
-	return fakeReturns.result1
-}
-
-func (fake *FakeStorage) PostponeRefreshCallCount() int {
-	fake.postponeRefreshMutex.RLock()
-	defer fake.postponeRefreshMutex.RUnlock()
-	return len(fake.postponeRefreshArgsForCall)
-}
-
-func (fake *FakeStorage) PostponeRefreshCalls(stub func(context.Context, []*storage.Policy) error) {
-	fake.postponeRefreshMutex.Lock()
-	defer fake.postponeRefreshMutex.Unlock()
-	fake.PostponeRefreshStub = stub
-}
-
-func (fake *FakeStorage) PostponeRefreshArgsForCall(i int) (context.Context, []*storage.Policy) {
-	fake.postponeRefreshMutex.RLock()
-	defer fake.postponeRefreshMutex.RUnlock()
-	argsForCall := fake.postponeRefreshArgsForCall[i]
-	return argsForCall.arg1, argsForCall.arg2
-}
-
-func (fake *FakeStorage) PostponeRefreshReturns(result1 error) {
-	fake.postponeRefreshMutex.Lock()
-	defer fake.postponeRefreshMutex.Unlock()
-	fake.PostponeRefreshStub = nil
-	fake.postponeRefreshReturns = struct {
-		result1 error
-	}{result1}
-}
-
-func (fake *FakeStorage) PostponeRefreshReturnsOnCall(i int, result1 error) {
-	fake.postponeRefreshMutex.Lock()
-	defer fake.postponeRefreshMutex.Unlock()
-	fake.PostponeRefreshStub = nil
-	if fake.postponeRefreshReturnsOnCall == nil {
-		fake.postponeRefreshReturnsOnCall = make(map[int]struct {
-			result1 error
-		})
-	}
-	fake.postponeRefreshReturnsOnCall[i] = struct {
-		result1 error
-	}{result1}
-}
-
 func (fake *FakeStorage) UpdateNextRefreshTime(arg1 context.Context, arg2 *storage.Policy, arg3 time.Time) error {
 	fake.updateNextRefreshTimeMutex.Lock()
 	ret, specificReturn := fake.updateNextRefreshTimeReturnsOnCall[len(fake.updateNextRefreshTimeArgsForCall)]
@@ -252,8 +173,6 @@ func (fake *FakeStorage) Invocations() map[string][][]interface{} {
 	defer fake.invocationsMutex.RUnlock()
 	fake.getRefreshPoliciesMutex.RLock()
 	defer fake.getRefreshPoliciesMutex.RUnlock()
-	fake.postponeRefreshMutex.RLock()
-	defer fake.postponeRefreshMutex.RUnlock()
 	fake.updateNextRefreshTimeMutex.RLock()
 	defer fake.updateNextRefreshTimeMutex.RUnlock()
 	copiedInvocations := map[string][][]interface{}{}
