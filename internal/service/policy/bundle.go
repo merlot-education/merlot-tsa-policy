@@ -10,7 +10,7 @@ import (
 	"gitlab.eclipse.org/eclipse/xfsc/tsa/policy/internal/storage"
 )
 
-type BundleFile struct {
+type ZipFile struct {
 	Name    string
 	Content []byte
 }
@@ -26,29 +26,29 @@ type Metadata struct {
 	} `json:"policy"`
 }
 
-func createPolicyBundle(policy *storage.Policy) ([]byte, error) {
-	var files []BundleFile
+func (s *Service) createPolicyBundle(policy *storage.Policy) ([]byte, error) {
+	var files []ZipFile
 
 	// prepare metadata
-	metadata, err := createMetadata(policy)
+	metadata, err := s.createMetadata(policy)
 	if err != nil {
 		return nil, err
 	}
 
-	files = append(files, BundleFile{
+	files = append(files, ZipFile{
 		Name:    "metadata.json",
 		Content: metadata,
 	})
 
 	// prepare source code
-	files = append(files, BundleFile{
+	files = append(files, ZipFile{
 		Name:    "policy.rego",
 		Content: []byte(policy.Rego),
 	})
 
 	// prepare static data file
 	if strings.TrimSpace(policy.Data) != "" {
-		files = append(files, BundleFile{
+		files = append(files, ZipFile{
 			Name:    "data.json",
 			Content: []byte(policy.Data),
 		})
@@ -56,13 +56,27 @@ func createPolicyBundle(policy *storage.Policy) ([]byte, error) {
 
 	// prepare static data configuration file
 	if strings.TrimSpace(policy.DataConfig) != "" {
-		files = append(files, BundleFile{
+		files = append(files, ZipFile{
 			Name:    "data-config.json",
 			Content: []byte(policy.DataConfig),
 		})
 	}
 
-	// create zip archive
+	return s.createZipArchive(files)
+}
+
+func (s *Service) createMetadata(policy *storage.Policy) ([]byte, error) {
+	var meta Metadata
+	meta.Policy.Name = policy.Name
+	meta.Policy.Group = policy.Group
+	meta.Policy.Version = policy.Version
+	meta.Policy.Repository = policy.Repository
+	meta.Policy.Locked = policy.Locked
+	meta.Policy.LastUpdate = policy.LastUpdate
+	return json.Marshal(meta)
+}
+
+func (s *Service) createZipArchive(files []ZipFile) ([]byte, error) {
 	buf := new(bytes.Buffer)
 	zipWriter := zip.NewWriter(buf)
 	for _, file := range files {
@@ -82,16 +96,4 @@ func createPolicyBundle(policy *storage.Policy) ([]byte, error) {
 	}
 
 	return buf.Bytes(), nil
-}
-
-func createMetadata(policy *storage.Policy) ([]byte, error) {
-	var meta Metadata
-	meta.Policy.Name = policy.Name
-	meta.Policy.Group = policy.Group
-	meta.Policy.Version = policy.Version
-	meta.Policy.Repository = policy.Repository
-	meta.Policy.Locked = policy.Locked
-	meta.Policy.LastUpdate = policy.LastUpdate
-
-	return json.Marshal(meta)
 }
