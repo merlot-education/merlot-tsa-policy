@@ -36,14 +36,22 @@ spec:
         image: "{{ .Values.image.repository }}/{{ .Values.image.name }}:{{ default .Chart.AppVersion .Values.image.tag }}"
         imagePullPolicy: {{ .Values.image.pullPolicy | quote }}
         env:
+          {{- if .Values.mongo.addr }}
           - name: MONGO_ADDR
             value: {{ .Values.mongo.addr | quote }}
+          {{- end }}
+          {{- if .Values.mongo.user }}
           - name: MONGO_USER
             value: {{ .Values.mongo.user | quote }}
+          {{- end }}
+          {{- if .Values.mongo.pass }}
           - name: MONGO_PASS
             value: {{ .Values.mongo.pass | quote }}
+          {{- end }}
+          {{- if .Values.mongo.dbname }}
           - name: MONGO_DB
             value: {{ .Values.mongo.dbname | quote }}
+          {{- end }}
           - name: MONGO_EXPIRATION
             value: {{ .Values.mongo.collection | quote }}
           - name: LOG_LEVEL
@@ -72,6 +80,15 @@ spec:
             value: {{ .Values.addresses.ocm | quote }}
           {{- if .Values.extraVars }}
           {{- toYaml .Values.extraVars | indent 10 }}
+          {{- end }}
+          {{- if .Values.secretEnv }}
+          {{- range $key, $value := .Values.secretEnv }}
+          - name: "{{ $key }}"
+            valueFrom:
+              secretKeyRef:
+                name: "{{ $value.name }}"
+                key: "{{ $value.key }}"
+          {{- end }}
           {{- end }}
         ports:
         {{- if .Values.metrics.enabled }}
