@@ -10,8 +10,6 @@ import (
 	"os"
 	"time"
 
-	"gitlab.eclipse.org/eclipse/xfsc/tsa/policy/internal/clients/signer"
-
 	"github.com/jpillora/ipfilter"
 	"github.com/kelseyhightower/envconfig"
 	"github.com/open-policy-agent/opa/rego"
@@ -38,6 +36,7 @@ import (
 	goapolicy "gitlab.eclipse.org/eclipse/xfsc/tsa/policy/gen/policy"
 	"gitlab.eclipse.org/eclipse/xfsc/tsa/policy/internal/clients/cache"
 	"gitlab.eclipse.org/eclipse/xfsc/tsa/policy/internal/clients/nats"
+	"gitlab.eclipse.org/eclipse/xfsc/tsa/policy/internal/clients/signer"
 	"gitlab.eclipse.org/eclipse/xfsc/tsa/policy/internal/clone"
 	"gitlab.eclipse.org/eclipse/xfsc/tsa/policy/internal/config"
 	"gitlab.eclipse.org/eclipse/xfsc/tsa/policy/internal/header"

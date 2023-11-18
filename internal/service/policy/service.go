@@ -10,6 +10,8 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
+	"github.com/lestrrat-go/jwx/v2/jwa"
+	"github.com/lestrrat-go/jwx/v2/jws"
 	"github.com/open-policy-agent/opa/rego"
 	"github.com/open-policy-agent/opa/storage/inmem"
 	"go.uber.org/zap"
@@ -49,6 +51,23 @@ type Service struct {
 }
 
 func New(storage Storage, policyCache RegoCache, cache Cache, signer Signer, logger *zap.Logger) *Service {
+	signerFactory := func(signer Signer) func() (jws.Signer, error) {
+		return func() (jws.Signer, error) {
+			return &signAdapter{signer: signer}, nil
+		}
+	}
+
+	// This unregister/register sequence is done mainly for the unit tests
+	// because each tests creates a new service instance, but the jws.Signer
+	// implementations are kept in a global variable map, which is the same
+	// for all test cases. In order for tests to work and to be able to register
+	// different signer implementations, the previous signer must be explicitly
+	// unregistered.
+	jws.UnregisterSigner(JwaVaultSignature)
+	jwa.UnregisterSignatureAlgorithm(JwaVaultSignature)
+	jwa.RegisterSignatureAlgorithm(JwaVaultSignature)
+	jws.RegisterSigner(JwaVaultSignature, jws.SignerFactoryFn(signerFactory(signer)))
+
 	return &Service{
 		storage:     storage,
 		policyCache: policyCache,
@@ -234,7 +253,7 @@ func (s *Service) ExportBundle(ctx context.Context, req *policy.ExportBundleRequ
 		return nil, nil, err
 	}
 
-	// only the hash256 file digest will be signed, not the file itself
+	// only the sha256 file digest will be signed, not the file itself
 	bundleDigest := sha256.Sum256(bundle)
 
 	// TODO(penkovski): namespace and key must be taken from policy export configuration

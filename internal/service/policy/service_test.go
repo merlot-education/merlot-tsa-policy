@@ -887,7 +887,7 @@ func TestService_SubscribeForPolicyChange(t *testing.T) {
 	}
 }
 
-func TestService_ExportBundle(t *testing.T) {
+func TestService_ExportBundleError(t *testing.T) {
 	t.Run("policy not found in storage", func(t *testing.T) {
 		storage := &policyfakes.FakeStorage{
 			PolicyStub: func(ctx context.Context, s string, s2 string, s3 string, s4 string) (*storage.Policy, error) {
@@ -952,72 +952,70 @@ func TestService_ExportBundle(t *testing.T) {
 		require.Error(t, err)
 		assert.ErrorContains(t, err, "error signing data")
 	})
+}
 
-	t.Run("successful export of policy bundle", func(t *testing.T) {
-		storage := &policyfakes.FakeStorage{
-			PolicyStub: func(ctx context.Context, s string, s2 string, s3 string, s4 string) (*storage.Policy, error) {
-				return &storage.Policy{
-					Repository: "myrepo",
-					Name:       "myname",
-					Group:      "mygroup",
-					Version:    "1.52",
-					Rego:       "package test",
-					Data:       `{"key":"value"}`,
-					DataConfig: `{"new":"value"}`,
-					Locked:     false,
-					LastUpdate: time.Date(2023, 10, 8, 0, 0, 0, 0, time.UTC),
-				}, nil
-			},
-		}
+func TestService_ExportBundleSuccess(t *testing.T) {
+	storage := &policyfakes.FakeStorage{
+		PolicyStub: func(ctx context.Context, s string, s2 string, s3 string, s4 string) (*storage.Policy, error) {
+			return &storage.Policy{
+				Repository: "myrepo",
+				Name:       "myname",
+				Group:      "mygroup",
+				Version:    "1.52",
+				Rego:       "package test",
+				Data:       `{"key":"value"}`,
+				DataConfig: `{"new":"value"}`,
+				Locked:     false,
+				LastUpdate: time.Date(2023, 10, 8, 0, 0, 0, 0, time.UTC),
+			}, nil
+		},
+	}
 
-		signer := &policyfakes.FakeSigner{
-			SignStub: func(ctx context.Context, namespace, key string, data []byte) ([]byte, error) {
-				return []byte("signature"), nil
-			},
-		}
+	signer := &policyfakes.FakeSigner{
+		SignStub: func(ctx context.Context, namespace, key string, data []byte) ([]byte, error) {
+			return []byte("signature"), nil
+		},
+	}
 
-		svc := policy.New(storage, nil, nil, signer, zap.NewNop())
-		res, reader, err := svc.ExportBundle(context.Background(), &goapolicy.ExportBundleRequest{})
-		require.NoError(t, err)
-		require.NotNil(t, res)
-		require.NotNil(t, reader)
+	svc := policy.New(storage, nil, nil, signer, zap.NewNop())
+	res, reader, err := svc.ExportBundle(context.Background(), &goapolicy.ExportBundleRequest{})
+	require.NoError(t, err)
+	require.NotNil(t, res)
+	require.NotNil(t, reader)
 
-		assert.Equal(t, "application/zip", res.ContentType)
-		assert.Equal(t, `attachment; filename="myrepo_mygroup_myname_1.52.zip"`, res.ContentDisposition)
-		assert.NotZero(t, res.ContentLength)
+	assert.Equal(t, "application/zip", res.ContentType)
+	assert.Equal(t, `attachment; filename="myrepo_mygroup_myname_1.52.zip"`, res.ContentDisposition)
+	assert.NotZero(t, res.ContentLength)
 
-		archive, err := io.ReadAll(reader)
-		require.NoError(t, err)
-		require.NotNil(t, archive)
+	archive, err := io.ReadAll(reader)
+	require.NoError(t, err)
+	require.NotNil(t, archive)
 
-		r, err := zip.NewReader(bytes.NewReader(archive), int64(res.ContentLength))
-		require.NoError(t, err)
-		require.NotNil(t, r)
+	r, err := zip.NewReader(bytes.NewReader(archive), int64(res.ContentLength))
+	require.NoError(t, err)
+	require.NotNil(t, r)
 
-		// check if policy_bundle.zip is present
-		require.NotNil(t, r.File[0])
-		require.Equal(t, "policy_bundle.zip", r.File[0].Name)
+	// check if policy_bundle.zip is present
+	require.NotNil(t, r.File[0])
+	require.Equal(t, "policy_bundle.zip", r.File[0].Name)
 
-		// check if policy_bundle.jws is present
-		require.NotNil(t, r.File[1])
-		require.Equal(t, "policy_bundle.jws", r.File[1].Name)
+	// check if policy_bundle.jws is present
+	require.NotNil(t, r.File[1])
+	require.Equal(t, "policy_bundle.jws", r.File[1].Name)
 
-		// check if signature match expected
-		reader, err = r.File[1].Open()
-		require.NoError(t, err)
-		require.NotNil(t, reader)
-		sig, err := io.ReadAll(reader)
-		fmt.Printf("sig = %s\n", sig)
-		require.NoError(t, err)
-		require.NotNil(t, sig)
-		assert.Equal(t, []byte("eyJhbGciOiJWYXVsdFNpZ25lciJ9..c2lnbmF0dXJl"), sig)
+	// check if signature matches the returned value from signer
+	reader, err = r.File[1].Open()
+	require.NoError(t, err)
+	require.NotNil(t, reader)
+	sig, err := io.ReadAll(reader)
+	require.NoError(t, err)
+	require.NotNil(t, sig)
 
-		signatureParts := bytes.Split(sig, []byte("."))
-		assert.Len(t, signatureParts, 3)
-		assert.NotEmpty(t, signatureParts[2])
+	jwsParts := bytes.Split(sig, []byte("."))
+	assert.Len(t, jwsParts, 3)
+	assert.NotEmpty(t, jwsParts[2])
 
-		s, err := base64.StdEncoding.DecodeString(string(signatureParts[2]))
-		require.NoError(t, err)
-		assert.Equal(t, "signature", string(s))
-	})
+	s, err := base64.StdEncoding.DecodeString(string(jwsParts[2]))
+	require.NoError(t, err)
+	assert.Equal(t, "signature", string(s))
 }
