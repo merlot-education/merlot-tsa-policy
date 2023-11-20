@@ -14,4 +14,7 @@ type Storage interface {
 	ListenPolicyDataChanges(ctx context.Context) error
 	CreateSubscriber(ctx context.Context, subscriber *storage.Subscriber) (*storage.Subscriber, error)
 	Close(ctx context.Context)
+	GetData(ctx context.Context, key string) (any, error)
+	SetData(ctx context.Context, key string, data map[string]interface{}) error
+	DeleteData(ctx context.Context, key string) error
 }

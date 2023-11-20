@@ -119,6 +119,40 @@ func TestStorage_GetRefreshPolicies(t *testing.T) {
 	assert.Greater(t, policies[validKey].NextDataRefreshTime, nextDataRefreshTime)
 }
 
+func TestStorage_CommonStorage(t *testing.T) {
+	storage := memory.New(nil, nil, zap.NewNop())
+
+	t.Run("set data", func(t *testing.T) {
+		err := storage.SetData(context.Background(), "exampleKey", map[string]interface{}{"some": "data"})
+		assert.NoError(t, err)
+	})
+	t.Run("update data", func(t *testing.T) {
+		err := storage.SetData(context.Background(), "exampleKey", map[string]interface{}{"some": "updated_data"})
+		assert.NoError(t, err)
+	})
+
+	t.Run("get data", func(t *testing.T) {
+		data, err := storage.GetData(context.Background(), "exampleKey")
+		assert.NoError(t, err)
+		assert.Equal(t, map[string]interface{}{"some": "updated_data"}, data)
+	})
+
+	t.Run("get with not existing key", func(t *testing.T) {
+		_, err := storage.GetData(context.Background(), "notExistingKey")
+		assert.ErrorContains(t, err, "doesn't exist")
+	})
+
+	t.Run("delete data", func(t *testing.T) {
+		err := storage.DeleteData(context.Background(), "exampleKey")
+		assert.NoError(t, err)
+	})
+
+	t.Run("delete data with key error", func(t *testing.T) {
+		err := storage.DeleteData(context.Background(), "exampleKey")
+		assert.ErrorContains(t, err, "doesn't exist")
+	})
+}
+
 // makePolicies makes a valid policies map
 func makePolicies() map[string]*storage.Policy {
 	return map[string]*storage.Policy{

@@ -104,5 +104,4 @@ func TestNotify_PolicyDataChange(t *testing.T) {
 			}
 		})
 	}
-
 }

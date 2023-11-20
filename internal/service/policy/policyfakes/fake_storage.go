@@ -34,6 +34,32 @@ type FakeStorage struct {
 		result1 *storage.Subscriber
 		result2 error
 	}
+	DeleteDataStub        func(context.Context, string) error
+	deleteDataMutex       sync.RWMutex
+	deleteDataArgsForCall []struct {
+		arg1 context.Context
+		arg2 string
+	}
+	deleteDataReturns struct {
+		result1 error
+	}
+	deleteDataReturnsOnCall map[int]struct {
+		result1 error
+	}
+	GetDataStub        func(context.Context, string) (any, error)
+	getDataMutex       sync.RWMutex
+	getDataArgsForCall []struct {
+		arg1 context.Context
+		arg2 string
+	}
+	getDataReturns struct {
+		result1 any
+		result2 error
+	}
+	getDataReturnsOnCall map[int]struct {
+		result1 any
+		result2 error
+	}
 	GetPoliciesStub        func(context.Context, *bool) ([]*storage.Policy, error)
 	getPoliciesMutex       sync.RWMutex
 	getPoliciesArgsForCall []struct {
@@ -75,6 +101,19 @@ type FakeStorage struct {
 	policyReturnsOnCall map[int]struct {
 		result1 *storage.Policy
 		result2 error
+	}
+	SetDataStub        func(context.Context, string, map[string]interface{}) error
+	setDataMutex       sync.RWMutex
+	setDataArgsForCall []struct {
+		arg1 context.Context
+		arg2 string
+		arg3 map[string]interface{}
+	}
+	setDataReturns struct {
+		result1 error
+	}
+	setDataReturnsOnCall map[int]struct {
+		result1 error
 	}
 	SetPolicyLockStub        func(context.Context, string, string, string, string, bool) error
 	setPolicyLockMutex       sync.RWMutex
@@ -221,6 +260,133 @@ func (fake *FakeStorage) CreateSubscriberReturnsOnCall(i int, result1 *storage.S
 	}
 	fake.createSubscriberReturnsOnCall[i] = struct {
 		result1 *storage.Subscriber
+		result2 error
+	}{result1, result2}
+}
+
+func (fake *FakeStorage) DeleteData(arg1 context.Context, arg2 string) error {
+	fake.deleteDataMutex.Lock()
+	ret, specificReturn := fake.deleteDataReturnsOnCall[len(fake.deleteDataArgsForCall)]
+	fake.deleteDataArgsForCall = append(fake.deleteDataArgsForCall, struct {
+		arg1 context.Context
+		arg2 string
+	}{arg1, arg2})
+	stub := fake.DeleteDataStub
+	fakeReturns := fake.deleteDataReturns
+	fake.recordInvocation("DeleteData", []interface{}{arg1, arg2})
+	fake.deleteDataMutex.Unlock()
+	if stub != nil {
+		return stub(arg1, arg2)
+	}
+	if specificReturn {
+		return ret.result1
+	}
+	return fakeReturns.result1
+}
+
+func (fake *FakeStorage) DeleteDataCallCount() int {
+	fake.deleteDataMutex.RLock()
+	defer fake.deleteDataMutex.RUnlock()
+	return len(fake.deleteDataArgsForCall)
+}
+
+func (fake *FakeStorage) DeleteDataCalls(stub func(context.Context, string) error) {
+	fake.deleteDataMutex.Lock()
+	defer fake.deleteDataMutex.Unlock()
+	fake.DeleteDataStub = stub
+}
+
+func (fake *FakeStorage) DeleteDataArgsForCall(i int) (context.Context, string) {
+	fake.deleteDataMutex.RLock()
+	defer fake.deleteDataMutex.RUnlock()
+	argsForCall := fake.deleteDataArgsForCall[i]
+	return argsForCall.arg1, argsForCall.arg2
+}
+
+func (fake *FakeStorage) DeleteDataReturns(result1 error) {
+	fake.deleteDataMutex.Lock()
+	defer fake.deleteDataMutex.Unlock()
+	fake.DeleteDataStub = nil
+	fake.deleteDataReturns = struct {
+		result1 error
+	}{result1}
+}
+
+func (fake *FakeStorage) DeleteDataReturnsOnCall(i int, result1 error) {
+	fake.deleteDataMutex.Lock()
+	defer fake.deleteDataMutex.Unlock()
+	fake.DeleteDataStub = nil
+	if fake.deleteDataReturnsOnCall == nil {
+		fake.deleteDataReturnsOnCall = make(map[int]struct {
+			result1 error
+		})
+	}
+	fake.deleteDataReturnsOnCall[i] = struct {
+		result1 error
+	}{result1}
+}
+
+func (fake *FakeStorage) GetData(arg1 context.Context, arg2 string) (any, error) {
+	fake.getDataMutex.Lock()
+	ret, specificReturn := fake.getDataReturnsOnCall[len(fake.getDataArgsForCall)]
+	fake.getDataArgsForCall = append(fake.getDataArgsForCall, struct {
+		arg1 context.Context
+		arg2 string
+	}{arg1, arg2})
+	stub := fake.GetDataStub
+	fakeReturns := fake.getDataReturns
+	fake.recordInvocation("GetData", []interface{}{arg1, arg2})
+	fake.getDataMutex.Unlock()
+	if stub != nil {
+		return stub(arg1, arg2)
+	}
+	if specificReturn {
+		return ret.result1, ret.result2
+	}
+	return fakeReturns.result1, fakeReturns.result2
+}
+
+func (fake *FakeStorage) GetDataCallCount() int {
+	fake.getDataMutex.RLock()
+	defer fake.getDataMutex.RUnlock()
+	return len(fake.getDataArgsForCall)
+}
+
+func (fake *FakeStorage) GetDataCalls(stub func(context.Context, string) (any, error)) {
+	fake.getDataMutex.Lock()
+	defer fake.getDataMutex.Unlock()
+	fake.GetDataStub = stub
+}
+
+func (fake *FakeStorage) GetDataArgsForCall(i int) (context.Context, string) {
+	fake.getDataMutex.RLock()
+	defer fake.getDataMutex.RUnlock()
+	argsForCall := fake.getDataArgsForCall[i]
+	return argsForCall.arg1, argsForCall.arg2
+}
+
+func (fake *FakeStorage) GetDataReturns(result1 any, result2 error) {
+	fake.getDataMutex.Lock()
+	defer fake.getDataMutex.Unlock()
+	fake.GetDataStub = nil
+	fake.getDataReturns = struct {
+		result1 any
+		result2 error
+	}{result1, result2}
+}
+
+func (fake *FakeStorage) GetDataReturnsOnCall(i int, result1 any, result2 error) {
+	fake.getDataMutex.Lock()
+	defer fake.getDataMutex.Unlock()
+	fake.GetDataStub = nil
+	if fake.getDataReturnsOnCall == nil {
+		fake.getDataReturnsOnCall = make(map[int]struct {
+			result1 any
+			result2 error
+		})
+	}
+	fake.getDataReturnsOnCall[i] = struct {
+		result1 any
 		result2 error
 	}{result1, result2}
 }
@@ -419,6 +585,69 @@ func (fake *FakeStorage) PolicyReturnsOnCall(i int, result1 *storage.Policy, res
 	}{result1, result2}
 }
 
+func (fake *FakeStorage) SetData(arg1 context.Context, arg2 string, arg3 map[string]interface{}) error {
+	fake.setDataMutex.Lock()
+	ret, specificReturn := fake.setDataReturnsOnCall[len(fake.setDataArgsForCall)]
+	fake.setDataArgsForCall = append(fake.setDataArgsForCall, struct {
+		arg1 context.Context
+		arg2 string
+		arg3 map[string]interface{}
+	}{arg1, arg2, arg3})
+	stub := fake.SetDataStub
+	fakeReturns := fake.setDataReturns
+	fake.recordInvocation("SetData", []interface{}{arg1, arg2, arg3})
+	fake.setDataMutex.Unlock()
+	if stub != nil {
+		return stub(arg1, arg2, arg3)
+	}
+	if specificReturn {
+		return ret.result1
+	}
+	return fakeReturns.result1
+}
+
+func (fake *FakeStorage) SetDataCallCount() int {
+	fake.setDataMutex.RLock()
+	defer fake.setDataMutex.RUnlock()
+	return len(fake.setDataArgsForCall)
+}
+
+func (fake *FakeStorage) SetDataCalls(stub func(context.Context, string, map[string]interface{}) error) {
+	fake.setDataMutex.Lock()
+	defer fake.setDataMutex.Unlock()
+	fake.SetDataStub = stub
+}
+
+func (fake *FakeStorage) SetDataArgsForCall(i int) (context.Context, string, map[string]interface{}) {
+	fake.setDataMutex.RLock()
+	defer fake.setDataMutex.RUnlock()
+	argsForCall := fake.setDataArgsForCall[i]
+	return argsForCall.arg1, argsForCall.arg2, argsForCall.arg3
+}
+
+func (fake *FakeStorage) SetDataReturns(result1 error) {
+	fake.setDataMutex.Lock()
+	defer fake.setDataMutex.Unlock()
+	fake.SetDataStub = nil
+	fake.setDataReturns = struct {
+		result1 error
+	}{result1}
+}
+
+func (fake *FakeStorage) SetDataReturnsOnCall(i int, result1 error) {
+	fake.setDataMutex.Lock()
+	defer fake.setDataMutex.Unlock()
+	fake.SetDataStub = nil
+	if fake.setDataReturnsOnCall == nil {
+		fake.setDataReturnsOnCall = make(map[int]struct {
+			result1 error
+		})
+	}
+	fake.setDataReturnsOnCall[i] = struct {
+		result1 error
+	}{result1}
+}
+
 func (fake *FakeStorage) SetPolicyLock(arg1 context.Context, arg2 string, arg3 string, arg4 string, arg5 string, arg6 bool) error {
 	fake.setPolicyLockMutex.Lock()
 	ret, specificReturn := fake.setPolicyLockReturnsOnCall[len(fake.setPolicyLockArgsForCall)]
@@ -494,12 +723,18 @@ func (fake *FakeStorage) Invocations() map[string][][]interface{} {
 	defer fake.closeMutex.RUnlock()
 	fake.createSubscriberMutex.RLock()
 	defer fake.createSubscriberMutex.RUnlock()
+	fake.deleteDataMutex.RLock()
+	defer fake.deleteDataMutex.RUnlock()
+	fake.getDataMutex.RLock()
+	defer fake.getDataMutex.RUnlock()
 	fake.getPoliciesMutex.RLock()
 	defer fake.getPoliciesMutex.RUnlock()
 	fake.listenPolicyDataChangesMutex.RLock()
 	defer fake.listenPolicyDataChangesMutex.RUnlock()
 	fake.policyMutex.RLock()
 	defer fake.policyMutex.RUnlock()
+	fake.setDataMutex.RLock()
+	defer fake.setDataMutex.RUnlock()
 	fake.setPolicyLockMutex.RLock()
 	defer fake.setPolicyLockMutex.RUnlock()
 	copiedInvocations := map[string][][]interface{}{}
