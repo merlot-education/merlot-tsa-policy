@@ -4,6 +4,7 @@ import (
 	"archive/zip"
 	"bytes"
 	"context"
+	"encoding/base64"
 	"fmt"
 	"io"
 	"net/http"
@@ -25,7 +26,7 @@ import (
 )
 
 func TestNew(t *testing.T) {
-	svc := policy.New(nil, nil, nil, zap.NewNop())
+	svc := policy.New(nil, nil, nil, nil, zap.NewNop())
 	assert.Implements(t, (*goapolicy.Service)(nil), svc)
 }
 
@@ -372,7 +373,7 @@ func TestService_Evaluate(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			svc := policy.New(test.storage, test.regocache, test.cache, zap.NewNop())
+			svc := policy.New(test.storage, test.regocache, test.cache, nil, zap.NewNop())
 			ctx := context.Background()
 			if test.ctx != nil {
 				ctx = test.ctx
@@ -478,7 +479,7 @@ func TestService_Lock(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			svc := policy.New(test.storage, nil, nil, zap.NewNop())
+			svc := policy.New(test.storage, nil, nil, nil, zap.NewNop())
 			err := svc.Lock(context.Background(), test.req)
 			if err == nil {
 				assert.Empty(t, test.errtext)
@@ -576,7 +577,7 @@ func TestService_Unlock(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			svc := policy.New(test.storage, nil, nil, zap.NewNop())
+			svc := policy.New(test.storage, nil, nil, nil, zap.NewNop())
 			err := svc.Unlock(context.Background(), test.req)
 			if err == nil {
 				assert.Empty(t, test.errtext)
@@ -808,7 +809,7 @@ func TestService_ListPolicies(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			svc := policy.New(test.storage, nil, nil, zap.NewNop())
+			svc := policy.New(test.storage, nil, nil, nil, zap.NewNop())
 			result, err := svc.ListPolicies(context.Background(), test.request)
 
 			if test.errText != "" {
@@ -873,7 +874,7 @@ func TestService_SubscribeForPolicyChange(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			svc := policy.New(test.storage, nil, nil, zap.NewNop())
+			svc := policy.New(test.storage, nil, nil, nil, zap.NewNop())
 			res, err := svc.SubscribeForPolicyChange(context.Background(), test.request)
 			if test.errText != "" {
 				assert.ErrorContains(t, err, test.errText)
@@ -886,14 +887,14 @@ func TestService_SubscribeForPolicyChange(t *testing.T) {
 	}
 }
 
-func TestService_ExportBundle(t *testing.T) {
+func TestService_ExportBundleError(t *testing.T) {
 	t.Run("policy not found in storage", func(t *testing.T) {
 		storage := &policyfakes.FakeStorage{
 			PolicyStub: func(ctx context.Context, s string, s2 string, s3 string, s4 string) (*storage.Policy, error) {
 				return nil, errors.New(errors.NotFound, "policy not found")
 			},
 		}
-		svc := policy.New(storage, nil, nil, zap.NewNop())
+		svc := policy.New(storage, nil, nil, nil, zap.NewNop())
 		res, reader, err := svc.ExportBundle(context.Background(), &goapolicy.ExportBundleRequest{})
 		assert.Nil(t, res)
 		assert.Nil(t, reader)
@@ -910,7 +911,7 @@ func TestService_ExportBundle(t *testing.T) {
 				return nil, errors.New("unexpected error")
 			},
 		}
-		svc := policy.New(storage, nil, nil, zap.NewNop())
+		svc := policy.New(storage, nil, nil, nil, zap.NewNop())
 		res, reader, err := svc.ExportBundle(context.Background(), &goapolicy.ExportBundleRequest{})
 		assert.Nil(t, res)
 		assert.Nil(t, reader)
@@ -921,7 +922,7 @@ func TestService_ExportBundle(t *testing.T) {
 		assert.True(t, errors.Is(errors.Unknown, e))
 	})
 
-	t.Run("successful export of policy bundle", func(t *testing.T) {
+	t.Run("error making signature", func(t *testing.T) {
 		storage := &policyfakes.FakeStorage{
 			PolicyStub: func(ctx context.Context, s string, s2 string, s3 string, s4 string) (*storage.Policy, error) {
 				return &storage.Policy{
@@ -937,38 +938,84 @@ func TestService_ExportBundle(t *testing.T) {
 				}, nil
 			},
 		}
-		svc := policy.New(storage, nil, nil, zap.NewNop())
+
+		signer := &policyfakes.FakeSigner{
+			SignStub: func(ctx context.Context, namespace, key string, data []byte) ([]byte, error) {
+				return nil, fmt.Errorf("error signing data")
+			},
+		}
+
+		svc := policy.New(storage, nil, nil, signer, zap.NewNop())
 		res, reader, err := svc.ExportBundle(context.Background(), &goapolicy.ExportBundleRequest{})
-		require.NoError(t, err)
-		require.NotNil(t, res)
-		require.NotNil(t, reader)
-
-		assert.Equal(t, "application/zip", res.ContentType)
-		assert.Equal(t, `attachment; filename="myrepo_mygroup_myname_1.52.zip"`, res.ContentDisposition)
-		assert.NotZero(t, res.ContentLength)
-
-		archive, err := io.ReadAll(reader)
-		require.NoError(t, err)
-		require.NotNil(t, archive)
-
-		r, err := zip.NewReader(bytes.NewReader(archive), int64(res.ContentLength))
-		require.NoError(t, err)
-		require.NotNil(t, r)
-
-		// check metadata
-		require.NotNil(t, r.File[0])
-		require.Equal(t, "metadata.json", r.File[0].Name)
-
-		// check policy source code
-		assert.NotNil(t, r.File[1])
-		assert.Equal(t, "policy.rego", r.File[1].Name)
-
-		// check static data
-		assert.NotNil(t, r.File[2])
-		assert.Equal(t, "data.json", r.File[2].Name)
-
-		// check static data configuration
-		assert.NotNil(t, r.File[3])
-		assert.Equal(t, "data-config.json", r.File[3].Name)
+		assert.Nil(t, res)
+		assert.Nil(t, reader)
+		require.Error(t, err)
+		assert.ErrorContains(t, err, "error signing data")
 	})
+}
+
+func TestService_ExportBundleSuccess(t *testing.T) {
+	storage := &policyfakes.FakeStorage{
+		PolicyStub: func(ctx context.Context, s string, s2 string, s3 string, s4 string) (*storage.Policy, error) {
+			return &storage.Policy{
+				Repository: "myrepo",
+				Name:       "myname",
+				Group:      "mygroup",
+				Version:    "1.52",
+				Rego:       "package test",
+				Data:       `{"key":"value"}`,
+				DataConfig: `{"new":"value"}`,
+				Locked:     false,
+				LastUpdate: time.Date(2023, 10, 8, 0, 0, 0, 0, time.UTC),
+			}, nil
+		},
+	}
+
+	signer := &policyfakes.FakeSigner{
+		SignStub: func(ctx context.Context, namespace, key string, data []byte) ([]byte, error) {
+			return []byte("signature"), nil
+		},
+	}
+
+	svc := policy.New(storage, nil, nil, signer, zap.NewNop())
+	res, reader, err := svc.ExportBundle(context.Background(), &goapolicy.ExportBundleRequest{})
+	require.NoError(t, err)
+	require.NotNil(t, res)
+	require.NotNil(t, reader)
+
+	assert.Equal(t, "application/zip", res.ContentType)
+	assert.Equal(t, `attachment; filename="myrepo_mygroup_myname_1.52.zip"`, res.ContentDisposition)
+	assert.NotZero(t, res.ContentLength)
+
+	archive, err := io.ReadAll(reader)
+	require.NoError(t, err)
+	require.NotNil(t, archive)
+
+	r, err := zip.NewReader(bytes.NewReader(archive), int64(res.ContentLength))
+	require.NoError(t, err)
+	require.NotNil(t, r)
+
+	// check if policy_bundle.zip is present
+	require.NotNil(t, r.File[0])
+	require.Equal(t, "policy_bundle.zip", r.File[0].Name)
+
+	// check if policy_bundle.jws is present
+	require.NotNil(t, r.File[1])
+	require.Equal(t, "policy_bundle.jws", r.File[1].Name)
+
+	// check if signature matches the returned value from signer
+	reader, err = r.File[1].Open()
+	require.NoError(t, err)
+	require.NotNil(t, reader)
+	sig, err := io.ReadAll(reader)
+	require.NoError(t, err)
+	require.NotNil(t, sig)
+
+	jwsParts := bytes.Split(sig, []byte("."))
+	assert.Len(t, jwsParts, 3)
+	assert.NotEmpty(t, jwsParts[2])
+
+	s, err := base64.StdEncoding.DecodeString(string(jwsParts[2]))
+	require.NoError(t, err)
+	assert.Equal(t, "signature", string(s))
 }

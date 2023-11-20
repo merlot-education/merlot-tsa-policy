@@ -36,6 +36,7 @@ import (
 	goapolicy "gitlab.eclipse.org/eclipse/xfsc/tsa/policy/gen/policy"
 	"gitlab.eclipse.org/eclipse/xfsc/tsa/policy/internal/clients/cache"
 	"gitlab.eclipse.org/eclipse/xfsc/tsa/policy/internal/clients/nats"
+	"gitlab.eclipse.org/eclipse/xfsc/tsa/policy/internal/clients/signer"
 	"gitlab.eclipse.org/eclipse/xfsc/tsa/policy/internal/clone"
 	"gitlab.eclipse.org/eclipse/xfsc/tsa/policy/internal/config"
 	"gitlab.eclipse.org/eclipse/xfsc/tsa/policy/internal/header"
@@ -78,6 +79,8 @@ func main() {
 		oauthCtx := context.WithValue(context.Background(), oauth2.HTTPClient, httpClient)
 		oauthClient = newOAuth2Client(oauthCtx, cfg.OAuth.ClientID, cfg.OAuth.ClientSecret, cfg.OAuth.TokenURL)
 	}
+
+	signer := signer.New(cfg.Signer.Addr, signer.WithHTTPClient(httpClient))
 
 	// create cache client
 	cache := cache.New(cfg.Cache.Addr, cache.WithHTTPClient(oauthClient))
@@ -163,7 +166,7 @@ func main() {
 		healthSvc goahealth.Service
 	)
 	{
-		policySvc = policy.New(storage, regocache, cache, logger)
+		policySvc = policy.New(storage, regocache, cache, signer, logger)
 		healthSvc = health.New(Version)
 	}
 

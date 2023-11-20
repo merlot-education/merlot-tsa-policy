@@ -3,12 +3,15 @@ package policy
 import (
 	"bytes"
 	"context"
+	"crypto/sha256"
 	"encoding/json"
 	"fmt"
 	"io"
 	"strings"
 
 	"github.com/google/uuid"
+	"github.com/lestrrat-go/jwx/v2/jwa"
+	"github.com/lestrrat-go/jwx/v2/jws"
 	"github.com/open-policy-agent/opa/rego"
 	"github.com/open-policy-agent/opa/storage/inmem"
 	"go.uber.org/zap"
@@ -24,6 +27,7 @@ import (
 //go:generate counterfeiter . Cache
 //go:generate counterfeiter . Storage
 //go:generate counterfeiter . RegoCache
+//go:generate counterfeiter . Signer
 
 type Cache interface {
 	Set(ctx context.Context, key, namespace, scope string, value []byte, ttl int) error
@@ -34,18 +38,41 @@ type RegoCache interface {
 	Get(key string) (policy *storage.Policy, found bool)
 }
 
+type Signer interface {
+	Sign(ctx context.Context, namespace string, key string, data []byte) ([]byte, error)
+}
+
 type Service struct {
 	storage     Storage
 	policyCache RegoCache
 	cache       Cache
+	signer      Signer
 	logger      *zap.Logger
 }
 
-func New(storage Storage, policyCache RegoCache, cache Cache, logger *zap.Logger) *Service {
+func New(storage Storage, policyCache RegoCache, cache Cache, signer Signer, logger *zap.Logger) *Service {
+	signerFactory := func(signer Signer) func() (jws.Signer, error) {
+		return func() (jws.Signer, error) {
+			return &signAdapter{signer: signer}, nil
+		}
+	}
+
+	// This unregister/register sequence is done mainly for the unit tests
+	// because each tests creates a new service instance, but the jws.Signer
+	// implementations are kept in a global variable map, which is the same
+	// for all test cases. In order for tests to work and to be able to register
+	// different signer implementations, the previous signer must be explicitly
+	// unregistered.
+	jws.UnregisterSigner(JwaVaultSignature)
+	jwa.UnregisterSignatureAlgorithm(JwaVaultSignature)
+	jwa.RegisterSignatureAlgorithm(JwaVaultSignature)
+	jws.RegisterSigner(JwaVaultSignature, jws.SignerFactoryFn(signerFactory(signer)))
+
 	return &Service{
 		storage:     storage,
 		policyCache: policyCache,
 		cache:       cache,
+		signer:      signer,
 		logger:      logger,
 	}
 }
@@ -219,9 +246,41 @@ func (s *Service) ExportBundle(ctx context.Context, req *policy.ExportBundleRequ
 		return nil, nil, err
 	}
 
-	bundle, err := createPolicyBundle(pol)
+	// bundle is the complete policy bundle zip file
+	bundle, err := s.createPolicyBundle(pol)
 	if err != nil {
 		logger.Error("error creating policy bundle", zap.Error(err))
+		return nil, nil, err
+	}
+
+	// only the sha256 file digest will be signed, not the file itself
+	bundleDigest := sha256.Sum256(bundle)
+
+	// TODO(penkovski): namespace and key must be taken from policy export configuration
+	// This will be implemented with issue #41, for now some test values are hardcoded
+	// https://gitlab.eclipse.org/eclipse/xfsc/tsa/policy/-/issues/41
+	signature, err := s.sign("transit", "key1", bundleDigest[:])
+	if err != nil {
+		logger.Error("error signing policy bundle", zap.Error(err))
+		return nil, nil, err
+	}
+
+	// the final ZIP file that will be exported to the client wraps the policy bundle
+	// zip file and the jws detached payload signature file
+	var files = []ZipFile{
+		{
+			Name:    "policy_bundle.zip",
+			Content: bundle,
+		},
+		{
+			Name:    "policy_bundle.jws",
+			Content: signature,
+		},
+	}
+
+	signedBundle, err := s.createZipArchive(files)
+	if err != nil {
+		logger.Error("error making final zip with signature", zap.Error(err))
 		return nil, nil, err
 	}
 
@@ -230,9 +289,9 @@ func (s *Service) ExportBundle(ctx context.Context, req *policy.ExportBundleRequ
 
 	return &policy.ExportBundleResult{
 		ContentType:        "application/zip",
-		ContentLength:      len(bundle),
+		ContentLength:      len(signedBundle),
 		ContentDisposition: fmt.Sprintf(`attachment; filename="%s"`, filename),
-	}, io.NopCloser(bytes.NewReader(bundle)), nil
+	}, io.NopCloser(bytes.NewReader(signedBundle)), nil
 }
 
 func (s *Service) ListPolicies(ctx context.Context, req *policy.PoliciesRequest) (*policy.PoliciesResult, error) {

@@ -10,6 +10,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
 
 	"gitlab.eclipse.org/eclipse/xfsc/tsa/policy/internal/storage"
 )
@@ -46,7 +47,8 @@ var testMetadata = Metadata{
 }
 
 func TestPolicy_createPolicyBundle(t *testing.T) {
-	bundle, err := createPolicyBundle(testPolicy)
+	svc := New(nil, nil, nil, nil, zap.NewNop())
+	bundle, err := svc.createPolicyBundle(testPolicy)
 	assert.NoError(t, err)
 	assert.NotNil(t, bundle)
 
