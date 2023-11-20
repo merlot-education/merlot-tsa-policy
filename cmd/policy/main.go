@@ -135,6 +135,7 @@ func main() {
 		ocmFuncs := regofunc.NewOcmFuncs(cfg.OCM.Addr, httpClient)
 		signerFuncs := regofunc.NewSignerFuncs(cfg.Signer.Addr, oauthClient)
 		didWebFuncs := regofunc.NewDIDWebFuncs()
+		storageFuncs := regofunc.NewStorageFuncs(storage)
 		regofunc.Register("cacheGet", rego.Function3(cacheFuncs.CacheGetFunc()))
 		regofunc.Register("cacheSet", rego.Function4(cacheFuncs.CacheSetFunc()))
 		regofunc.Register("didResolve", rego.Function1(didResolverFuncs.ResolveFunc()))
@@ -151,6 +152,9 @@ func main() {
 		regofunc.Register("ocmRawProofResult", rego.Function1(ocmFuncs.GetRawProofResult()))
 		regofunc.Register("didToURL", rego.Function1(didWebFuncs.DIDToURLFunc()))
 		regofunc.Register("urlToDID", rego.Function1(didWebFuncs.URLToDIDFunc()))
+		regofunc.Register("storageGet", rego.Function1(storageFuncs.GetData()))
+		regofunc.Register("storageSet", rego.Function2(storageFuncs.SetData()))
+		regofunc.Register("storageDelete", rego.Function1(storageFuncs.DeleteData()))
 	}
 
 	// create services

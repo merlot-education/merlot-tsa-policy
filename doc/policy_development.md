@@ -1,22 +1,22 @@
 # Policy Development Extensions
 
-The policy service extends the standard Rego runtime with custom 
+The policy service extends the standard Rego runtime with custom
 built-in functions and some custom functionalities described here.
 
 ### Pure Evaluation Results
 
-In the Rego language there is a blank identifier variable which 
+In the Rego language there is a blank identifier variable which
 can be used for assignments. If used like it's shown below, the
-result from the policy evaluation will not be embedded in variable, 
-but will be returned as *pure* result. 
+result from the policy evaluation will not be embedded in variable,
+but will be returned as _pure_ result.
 
 > This is custom functionality developed in the policy service
 > and is not standard behaviour of the OPA Rego runtime.
 
 Below are two examples for what it means.
 
-If the following policy is evaluated, the returned result will be 
-*embedded* in an attribute named `credential`:
+If the following policy is evaluated, the returned result will be
+_embedded_ in an attribute named `credential`:
 
 ```
 package example.createProof
@@ -25,6 +25,7 @@ credential := add_vc_proof("transit", "key1", input)
 ```
 
 Result:
+
 ```json
 {
     "credential": {
@@ -36,7 +37,7 @@ Result:
 }
 ```
 
-If however a blank identifier is used for the assignment, the result 
+If however a blank identifier is used for the assignment, the result
 of the policy evaluation won't be embedded in an attribute named
 `credential` but will be returned directly:
 
@@ -47,6 +48,7 @@ _ = add_vc_proof("transit", "key1", input)
 ```
 
 Result:
+
 ```json
 {
     "@context": "...",
@@ -57,8 +59,8 @@ Result:
 ```
 
 A policy developer can use the blank identifier assignment to skip the
-mapping of a function call to a JSON attribute name. The result of the 
-function call will be returned directly as JSON. 
+mapping of a function call to a JSON attribute name. The result of the
+function call will be returned directly as JSON.
 
 This is useful in case you want to return a DID document or Verifiable Credential
 from policy evaluation, and the document must not be mapped to an upper level attribute.
@@ -71,12 +73,13 @@ each one of them.
 
 #### external.http.header
 
-The function retrieves an HTTP header value taken from the incoming request 
+The function retrieves an HTTP header value taken from the incoming request
 during the current policy evaluation. The header name is in Canonical format
 because of the way Go `net/http` library formats headers.
 
 For example, inside Rego the value of a header named `Authorization` can be retrieved
 as follows:
+
 ```
 package example.example
 
@@ -90,6 +93,7 @@ three parameters used to identify the underlying Cache key. Only the
 first one named `key` is required, the other two may be empty.
 
 Example:
+
 ```
 package example.cacheGet
 
@@ -99,10 +103,11 @@ data := cache.get("mykey", "", "")
 #### cache.set
 
 The function inserts JSON data into the Cache service. It accepts
-four parameters. First three are used to identify/construct the 
+four parameters. First three are used to identify/construct the
 underlying Cache key. The last one is the data to be stored.
 
 Example:
+
 ```
 package example.cacheSet
 
@@ -112,9 +117,10 @@ result := cache.set("mykey", "", "", input.data)
 #### did.resolve
 
 Resolve DID using the [Universal DID Resolver](https://github.com/decentralized-identity/universal-resolver)
-and return the resolved DID document. 
+and return the resolved DID document.
 
 Example:
+
 ```
 package example.didResolve
 
@@ -127,6 +133,7 @@ Start asynchronous task and pass the given data as task input. The function acce
 parameters: task name and the input data.
 
 Example:
+
 ```
 package example.taskCreate
 
@@ -136,9 +143,10 @@ result := task.create("task-name", input.data)
 #### tasklist.create
 
 Start asynchronous task list and pass the given data as input. The function accepts two
-parameters: task list name and the input data.   
+parameters: task list name and the input data.
 
 Example:
+
 ```
 package example.tasklist
 
@@ -148,10 +156,11 @@ result := tasklist.create("task-list-name", input.data)
 #### keys.get
 
 Retrieve a specific public key from the signer service. The function accepts
-three arguments which specify the DID, key namespace and key name. The key 
+three arguments which specify the DID, key namespace and key name. The key
 is returned in JWK format wrapped in a DID verification method envelope.
 
 Example:
+
 ```
 package example.getkey
 
@@ -159,8 +168,9 @@ _ := keys.get("did:web:example.com", "transit", "key1")
 ```
 
 Result:
+
 ```json
-  {
+{
   "id": "did:web:example.com#key1",
   "type": "JsonWebKey2020",
   "controller": "did:web:example.com",
@@ -180,6 +190,7 @@ two arguments specifying DID and key namespace. The result is JSON array of
 keys in JWK format wrapped in a DID verification method envelope.
 
 Example:
+
 ```
 package example.getAllKeys
 
@@ -187,6 +198,7 @@ _ := keys.getAll("did:web:example.com", "transit")
 ```
 
 Result:
+
 ```json
 [
   {
@@ -219,13 +231,15 @@ Result:
 
 Add a proof to Verifiable Credential.
 The function accepts three arguments:
-* Key namespace where the signing key must be present.
-* Key name of the signing key to be used.
-* A Verifiable Credential document in JSON format.
-It calls the signer service to generate a proof and returns the response, 
-which is the same VC but with the generated proof section by the signer. 
+
+- Key namespace where the signing key must be present.
+- Key name of the signing key to be used.
+- A Verifiable Credential document in JSON format.
+  It calls the signer service to generate a proof and returns the response,
+  which is the same VC but with the generated proof section by the signer.
 
 Example Policy:
+
 ```
 package example.addProof
 
@@ -233,6 +247,7 @@ _ := add_vc_proof("transit", "key1", input)
 ```
 
 Example VC given to policy evaluation:
+
 ```json
 {
   "@context": [
@@ -251,6 +266,7 @@ Example VC given to policy evaluation:
 ```
 
 Example Response:
+
 ```json
 {
   "@context": [
@@ -279,14 +295,16 @@ Example Response:
 
 Add a proof to Verifiable Presentation.
 The function accepts four arguments:
-* Issuer DID used for identifying the verification method to verify the proof.
-* Key namespace where the signing key must be present.
-* Key name of the signing key to be used.
-* A Verifiable Presentation document in JSON format.
-It calls the signer service to generate a proof and returns the response,
-which is the same VC but with the generated proof section by the signer.
+
+- Issuer DID used for identifying the verification method to verify the proof.
+- Key namespace where the signing key must be present.
+- Key name of the signing key to be used.
+- A Verifiable Presentation document in JSON format.
+  It calls the signer service to generate a proof and returns the response,
+  which is the same VC but with the generated proof section by the signer.
 
 Example Policy:
+
 ```
 package example.addProof
 
@@ -300,6 +318,7 @@ The function accepts one argument which represents a VC or VP in JSON format.
 It calls the signer service to validate the proof.
 
 Example Policy:
+
 ```
 package example.verifyProof
 
@@ -307,6 +326,7 @@ valid := proof.verify(input)
 ```
 
 Example VC given to policy evaluation:
+
 ```json
 {
   "@context": [
@@ -332,6 +352,7 @@ Example VC given to policy evaluation:
 ```
 
 Result:
+
 ```json
 {
   "valid": true
@@ -346,6 +367,7 @@ credential types in OCM. The second argument is a map between scopes and credent
 which is statically defined in a `data.json` file.
 
 Example request body:
+
 ```json
 {
   "scope": ["openid", "email"]
@@ -353,6 +375,7 @@ Example request body:
 ```
 
 Example `data.json` file containing "scope-to-credential-type" map:
+
 ```json
 {
   "scopes": {
@@ -374,19 +397,20 @@ Result:
 
 ```json
 {
-    "link": "https://ocm:443/didcomm/?d_m=eyJAdHlwZSI6Imh0dHBzOi8vZGlkY29tbS5vc9tbSJ9fQ",
-    "requestId": "851076fa-da78-444a-9127-e636c5102f40"
+  "link": "https://ocm:443/didcomm/?d_m=eyJAdHlwZSI6Imh0dHBzOi8vZGlkY29tbS5vc9tbSJ9fQ",
+  "requestId": "851076fa-da78-444a-9127-e636c5102f40"
 }
 ```
 
 #### ocm.SendPresentationRequest
 
-Send a Presentation Request containing attributes (claims) with corresponding `schemaId` and `credentialDefinitionId` 
+Send a Presentation Request containing attributes (claims) with corresponding `schemaId` and `credentialDefinitionId`
 and receive an Invitation URL in return.
 
 > Note: `schemaId`, `credentialDefinitionId` and `attributeName` are required fields for each attribute.
 
 Example request body:
+
 ```json
 {
   "attributes": [
@@ -400,7 +424,6 @@ Example request body:
       "credentialDefinitionId": "7KuDTpQh3GJ7Gp6kErpWvM:3:CL:40329:principalTestCredDefExpir",
       "attributeName": "email"
     }
-
   ],
   "options": {
     "type": "Aries1.0"
@@ -420,18 +443,19 @@ Result:
 
 ```json
 {
-    "link": "https://ocm:443/didcomm/?d_m=eyJAdHlwZSI6Imh0dHBzOi8vZGlkY29tbS5vc9tbSJ9fQ",
-    "requestId": "851076fa-da78-444a-9127-e636c5102f40"
+  "link": "https://ocm:443/didcomm/?d_m=eyJAdHlwZSI6Imh0dHBzOi8vZGlkY29tbS5vc9tbSJ9fQ",
+  "requestId": "851076fa-da78-444a-9127-e636c5102f40"
 }
 ```
 
 #### ocm.GetLoginProofResult
 
 Get a Proof Invitation result from OCM containing a flattened list of claims.
-This function accepts one argument which is the  `resuestId` from the result of one of the
+This function accepts one argument which is the `resuestId` from the result of one of the
 `ocm.getLoginProofInvitation` or `ocm.sendPresentationRequest` functions.
 
 Example request body:
+
 ```json
 {
   "requestId": "87839b89-da07-4d30-bb57-392e49999fc3"
@@ -447,15 +471,16 @@ _ = ocm.getLoginProofResult(input.requestId)
 ```
 
 Result:
+
 ```json
 {
-    "name": "John Doe",
-    "given_name": "John",
-    "family_name": "Doe",
-    "email": "example@example.com",
-    "email_verified": true,
-    "preferred_username": "john",
-    "gender": "NA"
+  "name": "John Doe",
+  "given_name": "John",
+  "family_name": "Doe",
+  "email": "example@example.com",
+  "email_verified": true,
+  "preferred_username": "john",
+  "gender": "NA"
 }
 ```
 
@@ -466,14 +491,15 @@ This function accepts one argument which is the `resuestId` from the result of o
 `ocm.getLoginProofInvitation` or `ocm.sendPresentationRequest` functions.
 
 Example request body:
+
 ```json
 {
   "requestId": "87839b89-da07-4d30-bb57-392e49999fc3"
 }
 ```
 
-
 Example policy:
+
 ```rego
 package example.GetRawProofResult
 
@@ -481,6 +507,7 @@ _ = ocm.getRawProofResult(input.requestId)
 ```
 
 Result before Proof request is accepted:
+
 ```json
 {
   "data": {
@@ -501,6 +528,7 @@ Result before Proof request is accepted:
 ```
 
 Result after Proof request is accepted:
+
 ```json
 {
   "data": {
@@ -520,4 +548,88 @@ Result after Proof request is accepted:
   "message": "Proof presentation fetch successfully",
   "statusCode": 200
 }
+```
+
+#### storage.set
+
+Set data to the storage if the key exist the data will be updated.
+The result is nil if there is no error.
+This function accepts two arguments. The first one is the `key`.
+The second one is `data` you want to write. In json format.
+
+Example request body:
+
+```json
+{
+  "key": "example",
+  "data": { "some": "data" }
+}
+```
+
+Example policy:
+
+```rego
+package example.storageSet
+
+_ = storage.set(input.key, input.data)
+```
+
+Result when set:
+
+```
+null
+```
+
+#### storage.get
+
+Get data from the storage the result is object bound to given key if there is no error.
+This function accepts one argument `key`.
+
+Example request body:
+
+```json
+{
+  "key": "example"
+}
+```
+
+Example policy:
+
+```rego
+package example.storageGet
+
+_ = storage.get(input.key)
+```
+
+Result when set:
+
+```
+{ "some": "updated_data" }
+```
+
+#### storage.delete
+
+Delete data from the storage the result is null if there is no error.
+This function accepts one argument `key`.
+
+Example request body:
+
+```json
+{
+  "key": "example"
+}
+```
+
+Example policy:
+
+```rego
+package example.storageDelete
+
+_ = storage.delete(input.key)
+```
+
+Result when set:
+
+```
+null
 ```

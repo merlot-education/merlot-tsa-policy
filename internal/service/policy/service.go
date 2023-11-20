@@ -274,7 +274,6 @@ func (s *Service) ListPolicies(ctx context.Context, req *policy.PoliciesRequest)
 	return &policy.PoliciesResult{Policies: policiesResult}, nil
 }
 
-// TODO unit testing
 func (s *Service) SubscribeForPolicyChange(ctx context.Context, req *policy.SubscribeRequest) (any, error) {
 	logger := s.logger.With(zap.String("operation", "subscribeForPolicyChange"))
 

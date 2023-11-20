@@ -19,17 +19,19 @@ import (
 
 const (
 	subscriberCollectionName = "subscribers"
+	commonStorage            = "common_storage"
 	lockedField              = "locked"
 	dataField                = "data"
 	nextDataRefreshTimeField = "nextDataRefreshTime"
 )
 
 type Storage struct {
-	db          *mongo.Client
-	policy      *mongo.Collection
-	subscriber  *mongo.Collection
-	subscribers []storage.PolicyChangeSubscriber
-	logger      *zap.Logger
+	db            *mongo.Client
+	policy        *mongo.Collection
+	subscriber    *mongo.Collection
+	commonStorage *mongo.Collection
+	subscribers   []storage.PolicyChangeSubscriber
+	logger        *zap.Logger
 }
 
 func New(db *mongo.Client, dbname, collection string, logger *zap.Logger) (*Storage, error) {
@@ -40,10 +42,11 @@ func New(db *mongo.Client, dbname, collection string, logger *zap.Logger) (*Stor
 	database := db.Database(dbname)
 
 	return &Storage{
-		db:         db,
-		policy:     database.Collection(collection),
-		subscriber: database.Collection(subscriberCollectionName),
-		logger:     logger,
+		db:            db,
+		policy:        database.Collection(collection),
+		subscriber:    database.Collection(subscriberCollectionName),
+		commonStorage: database.Collection(commonStorage),
+		logger:        logger,
 	}, nil
 }
 
@@ -282,6 +285,44 @@ func (s *Storage) PolicyChangeSubscribers(ctx context.Context, policyRepository,
 	}
 
 	return subscribers, nil
+}
+
+func (s *Storage) SetData(ctx context.Context, key string, data map[string]interface{}) error {
+	opts := options.Update().SetUpsert(true)
+	query := bson.M{"key": key}
+	update := bson.M{"$set": bson.M{"key": key, "data": data}}
+
+	_, err := s.commonStorage.UpdateOne(ctx, query, update, opts)
+
+	return err
+}
+
+func (s *Storage) GetData(ctx context.Context, key string) (any, error) {
+	res := s.commonStorage.FindOne(ctx, bson.M{
+		"key": key,
+	})
+	if res.Err() != nil {
+		return nil, res.Err()
+	}
+
+	commonStorage := storage.CommonStorage{}
+	if err := res.Decode(&commonStorage); err != nil {
+		return nil, err
+	}
+
+	return commonStorage.Data, nil
+}
+
+func (s *Storage) DeleteData(ctx context.Context, key string) error {
+	res, err := s.commonStorage.DeleteOne(ctx, bson.M{
+		"key": key,
+	})
+
+	if res.DeletedCount < 1 {
+		return fmt.Errorf("this key doesn't exist")
+	}
+
+	return err
 }
 
 func (s *Storage) subscriberExist(ctx context.Context, subscriber *storage.Subscriber) (bool, error) {

@@ -2,6 +2,7 @@ package memory
 
 import (
 	"context"
+	"fmt"
 	"sync"
 	"time"
 
@@ -25,6 +26,9 @@ type Storage struct {
 	mu       sync.RWMutex
 	policies map[string]*storage.Policy
 
+	muCommonStorage sync.RWMutex
+	commonStorage   map[string]interface{}
+
 	logger *zap.Logger
 }
 
@@ -35,6 +39,7 @@ func New(c KeyConstructor, p map[string]*storage.Policy, l *zap.Logger) *Storage
 		keyConstructor: c,
 		changes:        ch,
 		policies:       p,
+		commonStorage:  map[string]interface{}{},
 		logger:         l,
 	}
 }
@@ -145,6 +150,38 @@ func (s *Storage) ListenPolicyDataChanges(ctx context.Context) error {
 			s.logger.Info("memory policy data changed")
 		}
 	}
+}
+
+func (s *Storage) GetData(_ context.Context, key string) (any, error) {
+	s.muCommonStorage.Lock()
+	defer s.muCommonStorage.Unlock()
+
+	data, ok := s.commonStorage[key]
+	if !ok {
+		return nil, fmt.Errorf("key: %s doesn't exist", key)
+	}
+
+	return data, nil
+}
+func (s *Storage) SetData(_ context.Context, key string, data map[string]interface{}) error {
+	s.muCommonStorage.Lock()
+	defer s.muCommonStorage.Unlock()
+
+	s.commonStorage[key] = data
+
+	return nil
+}
+func (s *Storage) DeleteData(_ context.Context, key string) error {
+	s.muCommonStorage.Lock()
+	defer s.muCommonStorage.Unlock()
+
+	if _, ok := s.commonStorage[key]; !ok {
+		return fmt.Errorf("key: %s doesn't exist", key)
+	}
+
+	delete(s.commonStorage, key)
+
+	return nil
 }
 
 func (s *Storage) Close(_ context.Context) {}

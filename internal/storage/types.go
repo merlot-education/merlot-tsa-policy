@@ -39,3 +39,8 @@ type Subscriber struct {
 	CreatedAt        time.Time
 	UpdatedAt        time.Time
 }
+
+type CommonStorage struct {
+	Key  string
+	Data map[string]interface{}
+}
