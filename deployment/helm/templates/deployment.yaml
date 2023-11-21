@@ -68,6 +68,10 @@ spec:
             value: {{ .Values.policy.http.timeout.read | quote }}
           - name: HTTP_WRITE_TIMEOUT
             value: {{ .Values.policy.http.timeout.write | quote }}
+          - name: NATS_ADDR
+            value: {{ .Values.policy.nats.url | quote }}
+          - name: NATS_SUBJECT
+            value: {{ .Values.policy.nats.subject | quote }}
           - name: CACHE_ADDR
             value: {{ .Values.addresses.cache | quote }}
           - name: TASK_ADDR
@@ -78,9 +82,9 @@ spec:
             value: {{ .Values.addresses.signer | quote }}
           - name: OCM_ADDR
             value: {{ .Values.addresses.ocm | quote }}
-          {{- if .Values.extraVars }}
-          {{- toYaml .Values.extraVars | indent 10 }}
-          {{- end }}
+{{- if .Values.extraVars }}
+{{- toYaml .Values.extraVars | indent 10 }}
+{{- end }}
           {{- if .Values.secretEnv }}
           {{- range $key, $value := .Values.secretEnv }}
           - name: "{{ $key }}"
