@@ -23,6 +23,7 @@ const (
 	cloneFolder        = "temp"
 	dataFilename       = "data.json"
 	dataConfigFilename = "data-config.json"
+	jsonSchemaFilename = "output-schema.json"
 )
 
 type Cloner struct {
@@ -136,16 +137,23 @@ func createPolicy(p, repository string) (*storage.Policy, error) {
 		log.Printf("[WARNING] policy data will be overwritten by a data configuration execution for policy %q, group %q and version %q\n", name, group, version)
 	}
 
+	// check if there is an output-schema.json file in the same folder as the policy
+	schemaBytes, err := os.ReadFile(strings.TrimSuffix(p, policyFilename) + jsonSchemaFilename)
+	if err != nil && !os.IsNotExist(err) {
+		return nil, err
+	}
+
 	return &storage.Policy{
-		Repository: repository,
-		Filename:   dbFilename,
-		Name:       name,
-		Group:      group,
-		Version:    version,
-		Rego:       regoSrc,
-		Data:       string(dataBytes),
-		DataConfig: string(configBytes),
-		Locked:     false,
+		Repository:   repository,
+		Filename:     dbFilename,
+		Name:         name,
+		Group:        group,
+		Version:      version,
+		Rego:         regoSrc,
+		Data:         string(dataBytes),
+		DataConfig:   string(configBytes),
+		OutputSchema: string(schemaBytes),
+		Locked:       false,
 	}, nil
 }
 

@@ -146,12 +146,15 @@ Example: `/xfsc/example/1.0/data-config.json`
 > Note that there should only be one of the two files `data.json` or `data-config.json` in the same directory.
 > If both files exist in the same directory tha data from the `data.json` file will be eventually overwritten by the data
 > acquired using the configuration from the `data-config.json` file.
-4. The policy package name inside the policy source code file *must* exactly match
+4. In the same directory there could be a configuration file containing JSON schema for validating the policy
+evaluation output. The file *must* be named `output-schema.json`.
+Example: `/xfsc/example/1.0/output-schema.json`
+5. The policy package name inside the policy source code file *must* exactly match
 the `group` and `policy` (name) of the policy.
 
-*What does it mean?*
+##### *What does it mean?*
 
-Let's see an example for the 1st convention.
+- Let's see an example for the 1st convention.
 ```
 package xfsc.example
 
@@ -171,7 +174,7 @@ automatically expose URLs for working with the policy at:
 http://localhost:8081/policy/xfsc/example/1.0/evaluation
 http://localhost:8081/policy/xfsc/example/1.0/lock
 ```
-The 2nd rule for static data file naming is to make sure that file `/xfsc/example/1.0/data.json`
+- The 2nd rule for static data file naming is to make sure that file `/xfsc/example/1.0/data.json`
 is passed and is available to the evaluation runtime when a policy is evaluated at URL:
 ```
 http://localhost:8081/policy/xfsc/example/1.0/evaluation
@@ -185,7 +188,7 @@ Example: If the `/xfsc/example/1.0/data.json` file is:
 ```
 one could access the data using `data.name` within the Rego source code.
 
-The 3rd rule for configuration file is to provide configurations for getting static JSON data from external URL.
+- The 3rd rule for configuration file is to provide configurations for getting static JSON data from external URL.
 The file must contain a URL, an HTTP method and a period, after which an HTTP request is made to get the latest data.
 > The period must be added as duration e.g. `10h`, `1h30m` etc.
 
@@ -204,7 +207,26 @@ Example file contents:
 This means that every 10 hours an HTTP request is going to be made on the given URL, with `GET` method and the result is going
 to be stored as static data for this policy and passed during evaluation.
 
-The 4th rule for package naming is needed so that a generic evaluation function
+- The 4th rule for policy output schema validation is to provide a JSON schema which will be
+used to validate the output of the policy.
+
+Example file contents:
+```json
+{
+  "type": "object",
+  "properties": {
+    "foo": {
+      "type": "string",
+      "minLength": 5
+    }
+  }
+}
+```
+
+This policy output would be valid: `{"foo":"barbaz"}`.
+This policy output would be invalid: `{"foo":"bar"}`.
+
+- The 5th rule for package naming is needed so that a generic evaluation function
 can be mapped and used for evaluating all kinds of different policies. Without a 
 package naming rule, there's no way the service can automatically generate HTTP 
 endpoints for working with arbitrary dynamically uploaded policies.
