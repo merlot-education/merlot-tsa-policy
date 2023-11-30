@@ -207,6 +207,7 @@ func upsert(ctx context.Context, policies []*storage.Policy, db *mongo.Collectio
 				"rego":                policy.Rego,
 				"data":                policy.Data,
 				"dataConfig":          policy.DataConfig,
+				"outputSchema":        policy.OutputSchema,
 				"lastUpdate":          time.Now(),
 				"nextDataRefreshTime": nextDataRefreshTime(policy),
 			},
@@ -235,6 +236,7 @@ func equal(p1 *storage.Policy, p2 *storage.Policy) bool {
 	if p1.Rego == p2.Rego &&
 		p1.Data == p2.Data &&
 		p1.DataConfig == p2.DataConfig &&
+		p1.OutputSchema == p2.OutputSchema &&
 		p1.Repository == p2.Repository &&
 		p1.Name == p2.Name &&
 		p1.Version == p2.Version &&

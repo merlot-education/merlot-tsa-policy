@@ -23,6 +23,7 @@ type Policy struct {
 	Rego                string
 	Data                string
 	DataConfig          string
+	OutputSchema        string
 	Locked              bool
 	LastUpdate          time.Time
 	NextDataRefreshTime time.Time
