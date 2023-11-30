@@ -87,6 +87,9 @@ service:
   port: 8080
 
 policy:
+  nats:
+    url: nats
+    subject: external
   http:
     host: ""
     port: 8080
