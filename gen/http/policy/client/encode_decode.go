@@ -124,6 +124,109 @@ func DecodeEvaluateResponse(decoder func(*http.Response) goahttp.Decoder, restor
 	}
 }
 
+// BuildValidateRequest instantiates a HTTP request object with method and path
+// set to call the "policy" service "Validate" endpoint
+func (c *Client) BuildValidateRequest(ctx context.Context, v any) (*http.Request, error) {
+	var (
+		repository string
+		group      string
+		policyName string
+		version    string
+	)
+	{
+		p, ok := v.(*policy.EvaluateRequest)
+		if !ok {
+			return nil, goahttp.ErrInvalidType("policy", "Validate", "*policy.EvaluateRequest", v)
+		}
+		repository = p.Repository
+		group = p.Group
+		policyName = p.PolicyName
+		version = p.Version
+	}
+	u := &url.URL{Scheme: c.scheme, Host: c.host, Path: ValidatePolicyPath(repository, group, policyName, version)}
+	req, err := http.NewRequest("GET", u.String(), nil)
+	if err != nil {
+		return nil, goahttp.ErrInvalidURL("policy", "Validate", u.String(), err)
+	}
+	if ctx != nil {
+		req = req.WithContext(ctx)
+	}
+
+	return req, nil
+}
+
+// EncodeValidateRequest returns an encoder for requests sent to the policy
+// Validate server.
+func EncodeValidateRequest(encoder func(*http.Request) goahttp.Encoder) func(*http.Request, any) error {
+	return func(req *http.Request, v any) error {
+		p, ok := v.(*policy.EvaluateRequest)
+		if !ok {
+			return goahttp.ErrInvalidType("policy", "Validate", "*policy.EvaluateRequest", v)
+		}
+		if p.EvaluationID != nil {
+			head := *p.EvaluationID
+			req.Header.Set("x-evaluation-id", head)
+		}
+		if p.TTL != nil {
+			head := *p.TTL
+			headStr := strconv.Itoa(head)
+			req.Header.Set("x-cache-ttl", headStr)
+		}
+		body := p.Input
+		if err := encoder(req).Encode(&body); err != nil {
+			return goahttp.ErrEncodingError("policy", "Validate", err)
+		}
+		return nil
+	}
+}
+
+// DecodeValidateResponse returns a decoder for responses returned by the
+// policy Validate endpoint. restoreBody controls whether the response body
+// should be restored after having been read.
+func DecodeValidateResponse(decoder func(*http.Response) goahttp.Decoder, restoreBody bool) func(*http.Response) (any, error) {
+	return func(resp *http.Response) (any, error) {
+		if restoreBody {
+			b, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return nil, err
+			}
+			resp.Body = io.NopCloser(bytes.NewBuffer(b))
+			defer func() {
+				resp.Body = io.NopCloser(bytes.NewBuffer(b))
+			}()
+		} else {
+			defer resp.Body.Close()
+		}
+		switch resp.StatusCode {
+		case http.StatusOK:
+			var (
+				body any
+				err  error
+			)
+			err = decoder(resp).Decode(&body)
+			if err != nil {
+				return nil, goahttp.ErrDecodingError("policy", "Validate", err)
+			}
+			var (
+				eTag string
+			)
+			eTagRaw := resp.Header.Get("Etag")
+			if eTagRaw == "" {
+				err = goa.MergeErrors(err, goa.MissingFieldError("ETag", "header"))
+			}
+			eTag = eTagRaw
+			if err != nil {
+				return nil, goahttp.ErrValidationError("policy", "Validate", err)
+			}
+			res := NewValidateEvaluateResultOK(body, eTag)
+			return res, nil
+		default:
+			body, _ := io.ReadAll(resp.Body)
+			return nil, goahttp.ErrInvalidResponse("policy", "Validate", resp.StatusCode, string(body))
+		}
+	}
+}
+
 // BuildLockRequest instantiates a HTTP request object with method and path set
 // to call the "policy" service "Lock" endpoint
 func (c *Client) BuildLockRequest(ctx context.Context, v any) (*http.Request, error) {

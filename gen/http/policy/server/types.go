@@ -83,6 +83,22 @@ func NewEvaluateRequest(body any, repository string, group string, policyName st
 	return res
 }
 
+// NewValidateEvaluateRequest builds a policy service Validate endpoint payload.
+func NewValidateEvaluateRequest(body any, repository string, group string, policyName string, version string, evaluationID *string, ttl *int) *policy.EvaluateRequest {
+	v := body
+	res := &policy.EvaluateRequest{
+		Input: &v,
+	}
+	res.Repository = repository
+	res.Group = group
+	res.PolicyName = policyName
+	res.Version = version
+	res.EvaluationID = evaluationID
+	res.TTL = ttl
+
+	return res
+}
+
 // NewLockRequest builds a policy service Lock endpoint payload.
 func NewLockRequest(repository string, group string, policyName string, version string) *policy.LockRequest {
 	v := &policy.LockRequest{}

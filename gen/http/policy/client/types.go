@@ -72,6 +72,18 @@ func NewEvaluateResultOK(body any, eTag string) *policy.EvaluateResult {
 	return res
 }
 
+// NewValidateEvaluateResultOK builds a "policy" service "Validate" endpoint
+// result from a HTTP "OK" response.
+func NewValidateEvaluateResultOK(body any, eTag string) *policy.EvaluateResult {
+	v := body
+	res := &policy.EvaluateResult{
+		Result: v,
+	}
+	res.ETag = eTag
+
+	return res
+}
+
 // NewExportBundleResultOK builds a "policy" service "ExportBundle" endpoint
 // result from a HTTP "OK" response.
 func NewExportBundleResultOK(contentType string, contentLength int, contentDisposition string) *policy.ExportBundleResult {

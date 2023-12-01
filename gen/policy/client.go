@@ -17,6 +17,7 @@ import (
 // Client is the "policy" service client.
 type Client struct {
 	EvaluateEndpoint                 goa.Endpoint
+	ValidateEndpoint                 goa.Endpoint
 	LockEndpoint                     goa.Endpoint
 	UnlockEndpoint                   goa.Endpoint
 	ExportBundleEndpoint             goa.Endpoint
@@ -25,9 +26,10 @@ type Client struct {
 }
 
 // NewClient initializes a "policy" service client given the endpoints.
-func NewClient(evaluate, lock, unlock, exportBundle, listPolicies, subscribeForPolicyChange goa.Endpoint) *Client {
+func NewClient(evaluate, validate, lock, unlock, exportBundle, listPolicies, subscribeForPolicyChange goa.Endpoint) *Client {
 	return &Client{
 		EvaluateEndpoint:                 evaluate,
+		ValidateEndpoint:                 validate,
 		LockEndpoint:                     lock,
 		UnlockEndpoint:                   unlock,
 		ExportBundleEndpoint:             exportBundle,
@@ -40,6 +42,16 @@ func NewClient(evaluate, lock, unlock, exportBundle, listPolicies, subscribeForP
 func (c *Client) Evaluate(ctx context.Context, p *EvaluateRequest) (res *EvaluateResult, err error) {
 	var ires any
 	ires, err = c.EvaluateEndpoint(ctx, p)
+	if err != nil {
+		return
+	}
+	return ires.(*EvaluateResult), nil
+}
+
+// Validate calls the "Validate" endpoint of the "policy" service.
+func (c *Client) Validate(ctx context.Context, p *EvaluateRequest) (res *EvaluateResult, err error) {
+	var ires any
+	ires, err = c.ValidateEndpoint(ctx, p)
 	if err != nil {
 		return
 	}

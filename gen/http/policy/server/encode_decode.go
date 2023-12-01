@@ -86,6 +86,74 @@ func DecodeEvaluateRequest(mux goahttp.Muxer, decoder func(*http.Request) goahtt
 	}
 }
 
+// EncodeValidateResponse returns an encoder for responses returned by the
+// policy Validate endpoint.
+func EncodeValidateResponse(encoder func(context.Context, http.ResponseWriter) goahttp.Encoder) func(context.Context, http.ResponseWriter, any) error {
+	return func(ctx context.Context, w http.ResponseWriter, v any) error {
+		res, _ := v.(*policy.EvaluateResult)
+		enc := encoder(ctx, w)
+		body := res.Result
+		w.Header().Set("Etag", res.ETag)
+		w.WriteHeader(http.StatusOK)
+		return enc.Encode(body)
+	}
+}
+
+// DecodeValidateRequest returns a decoder for requests sent to the policy
+// Validate endpoint.
+func DecodeValidateRequest(mux goahttp.Muxer, decoder func(*http.Request) goahttp.Decoder) func(*http.Request) (any, error) {
+	return func(r *http.Request) (any, error) {
+		var (
+			body any
+			err  error
+		)
+		err = decoder(r).Decode(&body)
+		if err != nil {
+			if err == io.EOF {
+				err = nil
+			} else {
+				return nil, goa.DecodePayloadError(err.Error())
+			}
+		}
+
+		var (
+			repository   string
+			group        string
+			policyName   string
+			version      string
+			evaluationID *string
+			ttl          *int
+
+			params = mux.Vars(r)
+		)
+		repository = params["repository"]
+		group = params["group"]
+		policyName = params["policyName"]
+		version = params["version"]
+		evaluationIDRaw := r.Header.Get("x-evaluation-id")
+		if evaluationIDRaw != "" {
+			evaluationID = &evaluationIDRaw
+		}
+		{
+			ttlRaw := r.Header.Get("x-cache-ttl")
+			if ttlRaw != "" {
+				v, err2 := strconv.ParseInt(ttlRaw, 10, strconv.IntSize)
+				if err2 != nil {
+					err = goa.MergeErrors(err, goa.InvalidFieldTypeError("ttl", ttlRaw, "integer"))
+				}
+				pv := int(v)
+				ttl = &pv
+			}
+		}
+		if err != nil {
+			return nil, err
+		}
+		payload := NewValidateEvaluateRequest(body, repository, group, policyName, version, evaluationID, ttl)
+
+		return payload, nil
+	}
+}
+
 // EncodeLockResponse returns an encoder for responses returned by the policy
 // Lock endpoint.
 func EncodeLockResponse(encoder func(context.Context, http.ResponseWriter) goahttp.Encoder) func(context.Context, http.ResponseWriter, any) error {

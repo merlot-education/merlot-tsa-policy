@@ -16,6 +16,9 @@ import (
 type Service interface {
 	// Evaluate executes a policy with the given 'data' as input.
 	Evaluate(context.Context, *EvaluateRequest) (res *EvaluateResult, err error)
+	// Validate executes a policy with the given 'data' as input and validates the
+	// output schema.
+	Validate(context.Context, *EvaluateRequest) (res *EvaluateResult, err error)
 	// Lock a policy so that it cannot be evaluated.
 	Lock(context.Context, *LockRequest) (err error)
 	// Unlock a policy so it can be evaluated again.
@@ -37,7 +40,7 @@ const ServiceName = "policy"
 // MethodNames lists the service method names as defined in the design. These
 // are the same values that are set in the endpoint request contexts under the
 // MethodKey key.
-var MethodNames = [6]string{"Evaluate", "Lock", "Unlock", "ExportBundle", "ListPolicies", "SubscribeForPolicyChange"}
+var MethodNames = [7]string{"Evaluate", "Validate", "Lock", "Unlock", "ExportBundle", "ListPolicies", "SubscribeForPolicyChange"}
 
 // EvaluateRequest is the payload type of the policy service Evaluate method.
 type EvaluateRequest struct {

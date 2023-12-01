@@ -23,7 +23,7 @@ import (
 //
 //	command (subcommand1|subcommand2|...)
 func UsageCommands() string {
-	return `policy (evaluate|lock|unlock|export-bundle|list-policies|subscribe-for-policy-change)
+	return `policy (evaluate|validate|lock|unlock|export-bundle|list-policies|subscribe-for-policy-change)
 health (liveness|readiness)
 `
 }
@@ -55,6 +55,15 @@ func ParseEndpoint(
 		policyEvaluateVersionFlag      = policyEvaluateFlags.String("version", "REQUIRED", "Policy version.")
 		policyEvaluateEvaluationIDFlag = policyEvaluateFlags.String("evaluation-id", "", "")
 		policyEvaluateTTLFlag          = policyEvaluateFlags.String("ttl", "", "")
+
+		policyValidateFlags            = flag.NewFlagSet("validate", flag.ExitOnError)
+		policyValidateBodyFlag         = policyValidateFlags.String("body", "REQUIRED", "")
+		policyValidateRepositoryFlag   = policyValidateFlags.String("repository", "REQUIRED", "Policy repository.")
+		policyValidateGroupFlag        = policyValidateFlags.String("group", "REQUIRED", "Policy group.")
+		policyValidatePolicyNameFlag   = policyValidateFlags.String("policy-name", "REQUIRED", "Policy name.")
+		policyValidateVersionFlag      = policyValidateFlags.String("version", "REQUIRED", "Policy version.")
+		policyValidateEvaluationIDFlag = policyValidateFlags.String("evaluation-id", "", "")
+		policyValidateTTLFlag          = policyValidateFlags.String("ttl", "", "")
 
 		policyLockFlags          = flag.NewFlagSet("lock", flag.ExitOnError)
 		policyLockRepositoryFlag = policyLockFlags.String("repository", "REQUIRED", "Policy repository.")
@@ -95,6 +104,7 @@ func ParseEndpoint(
 	)
 	policyFlags.Usage = policyUsage
 	policyEvaluateFlags.Usage = policyEvaluateUsage
+	policyValidateFlags.Usage = policyValidateUsage
 	policyLockFlags.Usage = policyLockUsage
 	policyUnlockFlags.Usage = policyUnlockUsage
 	policyExportBundleFlags.Usage = policyExportBundleUsage
@@ -143,6 +153,9 @@ func ParseEndpoint(
 			switch epn {
 			case "evaluate":
 				epf = policyEvaluateFlags
+
+			case "validate":
+				epf = policyValidateFlags
 
 			case "lock":
 				epf = policyLockFlags
@@ -197,6 +210,9 @@ func ParseEndpoint(
 			case "evaluate":
 				endpoint = c.Evaluate()
 				data, err = policyc.BuildEvaluatePayload(*policyEvaluateBodyFlag, *policyEvaluateRepositoryFlag, *policyEvaluateGroupFlag, *policyEvaluatePolicyNameFlag, *policyEvaluateVersionFlag, *policyEvaluateEvaluationIDFlag, *policyEvaluateTTLFlag)
+			case "validate":
+				endpoint = c.Validate()
+				data, err = policyc.BuildValidatePayload(*policyValidateBodyFlag, *policyValidateRepositoryFlag, *policyValidateGroupFlag, *policyValidatePolicyNameFlag, *policyValidateVersionFlag, *policyValidateEvaluationIDFlag, *policyValidateTTLFlag)
 			case "lock":
 				endpoint = c.Lock()
 				data, err = policyc.BuildLockPayload(*policyLockRepositoryFlag, *policyLockGroupFlag, *policyLockPolicyNameFlag, *policyLockVersionFlag)
@@ -240,6 +256,7 @@ Usage:
 
 COMMAND:
     evaluate: Evaluate executes a policy with the given 'data' as input.
+    validate: Validate executes a policy with the given 'data' as input and validates the output schema.
     lock: Lock a policy so that it cannot be evaluated.
     unlock: Unlock a policy so it can be evaluated again.
     export-bundle: Export a signed policy bundle.
@@ -267,6 +284,23 @@ Example:
 `, os.Args[0])
 }
 
+func policyValidateUsage() {
+	fmt.Fprintf(os.Stderr, `%[1]s [flags] policy validate -body JSON -repository STRING -group STRING -policy-name STRING -version STRING -evaluation-id STRING -ttl INT
+
+Validate executes a policy with the given 'data' as input and validates the output schema.
+    -body JSON: 
+    -repository STRING: Policy repository.
+    -group STRING: Policy group.
+    -policy-name STRING: Policy name.
+    -version STRING: Policy version.
+    -evaluation-id STRING: 
+    -ttl INT: 
+
+Example:
+    %[1]s policy validate --body "Ad quam dolores architecto itaque voluptatum." --repository "policies" --group "example" --policy-name "example" --version "1.0" --evaluation-id "Accusamus enim." --ttl 5827157130043234078
+`, os.Args[0])
+}
+
 func policyLockUsage() {
 	fmt.Fprintf(os.Stderr, `%[1]s [flags] policy lock -repository STRING -group STRING -policy-name STRING -version STRING
 
@@ -277,7 +311,7 @@ Lock a policy so that it cannot be evaluated.
     -version STRING: Policy version.
 
 Example:
-    %[1]s policy lock --repository "Quam dolores architecto itaque." --group "Voluptas ad corporis adipisci inventore ipsum." --policy-name "Recusandae dolorum nisi distinctio vitae ad." --version "Perspiciatis voluptatem."
+    %[1]s policy lock --repository "Voluptate amet." --group "Aut et." --policy-name "Maiores et minus." --version "Veritatis quam qui nostrum eaque."
 `, os.Args[0])
 }
 
@@ -291,7 +325,7 @@ Unlock a policy so it can be evaluated again.
     -version STRING: Policy version.
 
 Example:
-    %[1]s policy unlock --repository "Voluptate amet." --group "Aut et." --policy-name "Maiores et minus." --version "Veritatis quam qui nostrum eaque."
+    %[1]s policy unlock --repository "Vel dolores omnis molestiae tempora sed repellendus." --group "Error minus vel voluptate quasi." --policy-name "Debitis consectetur." --version "Vel sunt dolorem ea architecto iure."
 `, os.Args[0])
 }
 
@@ -319,7 +353,7 @@ List policies from storage with optional filters.
     -data-config BOOL: 
 
 Example:
-    %[1]s policy list-policies --locked false --rego false --data false --data-config true
+    %[1]s policy list-policies --locked true --rego false --data true --data-config false
 `, os.Args[0])
 }
 
@@ -335,9 +369,9 @@ Subscribe for policy change notifications by registering webhook callbacks which
 
 Example:
     %[1]s policy subscribe-for-policy-change --body '{
-      "subscriber": "nn6",
-      "webhook_url": "http://white.com/grover"
-   }' --repository "Asperiores nulla dolorem tenetur rerum necessitatibus." --group "Et ut velit." --policy-name "Nobis repellendus quis rem et occaecati quam." --version "Laborum harum voluptate et ut similique doloremque."
+      "subscriber": "cch",
+      "webhook_url": "http://cruickshank.biz/waylon"
+   }' --repository "Praesentium ut reiciendis fugit." --group "Cupiditate provident laborum dolor dolorem modi." --policy-name "Officiis veritatis." --version "Rerum recusandae eligendi in id quibusdam quia."
 `, os.Args[0])
 }
 

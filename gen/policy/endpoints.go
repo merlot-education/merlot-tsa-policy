@@ -17,6 +17,7 @@ import (
 // Endpoints wraps the "policy" service endpoints.
 type Endpoints struct {
 	Evaluate                 goa.Endpoint
+	Validate                 goa.Endpoint
 	Lock                     goa.Endpoint
 	Unlock                   goa.Endpoint
 	ExportBundle             goa.Endpoint
@@ -37,6 +38,7 @@ type ExportBundleResponseData struct {
 func NewEndpoints(s Service) *Endpoints {
 	return &Endpoints{
 		Evaluate:                 NewEvaluateEndpoint(s),
+		Validate:                 NewValidateEndpoint(s),
 		Lock:                     NewLockEndpoint(s),
 		Unlock:                   NewUnlockEndpoint(s),
 		ExportBundle:             NewExportBundleEndpoint(s),
@@ -48,6 +50,7 @@ func NewEndpoints(s Service) *Endpoints {
 // Use applies the given middleware to all the "policy" service endpoints.
 func (e *Endpoints) Use(m func(goa.Endpoint) goa.Endpoint) {
 	e.Evaluate = m(e.Evaluate)
+	e.Validate = m(e.Validate)
 	e.Lock = m(e.Lock)
 	e.Unlock = m(e.Unlock)
 	e.ExportBundle = m(e.ExportBundle)
@@ -61,6 +64,15 @@ func NewEvaluateEndpoint(s Service) goa.Endpoint {
 	return func(ctx context.Context, req any) (any, error) {
 		p := req.(*EvaluateRequest)
 		return s.Evaluate(ctx, p)
+	}
+}
+
+// NewValidateEndpoint returns an endpoint function that calls the method
+// "Validate" of service "policy".
+func NewValidateEndpoint(s Service) goa.Endpoint {
+	return func(ctx context.Context, req any) (any, error) {
+		p := req.(*EvaluateRequest)
+		return s.Validate(ctx, p)
 	}
 }
 
