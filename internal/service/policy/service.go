@@ -14,6 +14,7 @@ import (
 	"github.com/lestrrat-go/jwx/v2/jws"
 	"github.com/open-policy-agent/opa/rego"
 	"github.com/open-policy-agent/opa/storage/inmem"
+	"github.com/santhosh-tekuri/jsonschema/v5"
 	"go.uber.org/zap"
 
 	"gitlab.eclipse.org/eclipse/xfsc/tsa/golib/errors"
@@ -163,6 +164,52 @@ func (s *Service) Evaluate(ctx context.Context, req *policy.EvaluateRequest) (*p
 		Result: result,
 		ETag:   evaluationID,
 	}, nil
+}
+
+// Validate executes a policy with given input and then validates the output against
+// a predefined JSON schema.
+func (s *Service) Validate(ctx context.Context, req *policy.EvaluateRequest) (*policy.EvaluateResult, error) {
+	// evaluate the policy and get the result
+	res, err := s.Evaluate(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	logger := s.logger.With(
+		zap.String("operation", "evaluate"),
+		zap.String("repository", req.Repository),
+		zap.String("group", req.Group),
+		zap.String("name", req.PolicyName),
+		zap.String("version", req.Version),
+		zap.String("evaluationID", res.ETag),
+	)
+
+	// retrieve policy
+	pol, err := s.retrievePolicy(ctx, req.Repository, req.Group, req.PolicyName, req.Version)
+	if err != nil {
+		logger.Error("error retrieving policy", zap.Error(err))
+		return nil, errors.New("error retrieving policy", err)
+	}
+
+	if pol.OutputSchema == "" {
+		logger.Error("validation schema for policy output is not found")
+		return nil, errors.New(errors.BadRequest, "validation schema for policy output is not found")
+	}
+
+	// compile the validation schema
+	sch, err := jsonschema.CompileString("", pol.OutputSchema)
+	if err != nil {
+		logger.Error("error compiling output validation schema", zap.Error(err))
+		return nil, errors.New("error compiling output validation schema")
+	}
+
+	// validate the policy output
+	if err := sch.Validate(res.Result); err != nil {
+		logger.Error("invalid policy output schema", zap.Error(err))
+		return nil, errors.New("invalid policy output schema", err)
+	}
+
+	return res, nil
 }
 
 // Lock a policy so that it cannot be evaluated.
@@ -356,20 +403,10 @@ func (s *Service) SubscribeForPolicyChange(ctx context.Context, req *policy.Subs
 // If the policyCache entry is not found, it will try to prepare a new
 // query and will set it into the policyCache for future use.
 func (s *Service) prepareQuery(ctx context.Context, repository, group, policyName, version string, headers map[string]string) (*rego.PreparedEvalQuery, error) {
-	// retrieve policy from cache
-	key := s.queryCacheKey(repository, group, policyName, version)
-	pol, ok := s.policyCache.Get(key)
-	if !ok {
-		// retrieve policy from database storage
-		var err error
-		pol, err = s.storage.Policy(ctx, repository, group, policyName, version)
-		if err != nil {
-			if errors.Is(errors.NotFound, err) {
-				return nil, err
-			}
-			return nil, errors.New("error getting policy from storage", err)
-		}
-		s.policyCache.Set(key, pol)
+	// retrieve policy
+	pol, err := s.retrievePolicy(ctx, repository, group, policyName, version)
+	if err != nil {
+		return nil, err
 	}
 
 	// if policy is locked, return an error
@@ -424,6 +461,26 @@ func (s *Service) buildRegoArgs(filename, regoPolicy, regoQuery, regoData string
 	}
 
 	return availableFuncs, nil
+}
+
+func (s *Service) retrievePolicy(ctx context.Context, repository, group, policyName, version string) (*storage.Policy, error) {
+	// retrieve policy from cache
+	key := s.queryCacheKey(repository, group, policyName, version)
+	p, ok := s.policyCache.Get(key)
+	if !ok {
+		// retrieve policy from storage
+		var err error
+		p, err = s.storage.Policy(ctx, repository, group, policyName, version)
+		if err != nil {
+			if errors.Is(errors.NotFound, err) {
+				return nil, err
+			}
+			return nil, errors.New("error getting policy from storage", err)
+		}
+		s.policyCache.Set(key, p)
+	}
+
+	return p, nil
 }
 
 func (s *Service) queryCacheKey(repository, group, policyName, version string) string {

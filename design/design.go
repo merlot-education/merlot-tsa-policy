@@ -42,6 +42,28 @@ var _ = Service("policy", func() {
 		})
 	})
 
+	Method("Validate", func() {
+		Description("Validate executes a policy with the given 'data' as input and validates the output schema.")
+		Payload(EvaluateRequest)
+		Result(EvaluateResult)
+		HTTP(func() {
+			GET("/policy/{repository}/{group}/{policyName}/{version}/validation/did.json")
+			GET("/policy/{repository}/{group}/{policyName}/{version}/validation")
+			POST("/policy/{repository}/{group}/{policyName}/{version}/validation")
+			Header("evaluationID:x-evaluation-id", String, "EvaluationID allows overwriting the randomly generated evaluationID", func() {
+				Example("did:web:example.com")
+			})
+			Header("ttl:x-cache-ttl", Int, "Policy result cache TTL in seconds", func() {
+				Example(60)
+			})
+			Body("input")
+			Response(StatusOK, func() {
+				Body("result")
+				Header("ETag")
+			})
+		})
+	})
+
 	Method("Lock", func() {
 		Description("Lock a policy so that it cannot be evaluated.")
 		Payload(LockRequest)
