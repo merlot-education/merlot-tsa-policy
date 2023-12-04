@@ -22,6 +22,11 @@ type Service interface {
 	Unlock(context.Context, *UnlockRequest) (err error)
 	// Export a signed policy bundle.
 	ExportBundle(context.Context, *ExportBundleRequest) (res *ExportBundleResult, body io.ReadCloser, err error)
+	// Import a signed policy bundle.
+	ImportBundle(context.Context, *ImportBundlePayload, io.ReadCloser) (res any, err error)
+	// PolicyPublicKey returns the public key in JWK format which must be used to
+	// verify a signed policy bundle.
+	PolicyPublicKey(context.Context, *PolicyPublicKeyRequest) (res any, err error)
 	// List policies from storage with optional filters.
 	ListPolicies(context.Context, *PoliciesRequest) (res *PoliciesResult, err error)
 	// Subscribe for policy change notifications by registering webhook callbacks
@@ -37,7 +42,7 @@ const ServiceName = "policy"
 // MethodNames lists the service method names as defined in the design. These
 // are the same values that are set in the endpoint request contexts under the
 // MethodKey key.
-var MethodNames = [6]string{"Evaluate", "Lock", "Unlock", "ExportBundle", "ListPolicies", "SubscribeForPolicyChange"}
+var MethodNames = [8]string{"Evaluate", "Lock", "Unlock", "ExportBundle", "ImportBundle", "PolicyPublicKey", "ListPolicies", "SubscribeForPolicyChange"}
 
 // EvaluateRequest is the payload type of the policy service Evaluate method.
 type EvaluateRequest struct {
@@ -91,6 +96,12 @@ type ExportBundleResult struct {
 	ContentDisposition string
 }
 
+// ImportBundlePayload is the payload type of the policy service ImportBundle
+// method.
+type ImportBundlePayload struct {
+	Length *int
+}
+
 // LockRequest is the payload type of the policy service Lock method.
 type LockRequest struct {
 	// Policy repository.
@@ -137,6 +148,19 @@ type Policy struct {
 	Locked bool
 	// Last update (Unix timestamp).
 	LastUpdate int64
+}
+
+// PolicyPublicKeyRequest is the payload type of the policy service
+// PolicyPublicKey method.
+type PolicyPublicKeyRequest struct {
+	// Policy repository.
+	Repository string
+	// Policy group.
+	Group string
+	// Policy name.
+	PolicyName string
+	// Policy version.
+	Version string
 }
 
 // SubscribeRequest is the payload type of the policy service

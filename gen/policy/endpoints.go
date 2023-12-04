@@ -20,6 +20,8 @@ type Endpoints struct {
 	Lock                     goa.Endpoint
 	Unlock                   goa.Endpoint
 	ExportBundle             goa.Endpoint
+	ImportBundle             goa.Endpoint
+	PolicyPublicKey          goa.Endpoint
 	ListPolicies             goa.Endpoint
 	SubscribeForPolicyChange goa.Endpoint
 }
@@ -33,6 +35,15 @@ type ExportBundleResponseData struct {
 	Body io.ReadCloser
 }
 
+// ImportBundleRequestData holds both the payload and the HTTP request body
+// reader of the "ImportBundle" method.
+type ImportBundleRequestData struct {
+	// Payload is the method payload.
+	Payload *ImportBundlePayload
+	// Body streams the HTTP request body.
+	Body io.ReadCloser
+}
+
 // NewEndpoints wraps the methods of the "policy" service with endpoints.
 func NewEndpoints(s Service) *Endpoints {
 	return &Endpoints{
@@ -40,6 +51,8 @@ func NewEndpoints(s Service) *Endpoints {
 		Lock:                     NewLockEndpoint(s),
 		Unlock:                   NewUnlockEndpoint(s),
 		ExportBundle:             NewExportBundleEndpoint(s),
+		ImportBundle:             NewImportBundleEndpoint(s),
+		PolicyPublicKey:          NewPolicyPublicKeyEndpoint(s),
 		ListPolicies:             NewListPoliciesEndpoint(s),
 		SubscribeForPolicyChange: NewSubscribeForPolicyChangeEndpoint(s),
 	}
@@ -51,6 +64,8 @@ func (e *Endpoints) Use(m func(goa.Endpoint) goa.Endpoint) {
 	e.Lock = m(e.Lock)
 	e.Unlock = m(e.Unlock)
 	e.ExportBundle = m(e.ExportBundle)
+	e.ImportBundle = m(e.ImportBundle)
+	e.PolicyPublicKey = m(e.PolicyPublicKey)
 	e.ListPolicies = m(e.ListPolicies)
 	e.SubscribeForPolicyChange = m(e.SubscribeForPolicyChange)
 }
@@ -92,6 +107,24 @@ func NewExportBundleEndpoint(s Service) goa.Endpoint {
 			return nil, err
 		}
 		return &ExportBundleResponseData{Result: res, Body: body}, nil
+	}
+}
+
+// NewImportBundleEndpoint returns an endpoint function that calls the method
+// "ImportBundle" of service "policy".
+func NewImportBundleEndpoint(s Service) goa.Endpoint {
+	return func(ctx context.Context, req any) (any, error) {
+		ep := req.(*ImportBundleRequestData)
+		return s.ImportBundle(ctx, ep.Payload, ep.Body)
+	}
+}
+
+// NewPolicyPublicKeyEndpoint returns an endpoint function that calls the
+// method "PolicyPublicKey" of service "policy".
+func NewPolicyPublicKeyEndpoint(s Service) goa.Endpoint {
+	return func(ctx context.Context, req any) (any, error) {
+		p := req.(*PolicyPublicKeyRequest)
+		return s.PolicyPublicKey(ctx, p)
 	}
 }
 

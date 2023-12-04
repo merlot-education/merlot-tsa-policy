@@ -32,6 +32,14 @@ type Client struct {
 	// ExportBundle endpoint.
 	ExportBundleDoer goahttp.Doer
 
+	// ImportBundle Doer is the HTTP client used to make requests to the
+	// ImportBundle endpoint.
+	ImportBundleDoer goahttp.Doer
+
+	// PolicyPublicKey Doer is the HTTP client used to make requests to the
+	// PolicyPublicKey endpoint.
+	PolicyPublicKeyDoer goahttp.Doer
+
 	// ListPolicies Doer is the HTTP client used to make requests to the
 	// ListPolicies endpoint.
 	ListPoliciesDoer goahttp.Doer
@@ -64,6 +72,8 @@ func NewClient(
 		LockDoer:                     doer,
 		UnlockDoer:                   doer,
 		ExportBundleDoer:             doer,
+		ImportBundleDoer:             doer,
+		PolicyPublicKeyDoer:          doer,
 		ListPoliciesDoer:             doer,
 		SubscribeForPolicyChangeDoer: doer,
 		RestoreResponseBody:          restoreBody,
@@ -157,6 +167,49 @@ func (c *Client) ExportBundle() goa.Endpoint {
 			return nil, err
 		}
 		return &policy.ExportBundleResponseData{Result: res.(*policy.ExportBundleResult), Body: resp.Body}, nil
+	}
+}
+
+// ImportBundle returns an endpoint that makes HTTP requests to the policy
+// service ImportBundle server.
+func (c *Client) ImportBundle() goa.Endpoint {
+	var (
+		encodeRequest  = EncodeImportBundleRequest(c.encoder)
+		decodeResponse = DecodeImportBundleResponse(c.decoder, c.RestoreResponseBody)
+	)
+	return func(ctx context.Context, v any) (any, error) {
+		req, err := c.BuildImportBundleRequest(ctx, v)
+		if err != nil {
+			return nil, err
+		}
+		err = encodeRequest(req, v)
+		if err != nil {
+			return nil, err
+		}
+		resp, err := c.ImportBundleDoer.Do(req)
+		if err != nil {
+			return nil, goahttp.ErrRequestError("policy", "ImportBundle", err)
+		}
+		return decodeResponse(resp)
+	}
+}
+
+// PolicyPublicKey returns an endpoint that makes HTTP requests to the policy
+// service PolicyPublicKey server.
+func (c *Client) PolicyPublicKey() goa.Endpoint {
+	var (
+		decodeResponse = DecodePolicyPublicKeyResponse(c.decoder, c.RestoreResponseBody)
+	)
+	return func(ctx context.Context, v any) (any, error) {
+		req, err := c.BuildPolicyPublicKeyRequest(ctx, v)
+		if err != nil {
+			return nil, err
+		}
+		resp, err := c.PolicyPublicKeyDoer.Do(req)
+		if err != nil {
+			return nil, goahttp.ErrRequestError("policy", "PolicyPublicKey", err)
+		}
+		return decodeResponse(resp)
 	}
 }
 

@@ -187,6 +187,80 @@ func DecodeExportBundleRequest(mux goahttp.Muxer, decoder func(*http.Request) go
 	}
 }
 
+// EncodeImportBundleResponse returns an encoder for responses returned by the
+// policy ImportBundle endpoint.
+func EncodeImportBundleResponse(encoder func(context.Context, http.ResponseWriter) goahttp.Encoder) func(context.Context, http.ResponseWriter, any) error {
+	return func(ctx context.Context, w http.ResponseWriter, v any) error {
+		res, _ := v.(any)
+		enc := encoder(ctx, w)
+		body := res
+		w.WriteHeader(http.StatusOK)
+		return enc.Encode(body)
+	}
+}
+
+// DecodeImportBundleRequest returns a decoder for requests sent to the policy
+// ImportBundle endpoint.
+func DecodeImportBundleRequest(mux goahttp.Muxer, decoder func(*http.Request) goahttp.Decoder) func(*http.Request) (any, error) {
+	return func(r *http.Request) (any, error) {
+		var (
+			length *int
+			err    error
+		)
+		{
+			lengthRaw := r.Header.Get("Content-Length")
+			if lengthRaw != "" {
+				v, err2 := strconv.ParseInt(lengthRaw, 10, strconv.IntSize)
+				if err2 != nil {
+					err = goa.MergeErrors(err, goa.InvalidFieldTypeError("length", lengthRaw, "integer"))
+				}
+				pv := int(v)
+				length = &pv
+			}
+		}
+		if err != nil {
+			return nil, err
+		}
+		payload := NewImportBundlePayload(length)
+
+		return payload, nil
+	}
+}
+
+// EncodePolicyPublicKeyResponse returns an encoder for responses returned by
+// the policy PolicyPublicKey endpoint.
+func EncodePolicyPublicKeyResponse(encoder func(context.Context, http.ResponseWriter) goahttp.Encoder) func(context.Context, http.ResponseWriter, any) error {
+	return func(ctx context.Context, w http.ResponseWriter, v any) error {
+		res, _ := v.(any)
+		enc := encoder(ctx, w)
+		body := res
+		w.WriteHeader(http.StatusOK)
+		return enc.Encode(body)
+	}
+}
+
+// DecodePolicyPublicKeyRequest returns a decoder for requests sent to the
+// policy PolicyPublicKey endpoint.
+func DecodePolicyPublicKeyRequest(mux goahttp.Muxer, decoder func(*http.Request) goahttp.Decoder) func(*http.Request) (any, error) {
+	return func(r *http.Request) (any, error) {
+		var (
+			repository string
+			group      string
+			policyName string
+			version    string
+
+			params = mux.Vars(r)
+		)
+		repository = params["repository"]
+		group = params["group"]
+		policyName = params["policyName"]
+		version = params["version"]
+		payload := NewPolicyPublicKeyRequest(repository, group, policyName, version)
+
+		return payload, nil
+	}
+}
+
 // EncodeListPoliciesResponse returns an encoder for responses returned by the
 // policy ListPolicies endpoint.
 func EncodeListPoliciesResponse(encoder func(context.Context, http.ResponseWriter) goahttp.Encoder) func(context.Context, http.ResponseWriter, any) error {
