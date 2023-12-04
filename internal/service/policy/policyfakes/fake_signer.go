@@ -9,6 +9,21 @@ import (
 )
 
 type FakeSigner struct {
+	KeyStub        func(context.Context, string, string) (any, error)
+	keyMutex       sync.RWMutex
+	keyArgsForCall []struct {
+		arg1 context.Context
+		arg2 string
+		arg3 string
+	}
+	keyReturns struct {
+		result1 any
+		result2 error
+	}
+	keyReturnsOnCall map[int]struct {
+		result1 any
+		result2 error
+	}
 	SignStub        func(context.Context, string, string, []byte) ([]byte, error)
 	signMutex       sync.RWMutex
 	signArgsForCall []struct {
@@ -27,6 +42,72 @@ type FakeSigner struct {
 	}
 	invocations      map[string][][]interface{}
 	invocationsMutex sync.RWMutex
+}
+
+func (fake *FakeSigner) Key(arg1 context.Context, arg2 string, arg3 string) (any, error) {
+	fake.keyMutex.Lock()
+	ret, specificReturn := fake.keyReturnsOnCall[len(fake.keyArgsForCall)]
+	fake.keyArgsForCall = append(fake.keyArgsForCall, struct {
+		arg1 context.Context
+		arg2 string
+		arg3 string
+	}{arg1, arg2, arg3})
+	stub := fake.KeyStub
+	fakeReturns := fake.keyReturns
+	fake.recordInvocation("Key", []interface{}{arg1, arg2, arg3})
+	fake.keyMutex.Unlock()
+	if stub != nil {
+		return stub(arg1, arg2, arg3)
+	}
+	if specificReturn {
+		return ret.result1, ret.result2
+	}
+	return fakeReturns.result1, fakeReturns.result2
+}
+
+func (fake *FakeSigner) KeyCallCount() int {
+	fake.keyMutex.RLock()
+	defer fake.keyMutex.RUnlock()
+	return len(fake.keyArgsForCall)
+}
+
+func (fake *FakeSigner) KeyCalls(stub func(context.Context, string, string) (any, error)) {
+	fake.keyMutex.Lock()
+	defer fake.keyMutex.Unlock()
+	fake.KeyStub = stub
+}
+
+func (fake *FakeSigner) KeyArgsForCall(i int) (context.Context, string, string) {
+	fake.keyMutex.RLock()
+	defer fake.keyMutex.RUnlock()
+	argsForCall := fake.keyArgsForCall[i]
+	return argsForCall.arg1, argsForCall.arg2, argsForCall.arg3
+}
+
+func (fake *FakeSigner) KeyReturns(result1 any, result2 error) {
+	fake.keyMutex.Lock()
+	defer fake.keyMutex.Unlock()
+	fake.KeyStub = nil
+	fake.keyReturns = struct {
+		result1 any
+		result2 error
+	}{result1, result2}
+}
+
+func (fake *FakeSigner) KeyReturnsOnCall(i int, result1 any, result2 error) {
+	fake.keyMutex.Lock()
+	defer fake.keyMutex.Unlock()
+	fake.KeyStub = nil
+	if fake.keyReturnsOnCall == nil {
+		fake.keyReturnsOnCall = make(map[int]struct {
+			result1 any
+			result2 error
+		})
+	}
+	fake.keyReturnsOnCall[i] = struct {
+		result1 any
+		result2 error
+	}{result1, result2}
 }
 
 func (fake *FakeSigner) Sign(arg1 context.Context, arg2 string, arg3 string, arg4 []byte) ([]byte, error) {
@@ -104,6 +185,8 @@ func (fake *FakeSigner) SignReturnsOnCall(i int, result1 []byte, result2 error) 
 func (fake *FakeSigner) Invocations() map[string][][]interface{} {
 	fake.invocationsMutex.RLock()
 	defer fake.invocationsMutex.RUnlock()
+	fake.keyMutex.RLock()
+	defer fake.keyMutex.RUnlock()
 	fake.signMutex.RLock()
 	defer fake.signMutex.RUnlock()
 	copiedInvocations := map[string][][]interface{}{}

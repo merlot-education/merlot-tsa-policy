@@ -11,9 +11,9 @@ It is developed using the [Goa v3](https://goa.design/) framework
 and uses the [Go OPA framework](https://github.com/open-policy-agent/opa) 
 as a library.
 
-While the service is up and running, you can see a live Swagger API 
-description at `servicehost:serviceport/swagger-ui`. In the local docker-compose 
-environment, the Swagger URL is available at http://localhost:8081/swagger-ui/ 
+[Swagger OpenAPI documentation](https://gitlab.eclipse.org/eclipse/xfsc/tsa/policy/-/blob/main/gen/http/openapi3.json)
+
+In the local docker-compose environment, the Swagger URL is available at http://localhost:8081/swagger-ui/ 
 
 ### High-level Overview
 

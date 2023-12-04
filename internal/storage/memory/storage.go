@@ -56,7 +56,31 @@ func (s *Storage) Policy(_ context.Context, repository, group, name, version str
 	return &res, nil
 }
 
-func (s *Storage) SetPolicyLock(_ context.Context, repository, group, name, version string, lock bool) error {
+func (s *Storage) SavePolicy(ctx context.Context, policy *storage.Policy) error {
+	key := s.keyConstructor.ConstructKey(
+		policy.Repository,
+		policy.Group,
+		policy.Name,
+		policy.Version,
+	)
+
+	s.mu.Lock()
+	s.policies[key] = policy
+	s.mu.Unlock()
+
+	// send the changed policy to subscribers
+	go func(policy *storage.Policy) {
+		select {
+		case s.changes <- *policy:
+		case <-time.After(10 * time.Second):
+		case <-ctx.Done():
+		}
+	}(policy)
+
+	return nil
+}
+
+func (s *Storage) SetPolicyLock(ctx context.Context, repository, group, name, version string, lock bool) error {
 	key := s.keyConstructor.ConstructKey(repository, group, name, version)
 
 	s.mu.Lock()
@@ -70,7 +94,11 @@ func (s *Storage) SetPolicyLock(_ context.Context, repository, group, name, vers
 
 	// send the changed policy to subscribers
 	go func(policy *storage.Policy) {
-		s.changes <- *policy
+		select {
+		case s.changes <- *policy:
+		case <-time.After(10 * time.Second):
+		case <-ctx.Done():
+		}
 	}(p)
 
 	return nil

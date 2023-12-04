@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 
@@ -76,6 +77,35 @@ func (c *Client) Sign(ctx context.Context, namespace, key string, data []byte) (
 	}
 
 	return base64.StdEncoding.DecodeString(result.Signature)
+}
+
+func (c *Client) Key(ctx context.Context, namespace string, key string) (any, error) {
+	if c.addr == "" {
+		return nil, errors.New(errors.ServiceUnavailable, "signer address is not set")
+	}
+
+	keyPath := fmt.Sprintf("/v1/jwk/%s/%s", namespace, key)
+	req, err := http.NewRequestWithContext(ctx, "GET", c.addr+keyPath, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close() // nolint:errcheck
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, errors.New(errors.GetKind(resp.StatusCode), getErrorBody(resp))
+	}
+
+	var pubkey map[string]interface{}
+	if err := json.NewDecoder(resp.Body).Decode(&pubkey); err != nil {
+		return nil, err
+	}
+
+	return pubkey, nil
 }
 
 func getErrorBody(resp *http.Response) string {

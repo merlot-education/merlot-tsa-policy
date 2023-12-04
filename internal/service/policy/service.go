@@ -7,11 +7,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"net/http"
 	"strings"
 
 	"github.com/google/uuid"
-	"github.com/lestrrat-go/jwx/v2/jwa"
-	"github.com/lestrrat-go/jwx/v2/jws"
 	"github.com/open-policy-agent/opa/rego"
 	"github.com/open-policy-agent/opa/storage/inmem"
 	"go.uber.org/zap"
@@ -29,6 +28,11 @@ import (
 //go:generate counterfeiter . RegoCache
 //go:generate counterfeiter . Signer
 
+const (
+	BundleFilename          = "policy_bundle.zip"
+	BundleSignatureFilename = "signature.raw"
+)
+
 type Cache interface {
 	Set(ctx context.Context, key, namespace, scope string, value []byte, ttl int) error
 }
@@ -39,6 +43,7 @@ type RegoCache interface {
 }
 
 type Signer interface {
+	Key(ctx context.Context, namespace string, key string) (any, error)
 	Sign(ctx context.Context, namespace string, key string, data []byte) ([]byte, error)
 }
 
@@ -47,33 +52,26 @@ type Service struct {
 	policyCache RegoCache
 	cache       Cache
 	signer      Signer
+	httpClient  *http.Client
 	logger      *zap.Logger
+
+	// externalHostname specifies the hostname where the policy service can be
+	// reached from the public internet. This setting is very important for
+	// export/import of policy bundles, as the policy service must include the
+	// full path to its verification public key in the bundle, so that verifiers
+	// can use it for signature verification.
+	externalHostname string
 }
 
-func New(storage Storage, policyCache RegoCache, cache Cache, signer Signer, logger *zap.Logger) *Service {
-	signerFactory := func(signer Signer) func() (jws.Signer, error) {
-		return func() (jws.Signer, error) {
-			return &signAdapter{signer: signer}, nil
-		}
-	}
-
-	// This unregister/register sequence is done mainly for the unit tests
-	// because each tests creates a new service instance, but the jws.Signer
-	// implementations are kept in a global variable map, which is the same
-	// for all test cases. In order for tests to work and to be able to register
-	// different signer implementations, the previous signer must be explicitly
-	// unregistered.
-	jws.UnregisterSigner(JwaVaultSignature)
-	jwa.UnregisterSignatureAlgorithm(JwaVaultSignature)
-	jwa.RegisterSignatureAlgorithm(JwaVaultSignature)
-	jws.RegisterSigner(JwaVaultSignature, jws.SignerFactoryFn(signerFactory(signer)))
-
+func New(storage Storage, policyCache RegoCache, cache Cache, signer Signer, hostname string, httpClient *http.Client, logger *zap.Logger) *Service {
 	return &Service{
-		storage:     storage,
-		policyCache: policyCache,
-		cache:       cache,
-		signer:      signer,
-		logger:      logger,
+		storage:          storage,
+		policyCache:      policyCache,
+		cache:            cache,
+		signer:           signer,
+		httpClient:       httpClient,
+		logger:           logger,
+		externalHostname: hostname,
 	}
 }
 
@@ -259,7 +257,7 @@ func (s *Service) ExportBundle(ctx context.Context, req *policy.ExportBundleRequ
 	// TODO(penkovski): namespace and key must be taken from policy export configuration
 	// This will be implemented with issue #41, for now some test values are hardcoded
 	// https://gitlab.eclipse.org/eclipse/xfsc/tsa/policy/-/issues/41
-	signature, err := s.sign("transit", "key1", bundleDigest[:])
+	signature, err := s.signer.Sign(ctx, "transit", "key1", bundleDigest[:])
 	if err != nil {
 		logger.Error("error signing policy bundle", zap.Error(err))
 		return nil, nil, err
@@ -269,11 +267,11 @@ func (s *Service) ExportBundle(ctx context.Context, req *policy.ExportBundleRequ
 	// zip file and the jws detached payload signature file
 	var files = []ZipFile{
 		{
-			Name:    "policy_bundle.zip",
+			Name:    BundleFilename,
 			Content: bundle,
 		},
 		{
-			Name:    "policy_bundle.jws",
+			Name:    BundleSignatureFilename,
 			Content: signature,
 		},
 	}
@@ -292,6 +290,76 @@ func (s *Service) ExportBundle(ctx context.Context, req *policy.ExportBundleRequ
 		ContentLength:      len(signedBundle),
 		ContentDisposition: fmt.Sprintf(`attachment; filename="%s"`, filename),
 	}, io.NopCloser(bytes.NewReader(signedBundle)), nil
+}
+
+// PolicyPublicKey returns the public key in JWK format which must be used to
+// verify a signed policy bundle.
+func (s *Service) PolicyPublicKey(ctx context.Context, req *policy.PolicyPublicKeyRequest) (any, error) {
+	logger := s.logger.With(
+		zap.String("operation", "policyPublicKey"),
+		zap.String("repository", req.Repository),
+		zap.String("group", req.Group),
+		zap.String("name", req.PolicyName),
+		zap.String("version", req.Version),
+	)
+
+	// TODO: get key and namespace from policy export configuration
+	key, err := s.signer.Key(ctx, "transit", "key1")
+	if err != nil {
+		logger.Error("error getting policy public key", zap.Error(err))
+		return nil, err
+	}
+
+	return key, nil
+}
+
+// ImportBundle imports a signed policy bundle.
+func (s *Service) ImportBundle(ctx context.Context, _ *policy.ImportBundlePayload, payload io.ReadCloser) (any, error) {
+	logger := s.logger.With(zap.String("operation", "importBundle"))
+
+	archive, err := io.ReadAll(payload)
+	if err != nil {
+		logger.Error("error reading bundle payload", zap.Error(err))
+		return nil, errors.New(errors.BadRequest, fmt.Errorf("error reading bundle payload: %v", err))
+	}
+
+	files, err := s.unzip(archive)
+	if err != nil {
+		logger.Error("failed to unzip bundle", zap.Error(err))
+		return nil, errors.New(errors.BadRequest, fmt.Errorf("failed to unzip bundle: %v", err))
+	}
+
+	if len(files) != 2 {
+		err := fmt.Errorf("expected to contain two files, but has: %d", len(files))
+		logger.Error("invalid bundle", zap.Error(err))
+		return nil, errors.New(errors.BadRequest, "invalid bundle", err)
+	}
+
+	if err := s.verifyBundle(ctx, files); err != nil {
+		logger.Error("failed to verify bundle", zap.Error(err))
+		return nil, errors.New(errors.Forbidden, "failed to verify bundle", err)
+	}
+	logger.Debug("signature is valid")
+
+	policy, err := s.policyFromBundle(files[0].Content)
+	if err != nil {
+		logger.Error("cannot make policy from bundle", zap.Error(err))
+		return nil, errors.New("cannot make policy from bundle", err)
+	}
+
+	if err := s.storage.SavePolicy(ctx, policy); err != nil {
+		logger.Error("error saving imported policy bundle", zap.Error(err))
+		return nil, errors.New("error saving imported policy bundle", err)
+	}
+
+	return map[string]interface{}{
+		"repository": policy.Repository,
+		"group":      policy.Group,
+		"name":       policy.Name,
+		"version":    policy.Version,
+		"locked":     policy.Locked,
+		"lastUpdate": policy.LastUpdate,
+	}, err
 }
 
 func (s *Service) ListPolicies(ctx context.Context, req *policy.PoliciesRequest) (*policy.PoliciesResult, error) {
