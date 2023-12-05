@@ -22,23 +22,10 @@ const (
 	policyCollection = "policies"
 )
 
-type Policy struct {
-	Repository string
-	Filename   string
-	Name       string
-	Group      string
-	Version    string
-	Rego       string
-	Locked     bool
-	Data       string
-	DataConfig string
-	LastUpdate time.Time
-}
-
 func main() {
 	cfg, err := loadConfig()
 	if err != nil {
-		log.Fatalln("failed to setup the sync: ", err)
+		log.Fatalln("failed to setup policy sync: ", err)
 	}
 
 	log.Println("start updating policies...")
@@ -208,6 +195,7 @@ func upsert(ctx context.Context, policies []*storage.Policy, db *mongo.Collectio
 				"data":                policy.Data,
 				"dataConfig":          policy.DataConfig,
 				"outputSchema":        policy.OutputSchema,
+				"exportConfig":        policy.ExportConfig,
 				"lastUpdate":          time.Now(),
 				"nextDataRefreshTime": nextDataRefreshTime(policy),
 			},
@@ -237,6 +225,7 @@ func equal(p1 *storage.Policy, p2 *storage.Policy) bool {
 		p1.Data == p2.Data &&
 		p1.DataConfig == p2.DataConfig &&
 		p1.OutputSchema == p2.OutputSchema &&
+		p1.ExportConfig == p2.ExportConfig &&
 		p1.Repository == p2.Repository &&
 		p1.Name == p2.Name &&
 		p1.Version == p2.Version &&

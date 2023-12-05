@@ -30,6 +30,13 @@ type Metadata struct {
 	PublicKeyURL string `json:"publicKeyURL"`
 }
 
+// exportConfig specifies which signer namespace and key to be used
+// when exporting policy as signed bundle.
+type exportConfig struct {
+	Namespace string
+	Key       string
+}
+
 func (s *Service) createPolicyBundle(policy *storage.Policy) ([]byte, error) {
 	var files []ZipFile
 
@@ -71,6 +78,14 @@ func (s *Service) createPolicyBundle(policy *storage.Policy) ([]byte, error) {
 		files = append(files, ZipFile{
 			Name:    "output-schema.json",
 			Content: []byte(policy.OutputSchema),
+		})
+	}
+
+	// prepare json schema config file
+	if strings.TrimSpace(policy.ExportConfig) != "" {
+		files = append(files, ZipFile{
+			Name:    "export-config.json",
+			Content: []byte(policy.ExportConfig),
 		})
 	}
 
@@ -166,6 +181,7 @@ func (s *Service) policyFromBundle(bundle []byte) (*storage.Policy, error) {
 			policy.Version = metadata.Policy.Version
 			policy.Locked = metadata.Policy.Locked
 			policy.LastUpdate = metadata.Policy.LastUpdate
+			policy.Filename = policy.Group + "/" + policy.Name + "/" + policy.Version + "/" + "policy.rego"
 		case "policy.rego":
 			policy.Rego = string(f.Content)
 		case "data.json":
@@ -174,8 +190,23 @@ func (s *Service) policyFromBundle(bundle []byte) (*storage.Policy, error) {
 			policy.DataConfig = string(f.Content)
 		case "output-schema.json":
 			policy.OutputSchema = string(f.Content)
+		case "export-config.json":
+			policy.ExportConfig = string(f.Content)
 		}
 	}
 
 	return &policy, nil
+}
+
+func policyExportConfig(p *storage.Policy) (*exportConfig, error) {
+	if strings.TrimSpace(p.ExportConfig) == "" {
+		return nil, fmt.Errorf("policy export configuration is not defined")
+	}
+
+	var cfg exportConfig
+	if err := json.Unmarshal([]byte(p.ExportConfig), &cfg); err != nil {
+		return nil, fmt.Errorf("cannot unmarshal policy export configuration: %v", err)
+	}
+
+	return &cfg, nil
 }

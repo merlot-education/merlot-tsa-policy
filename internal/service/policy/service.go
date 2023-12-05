@@ -307,6 +307,12 @@ func (s *Service) ExportBundle(ctx context.Context, req *policy.ExportBundleRequ
 		return nil, nil, err
 	}
 
+	exportConfig, err := policyExportConfig(pol)
+	if err != nil {
+		logger.Error(err.Error())
+		return nil, nil, err
+	}
+
 	// bundle is the complete policy bundle zip file
 	bundle, err := s.createPolicyBundle(pol)
 	if err != nil {
@@ -317,10 +323,8 @@ func (s *Service) ExportBundle(ctx context.Context, req *policy.ExportBundleRequ
 	// only the sha256 file digest will be signed, not the file itself
 	bundleDigest := sha256.Sum256(bundle)
 
-	// TODO(penkovski): namespace and key must be taken from policy export configuration
-	// This will be implemented with issue #41, for now some test values are hardcoded
-	// https://gitlab.eclipse.org/eclipse/xfsc/tsa/policy/-/issues/41
-	signature, err := s.signer.Sign(ctx, "transit", "key1", bundleDigest[:])
+	// signer namespace and key are taken from policy export configuration
+	signature, err := s.signer.Sign(ctx, exportConfig.Namespace, exportConfig.Key, bundleDigest[:])
 	if err != nil {
 		logger.Error("error signing policy bundle", zap.Error(err))
 		return nil, nil, err
@@ -366,8 +370,20 @@ func (s *Service) PolicyPublicKey(ctx context.Context, req *policy.PolicyPublicK
 		zap.String("version", req.Version),
 	)
 
-	// TODO: get key and namespace from policy export configuration
-	key, err := s.signer.Key(ctx, "transit", "key1")
+	pol, err := s.storage.Policy(ctx, req.Repository, req.Group, req.PolicyName, req.Version)
+	if err != nil {
+		logger.Error("error getting policy from storage", zap.Error(err))
+		return nil, err
+	}
+
+	exportConfig, err := policyExportConfig(pol)
+	if err != nil {
+		logger.Error(err.Error())
+		return nil, err
+	}
+
+	// signer namespace and key are taken from policy export configuration
+	key, err := s.signer.Key(ctx, exportConfig.Namespace, exportConfig.Key)
 	if err != nil {
 		logger.Error("error getting policy public key", zap.Error(err))
 		return nil, err
