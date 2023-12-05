@@ -47,7 +47,7 @@ var testMetadata = Metadata{
 }
 
 func TestPolicy_createPolicyBundle(t *testing.T) {
-	svc := New(nil, nil, nil, nil, zap.NewNop())
+	svc := New(nil, nil, nil, nil, false, zap.NewNop())
 	bundle, err := svc.createPolicyBundle(testPolicy)
 	assert.NoError(t, err)
 	assert.NotNil(t, bundle)

@@ -64,6 +64,10 @@ type policyConfig struct {
 	// needed policies. If present, only policies inside this folder
 	// are going to be fetched and used for evaluation.
 	Folder string `envconfig:"POLICY_REPOSITORY_FOLDER"`
+
+	// LockOnValidationFailure indicates whether a policy must be locked for execution
+	// if the policy output fails the schema validation.
+	LockOnValidationFailure bool `envconfig:"POLICY_LOCK_ON_VALIDATION_FAILURE" default:"false"`
 }
 
 type metricsConfig struct {

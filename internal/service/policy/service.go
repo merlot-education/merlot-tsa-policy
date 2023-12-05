@@ -44,14 +44,16 @@ type Signer interface {
 }
 
 type Service struct {
-	storage     Storage
-	policyCache RegoCache
-	cache       Cache
-	signer      Signer
-	logger      *zap.Logger
+	storage        Storage
+	policyCache    RegoCache
+	cache          Cache
+	signer         Signer
+	validationLock bool
+
+	logger *zap.Logger
 }
 
-func New(storage Storage, policyCache RegoCache, cache Cache, signer Signer, logger *zap.Logger) *Service {
+func New(storage Storage, policyCache RegoCache, cache Cache, signer Signer, validationLock bool, logger *zap.Logger) *Service {
 	signerFactory := func(signer Signer) func() (jws.Signer, error) {
 		return func() (jws.Signer, error) {
 			return &signAdapter{signer: signer}, nil
@@ -70,11 +72,12 @@ func New(storage Storage, policyCache RegoCache, cache Cache, signer Signer, log
 	jws.RegisterSigner(JwaVaultSignature, jws.SignerFactoryFn(signerFactory(signer)))
 
 	return &Service{
-		storage:     storage,
-		policyCache: policyCache,
-		cache:       cache,
-		signer:      signer,
-		logger:      logger,
+		storage:        storage,
+		policyCache:    policyCache,
+		cache:          cache,
+		signer:         signer,
+		validationLock: validationLock,
+		logger:         logger,
 	}
 }
 
@@ -205,8 +208,15 @@ func (s *Service) Validate(ctx context.Context, req *policy.EvaluateRequest) (*p
 
 	// validate the policy output
 	if err := sch.Validate(res.Result); err != nil {
-		logger.Error("invalid policy output schema", zap.Error(err))
-		return nil, errors.New("invalid policy output schema", err)
+		// lock the policy for execution if configured
+		if s.validationLock {
+			if err := s.lock(ctx, pol); err != nil {
+				logger.Error("error locking policy after validation failure", zap.Error(err))
+			}
+		}
+
+		logger.Error("policy output schema validation failed", zap.Error(err))
+		return nil, errors.New(errors.Unknown, "policy output schema validation failed", err)
 	}
 
 	return res, nil
@@ -231,16 +241,24 @@ func (s *Service) Lock(ctx context.Context, req *policy.LockRequest) error {
 		return errors.New("error locking policy", err)
 	}
 
-	if pol.Locked {
-		return errors.New(errors.Forbidden, "policy is already locked")
-	}
-
-	if err := s.storage.SetPolicyLock(ctx, req.Repository, req.Group, req.PolicyName, req.Version, true); err != nil {
+	if err := s.lock(ctx, pol); err != nil {
 		logger.Error("error locking policy", zap.Error(err))
-		return errors.New("error locking policy", err)
+		return err
 	}
 
 	logger.Debug("policy is locked")
+
+	return nil
+}
+
+func (s *Service) lock(ctx context.Context, p *storage.Policy) error {
+	if p.Locked {
+		return errors.New(errors.Forbidden, "policy is already locked")
+	}
+
+	if err := s.storage.SetPolicyLock(ctx, p.Repository, p.Group, p.Name, p.Version, true); err != nil {
+		return errors.New("error locking policy", err)
+	}
 
 	return nil
 }
