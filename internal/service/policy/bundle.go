@@ -33,8 +33,8 @@ type Metadata struct {
 // exportConfig specifies which signer namespace and key to be used
 // when exporting policy as signed bundle.
 type exportConfig struct {
-	Namespace string
-	Key       string
+	Namespace string `json:"namespace"`
+	Key       string `json:"key"`
 }
 
 func (s *Service) createPolicyBundle(policy *storage.Policy) ([]byte, error) {

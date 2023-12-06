@@ -18,6 +18,7 @@ import (
 
 // should not be modified, read only
 var testPolicy = &storage.Policy{
+	Filename:   "example/mypolicy/1.0/policy.rego",
 	Repository: "myrepo",
 	Name:       "mypolicy",
 	Group:      "example",
