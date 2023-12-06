@@ -172,19 +172,12 @@ func (s *Service) Evaluate(ctx context.Context, req *policy.EvaluateRequest) (*p
 // Validate executes a policy with given input and then validates the output against
 // a predefined JSON schema.
 func (s *Service) Validate(ctx context.Context, req *policy.EvaluateRequest) (*policy.EvaluateResult, error) {
-	// evaluate the policy and get the result
-	res, err := s.Evaluate(ctx, req)
-	if err != nil {
-		return nil, err
-	}
-
 	logger := s.logger.With(
-		zap.String("operation", "evaluate"),
+		zap.String("operation", "validate"),
 		zap.String("repository", req.Repository),
 		zap.String("group", req.Group),
 		zap.String("name", req.PolicyName),
 		zap.String("version", req.Version),
-		zap.String("evaluationID", res.ETag),
 	)
 
 	// retrieve policy
@@ -197,6 +190,12 @@ func (s *Service) Validate(ctx context.Context, req *policy.EvaluateRequest) (*p
 	if pol.OutputSchema == "" {
 		logger.Error("validation schema for policy output is not found")
 		return nil, errors.New(errors.BadRequest, "validation schema for policy output is not found")
+	}
+
+	// evaluate the policy and get the result
+	res, err := s.Evaluate(ctx, req)
+	if err != nil {
+		return nil, err
 	}
 
 	// compile the validation schema
