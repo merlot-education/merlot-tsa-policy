@@ -18,6 +18,12 @@ type Config struct {
 	Nats        natsConfig
 	Policy      policyConfig
 
+	// ExternalAddr specifies the external address where
+	// the policy service could be reached, so that
+	// policy bundle verifiers can fetch public keys
+	// for verification.
+	ExternalAddr string `envconfig:"EXTERNAL_HTTP_ADDR" default:"http://localhost:8081"`
+
 	LogLevel string `envconfig:"LOG_LEVEL" default:"INFO"`
 }
 

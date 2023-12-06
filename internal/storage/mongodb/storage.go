@@ -80,6 +80,29 @@ func (s *Storage) Policy(ctx context.Context, repository, group, name, version s
 	return &policy, nil
 }
 
+func (s *Storage) SavePolicy(ctx context.Context, policy *storage.Policy) error {
+	opts := options.Update().SetUpsert(true)
+	filter := bson.M{
+		"repository": policy.Repository,
+		"group":      policy.Group,
+		"name":       policy.Name,
+		"version":    policy.Version,
+	}
+	update := bson.M{"$set": bson.M{
+		"locked":              policy.Locked,
+		"rego":                policy.Rego,
+		"data":                policy.Data,
+		"dataConfig":          policy.DataConfig,
+		"outputSchema":        policy.OutputSchema,
+		"lastUpdate":          time.Now(),
+		"nextDataRefreshTime": time.Time{},
+	}}
+
+	_, err := s.policy.UpdateOne(ctx, filter, update, opts)
+
+	return err
+}
+
 func (s *Storage) SetPolicyLock(ctx context.Context, repository, group, name, version string, lock bool) error {
 	_, err := s.policy.UpdateOne(
 		ctx,

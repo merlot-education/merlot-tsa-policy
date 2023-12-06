@@ -69,6 +69,22 @@ var ExportBundleResult = Type("ExportBundleResult", func() {
 	Required("content-type", "content-length", "content-disposition")
 })
 
+var PolicyPublicKeyRequest = Type("PolicyPublicKeyRequest", func() {
+	Field(1, "repository", String, "Policy repository.", func() {
+		Example("policies")
+	})
+	Field(2, "group", String, "Policy group.", func() {
+		Example("example")
+	})
+	Field(3, "policyName", String, "Policy name.", func() {
+		Example("returnDID")
+	})
+	Field(4, "version", String, "Policy version.", func() {
+		Example("1.0")
+	})
+	Required("repository", "group", "policyName", "version")
+})
+
 var Policy = Type("Policy", func() {
 	Field(1, "repository", String, "Policy repository.")
 	Field(2, "policyName", String, "Policy name.")

@@ -83,6 +83,34 @@ var _ = Service("policy", func() {
 		})
 	})
 
+	Method("ImportBundle", func() {
+		Description("Import a signed policy bundle.")
+		Payload(func() {
+			Attribute("length", Int)
+		})
+		Result(Any)
+		HTTP(func() {
+			POST("/policy/import")
+			Header("length:Content-Length")
+
+			SkipRequestBodyEncodeDecode()
+
+			Response(StatusOK)
+			Response(StatusForbidden)
+			Response(StatusInternalServerError)
+		})
+	})
+
+	Method("PolicyPublicKey", func() {
+		Description("PolicyPublicKey returns the public key in JWK format which must be used to verify a signed policy bundle.")
+		Payload(PolicyPublicKeyRequest)
+		Result(Any)
+		HTTP(func() {
+			GET("/policy/{repository}/{group}/{policyName}/{version}/key")
+			Response(StatusOK)
+		})
+	})
+
 	Method("ListPolicies", func() {
 		Description("List policies from storage with optional filters.")
 		Payload(PoliciesRequest)
