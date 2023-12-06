@@ -22,6 +22,10 @@ type Client struct {
 	// endpoint.
 	EvaluateDoer goahttp.Doer
 
+	// Validate Doer is the HTTP client used to make requests to the Validate
+	// endpoint.
+	ValidateDoer goahttp.Doer
+
 	// Lock Doer is the HTTP client used to make requests to the Lock endpoint.
 	LockDoer goahttp.Doer
 
@@ -69,6 +73,7 @@ func NewClient(
 ) *Client {
 	return &Client{
 		EvaluateDoer:                 doer,
+		ValidateDoer:                 doer,
 		LockDoer:                     doer,
 		UnlockDoer:                   doer,
 		ExportBundleDoer:             doer,
@@ -103,6 +108,30 @@ func (c *Client) Evaluate() goa.Endpoint {
 		resp, err := c.EvaluateDoer.Do(req)
 		if err != nil {
 			return nil, goahttp.ErrRequestError("policy", "Evaluate", err)
+		}
+		return decodeResponse(resp)
+	}
+}
+
+// Validate returns an endpoint that makes HTTP requests to the policy service
+// Validate server.
+func (c *Client) Validate() goa.Endpoint {
+	var (
+		encodeRequest  = EncodeValidateRequest(c.encoder)
+		decodeResponse = DecodeValidateResponse(c.decoder, c.RestoreResponseBody)
+	)
+	return func(ctx context.Context, v any) (any, error) {
+		req, err := c.BuildValidateRequest(ctx, v)
+		if err != nil {
+			return nil, err
+		}
+		err = encodeRequest(req, v)
+		if err != nil {
+			return nil, err
+		}
+		resp, err := c.ValidateDoer.Do(req)
+		if err != nil {
+			return nil, goahttp.ErrRequestError("policy", "Validate", err)
 		}
 		return decodeResponse(resp)
 	}

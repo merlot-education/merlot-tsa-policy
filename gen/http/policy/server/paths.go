@@ -26,6 +26,21 @@ func EvaluatePolicyPath3(repository string, group string, policyName string, ver
 	return fmt.Sprintf("/policy/%v/%v/%v/%v/evaluation", repository, group, policyName, version)
 }
 
+// ValidatePolicyPath returns the URL path to the policy service Validate HTTP endpoint.
+func ValidatePolicyPath(repository string, group string, policyName string, version string) string {
+	return fmt.Sprintf("/policy/%v/%v/%v/%v/validation/did.json", repository, group, policyName, version)
+}
+
+// ValidatePolicyPath2 returns the URL path to the policy service Validate HTTP endpoint.
+func ValidatePolicyPath2(repository string, group string, policyName string, version string) string {
+	return fmt.Sprintf("/policy/%v/%v/%v/%v/validation", repository, group, policyName, version)
+}
+
+// ValidatePolicyPath3 returns the URL path to the policy service Validate HTTP endpoint.
+func ValidatePolicyPath3(repository string, group string, policyName string, version string) string {
+	return fmt.Sprintf("/policy/%v/%v/%v/%v/validation", repository, group, policyName, version)
+}
+
 // LockPolicyPath returns the URL path to the policy service Lock HTTP endpoint.
 func LockPolicyPath(repository string, group string, policyName string, version string) string {
 	return fmt.Sprintf("/policy/%v/%v/%v/%v/lock", repository, group, policyName, version)

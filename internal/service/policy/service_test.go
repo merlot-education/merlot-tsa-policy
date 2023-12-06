@@ -25,8 +25,23 @@ import (
 )
 
 func TestNew(t *testing.T) {
-	svc := policy.New(nil, nil, nil, nil, "hostname.com", http.DefaultClient, zap.NewNop())
+	svc := policy.New(nil, nil, nil, nil, "hostname.com", http.DefaultClient, false, zap.NewNop())
 	assert.Implements(t, (*goapolicy.Service)(nil), svc)
+}
+
+// testReq prepares test request to be used in tests
+func testReq() *goapolicy.EvaluateRequest {
+	input := map[string]interface{}{"msg": "yes"}
+	var body interface{} = input
+
+	return &goapolicy.EvaluateRequest{
+		Repository: "policies",
+		Group:      "testgroup",
+		PolicyName: "example",
+		Version:    "1.0",
+		Input:      &body,
+		TTL:        ptr.Int(30),
+	}
 }
 
 func TestService_Evaluate(t *testing.T) {
@@ -50,21 +65,6 @@ func TestService_Evaluate(t *testing.T) {
 
 	// prepare test policy accessing headers during evaluation
 	testPolicyAccessingHeaders := `package testgroup.example token := external.http.header("Authorization")`
-
-	// prepare test request to be used in tests
-	testReq := func() *goapolicy.EvaluateRequest {
-		input := map[string]interface{}{"msg": "yes"}
-		var body interface{} = input
-
-		return &goapolicy.EvaluateRequest{
-			Repository: "policies",
-			Group:      "testgroup",
-			PolicyName: "example",
-			Version:    "1.0",
-			Input:      &body,
-			TTL:        ptr.Int(30),
-		}
-	}
 
 	// prepare test request with empty body
 	testEmptyReq := func() *goapolicy.EvaluateRequest {
@@ -372,7 +372,7 @@ func TestService_Evaluate(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			svc := policy.New(test.storage, test.regocache, test.cache, nil, "hostname.com", http.DefaultClient, zap.NewNop())
+			svc := policy.New(test.storage, test.regocache, test.cache, nil, "hostname.com", http.DefaultClient, false, zap.NewNop())
 			ctx := context.Background()
 			if test.ctx != nil {
 				ctx = test.ctx
@@ -391,6 +391,227 @@ func TestService_Evaluate(t *testing.T) {
 				assert.Contains(t, e.Error(), test.errtext)
 				assert.Equal(t, test.errkind, e.Kind)
 				assert.Equal(t, test.res, res)
+			}
+		})
+	}
+}
+
+func TestService_Validate(t *testing.T) {
+	// prepare basic JSON schema
+	jsonSchema := `
+		{
+		  "type": "object",
+		  "properties": {
+			"foo": {
+			  "type": "string",
+			  "minLength": 5
+			}
+		  },
+		  "required": [
+			"foo"
+		  ]
+		}
+	`
+	// prepare schema with specified $schema property
+	jsonSchemaWithSchemaProperty := `
+		{
+		  "$schema": "http://json-schema.org/draft-04/schema#",
+		  "type": "object",
+		  "properties": {
+			"foo": {
+			  "type": "string",
+			  "minLength": 5
+			}
+		  },
+		  "required": [
+			"foo"
+		  ]
+		}
+	`
+
+	tests := []struct {
+		name      string
+		req       *goapolicy.EvaluateRequest
+		storage   policy.Storage
+		regocache policy.RegoCache
+		cache     policy.Cache
+		// expected result
+		evalRes *goapolicy.EvaluateResult
+		errkind errors.Kind
+		errtext string
+	}{
+		{
+			name: "output validation schema is empty",
+			req:  testReq(),
+			regocache: &policyfakes.FakeRegoCache{
+				GetStub: func(key string) (*storage.Policy, bool) {
+					return nil, false
+				},
+			},
+			storage: &policyfakes.FakeStorage{
+				PolicyStub: func(ctx context.Context, s string, s2 string, s3 string, s4 string) (*storage.Policy, error) {
+					return &storage.Policy{
+						Repository:   "policies",
+						Name:         "example",
+						Group:        "testgroup",
+						Version:      "1.0",
+						Rego:         `package testgroup.example _ = {"hello":"world"}`,
+						Locked:       false,
+						OutputSchema: "",
+						LastUpdate:   time.Now(),
+					}, nil
+				},
+			},
+			cache: &policyfakes.FakeCache{
+				SetStub: func(ctx context.Context, s string, s2 string, s3 string, bytes []byte, i int) error {
+					return nil
+				},
+			},
+			errtext: "validation schema for policy output is not found",
+			errkind: errors.BadRequest,
+		},
+		{
+			name: "output validation schema is invalid JSON schema",
+			req:  testReq(),
+			regocache: &policyfakes.FakeRegoCache{
+				GetStub: func(key string) (*storage.Policy, bool) {
+					return nil, false
+				},
+			},
+			storage: &policyfakes.FakeStorage{
+				PolicyStub: func(ctx context.Context, s string, s2 string, s3 string, s4 string) (*storage.Policy, error) {
+					return &storage.Policy{
+						Repository:   "policies",
+						Name:         "example",
+						Group:        "testgroup",
+						Version:      "1.0",
+						Rego:         `package testgroup.example _ = {"hello":"world"}`,
+						Locked:       false,
+						OutputSchema: "invalid JSON schema",
+						LastUpdate:   time.Now(),
+					}, nil
+				},
+			},
+			cache: &policyfakes.FakeCache{
+				SetStub: func(ctx context.Context, s string, s2 string, s3 string, bytes []byte, i int) error {
+					return nil
+				},
+			},
+			errtext: "error compiling output validation schema",
+			errkind: errors.Unknown,
+		},
+		{
+			name: "policy output schema validation fails",
+			req:  testReq(),
+			regocache: &policyfakes.FakeRegoCache{
+				GetStub: func(key string) (*storage.Policy, bool) {
+					return nil, false
+				},
+			},
+			storage: &policyfakes.FakeStorage{
+				PolicyStub: func(ctx context.Context, s string, s2 string, s3 string, s4 string) (*storage.Policy, error) {
+					return &storage.Policy{
+						Repository:   "policies",
+						Name:         "example",
+						Group:        "testgroup",
+						Version:      "1.0",
+						Rego:         `package testgroup.example _ = {"foo":"bar"}`,
+						Locked:       false,
+						OutputSchema: jsonSchema,
+						LastUpdate:   time.Now(),
+					}, nil
+				},
+			},
+			cache: &policyfakes.FakeCache{
+				SetStub: func(ctx context.Context, s string, s2 string, s3 string, bytes []byte, i int) error {
+					return nil
+				},
+			},
+			errtext: "policy output schema validation failed",
+			errkind: errors.Unknown,
+		},
+		{
+			name: "policy output validation is successful",
+			req:  testReq(),
+			regocache: &policyfakes.FakeRegoCache{
+				GetStub: func(key string) (*storage.Policy, bool) {
+					return nil, false
+				},
+			},
+			storage: &policyfakes.FakeStorage{
+				PolicyStub: func(ctx context.Context, s string, s2 string, s3 string, s4 string) (*storage.Policy, error) {
+					return &storage.Policy{
+						Repository:   "policies",
+						Name:         "example",
+						Group:        "testgroup",
+						Version:      "1.0",
+						Rego:         `package testgroup.example _ = {"foo":"barbaz"}`,
+						Locked:       false,
+						OutputSchema: jsonSchema,
+						LastUpdate:   time.Now(),
+					}, nil
+				},
+			},
+			cache: &policyfakes.FakeCache{
+				SetStub: func(ctx context.Context, s string, s2 string, s3 string, bytes []byte, i int) error {
+					return nil
+				},
+			},
+			evalRes: &goapolicy.EvaluateResult{
+				Result: map[string]interface{}{"foo": "barbaz"},
+			},
+		},
+		{
+			name: "policy output validation using explicit schema draft version is successful ",
+			req:  testReq(),
+			regocache: &policyfakes.FakeRegoCache{
+				GetStub: func(key string) (*storage.Policy, bool) {
+					return nil, false
+				},
+			},
+			storage: &policyfakes.FakeStorage{
+				PolicyStub: func(ctx context.Context, s string, s2 string, s3 string, s4 string) (*storage.Policy, error) {
+					return &storage.Policy{
+						Repository:   "policies",
+						Name:         "example",
+						Group:        "testgroup",
+						Version:      "1.0",
+						Rego:         `package testgroup.example _ = {"foo":"barbaz"}`,
+						Locked:       false,
+						OutputSchema: jsonSchemaWithSchemaProperty,
+						LastUpdate:   time.Now(),
+					}, nil
+				},
+			},
+			cache: &policyfakes.FakeCache{
+				SetStub: func(ctx context.Context, s string, s2 string, s3 string, bytes []byte, i int) error {
+					return nil
+				},
+			},
+			evalRes: &goapolicy.EvaluateResult{
+				Result: map[string]interface{}{"foo": "barbaz"},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			svc := policy.New(test.storage, test.regocache, test.cache, nil, "hostname.com", http.DefaultClient, false, zap.NewNop())
+
+			res, err := svc.Validate(context.Background(), test.req)
+			if err == nil {
+				assert.Empty(t, test.errtext)
+				assert.NotNil(t, res)
+
+				assert.Equal(t, test.evalRes.Result, res.Result)
+				assert.NotEmpty(t, res.ETag)
+			} else {
+				e, ok := err.(*errors.Error)
+				assert.True(t, ok)
+
+				assert.Contains(t, e.Error(), test.errtext)
+				assert.Equal(t, test.errkind, e.Kind)
+				assert.Equal(t, test.evalRes, res)
 			}
 		})
 	}
@@ -478,7 +699,7 @@ func TestService_Lock(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			svc := policy.New(test.storage, nil, nil, nil, "hostname.com", http.DefaultClient, zap.NewNop())
+			svc := policy.New(test.storage, nil, nil, nil, "hostname.com", http.DefaultClient, false, zap.NewNop())
 			err := svc.Lock(context.Background(), test.req)
 			if err == nil {
 				assert.Empty(t, test.errtext)
@@ -576,7 +797,7 @@ func TestService_Unlock(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			svc := policy.New(test.storage, nil, nil, nil, "hostname.com", http.DefaultClient, zap.NewNop())
+			svc := policy.New(test.storage, nil, nil, nil, "hostname.com", http.DefaultClient, false, zap.NewNop())
 			err := svc.Unlock(context.Background(), test.req)
 			if err == nil {
 				assert.Empty(t, test.errtext)
@@ -808,7 +1029,7 @@ func TestService_ListPolicies(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			svc := policy.New(test.storage, nil, nil, nil, "hostname.com", http.DefaultClient, zap.NewNop())
+			svc := policy.New(test.storage, nil, nil, nil, "hostname.com", http.DefaultClient, false, zap.NewNop())
 			result, err := svc.ListPolicies(context.Background(), test.request)
 
 			if test.errText != "" {
@@ -873,7 +1094,7 @@ func TestService_SubscribeForPolicyChange(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			svc := policy.New(test.storage, nil, nil, nil, "hostname.com", http.DefaultClient, zap.NewNop())
+			svc := policy.New(test.storage, nil, nil, nil, "hostname.com", http.DefaultClient, false, zap.NewNop())
 			res, err := svc.SubscribeForPolicyChange(context.Background(), test.request)
 			if test.errText != "" {
 				assert.ErrorContains(t, err, test.errText)
@@ -893,7 +1114,7 @@ func TestService_ExportBundleError(t *testing.T) {
 				return nil, errors.New(errors.NotFound, "policy not found")
 			},
 		}
-		svc := policy.New(storage, nil, nil, nil, "https://policyservice.com", http.DefaultClient, zap.NewNop())
+		svc := policy.New(storage, nil, nil, nil, "https://policyservice.com", http.DefaultClient, false, zap.NewNop())
 		res, reader, err := svc.ExportBundle(context.Background(), &goapolicy.ExportBundleRequest{})
 		assert.Nil(t, res)
 		assert.Nil(t, reader)
@@ -910,7 +1131,7 @@ func TestService_ExportBundleError(t *testing.T) {
 				return nil, errors.New("unexpected error")
 			},
 		}
-		svc := policy.New(storage, nil, nil, nil, "https://policyservice.com", http.DefaultClient, zap.NewNop())
+		svc := policy.New(storage, nil, nil, nil, "https://policyservice.com", http.DefaultClient, false, zap.NewNop())
 		res, reader, err := svc.ExportBundle(context.Background(), &goapolicy.ExportBundleRequest{})
 		assert.Nil(t, res)
 		assert.Nil(t, reader)
@@ -944,7 +1165,7 @@ func TestService_ExportBundleError(t *testing.T) {
 			},
 		}
 
-		svc := policy.New(storage, nil, nil, signer, "https://policyservice.com", http.DefaultClient, zap.NewNop())
+		svc := policy.New(storage, nil, nil, signer, "https://policyservice.com", http.DefaultClient, false, zap.NewNop())
 		res, reader, err := svc.ExportBundle(context.Background(), &goapolicy.ExportBundleRequest{})
 		assert.Nil(t, res)
 		assert.Nil(t, reader)
@@ -976,7 +1197,7 @@ func TestService_ExportBundleSuccess(t *testing.T) {
 		},
 	}
 
-	svc := policy.New(storage, nil, nil, signer, "https://policyservice.com", http.DefaultClient, zap.NewNop())
+	svc := policy.New(storage, nil, nil, signer, "https://policyservice.com", http.DefaultClient, false, zap.NewNop())
 	res, reader, err := svc.ExportBundle(context.Background(), &goapolicy.ExportBundleRequest{})
 	require.NoError(t, err)
 	require.NotNil(t, res)

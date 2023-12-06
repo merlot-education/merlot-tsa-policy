@@ -22,6 +22,7 @@ import (
 type Server struct {
 	Mounts                   []*MountPoint
 	Evaluate                 http.Handler
+	Validate                 http.Handler
 	Lock                     http.Handler
 	Unlock                   http.Handler
 	ExportBundle             http.Handler
@@ -61,6 +62,9 @@ func New(
 			{"Evaluate", "GET", "/policy/{repository}/{group}/{policyName}/{version}/evaluation/did.json"},
 			{"Evaluate", "GET", "/policy/{repository}/{group}/{policyName}/{version}/evaluation"},
 			{"Evaluate", "POST", "/policy/{repository}/{group}/{policyName}/{version}/evaluation"},
+			{"Validate", "GET", "/policy/{repository}/{group}/{policyName}/{version}/validation/did.json"},
+			{"Validate", "GET", "/policy/{repository}/{group}/{policyName}/{version}/validation"},
+			{"Validate", "POST", "/policy/{repository}/{group}/{policyName}/{version}/validation"},
 			{"Lock", "POST", "/policy/{repository}/{group}/{policyName}/{version}/lock"},
 			{"Unlock", "DELETE", "/policy/{repository}/{group}/{policyName}/{version}/lock"},
 			{"ExportBundle", "GET", "/policy/{repository}/{group}/{policyName}/{version}/export"},
@@ -70,6 +74,7 @@ func New(
 			{"SubscribeForPolicyChange", "POST", "/policy/{repository}/{group}/{policyName}/{version}/notifychange"},
 		},
 		Evaluate:                 NewEvaluateHandler(e.Evaluate, mux, decoder, encoder, errhandler, formatter),
+		Validate:                 NewValidateHandler(e.Validate, mux, decoder, encoder, errhandler, formatter),
 		Lock:                     NewLockHandler(e.Lock, mux, decoder, encoder, errhandler, formatter),
 		Unlock:                   NewUnlockHandler(e.Unlock, mux, decoder, encoder, errhandler, formatter),
 		ExportBundle:             NewExportBundleHandler(e.ExportBundle, mux, decoder, encoder, errhandler, formatter),
@@ -86,6 +91,7 @@ func (s *Server) Service() string { return "policy" }
 // Use wraps the server handlers with the given middleware.
 func (s *Server) Use(m func(http.Handler) http.Handler) {
 	s.Evaluate = m(s.Evaluate)
+	s.Validate = m(s.Validate)
 	s.Lock = m(s.Lock)
 	s.Unlock = m(s.Unlock)
 	s.ExportBundle = m(s.ExportBundle)
@@ -101,6 +107,7 @@ func (s *Server) MethodNames() []string { return policy.MethodNames[:] }
 // Mount configures the mux to serve the policy endpoints.
 func Mount(mux goahttp.Muxer, h *Server) {
 	MountEvaluateHandler(mux, h.Evaluate)
+	MountValidateHandler(mux, h.Validate)
 	MountLockHandler(mux, h.Lock)
 	MountUnlockHandler(mux, h.Unlock)
 	MountExportBundleHandler(mux, h.ExportBundle)
@@ -147,6 +154,59 @@ func NewEvaluateHandler(
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := context.WithValue(r.Context(), goahttp.AcceptTypeKey, r.Header.Get("Accept"))
 		ctx = context.WithValue(ctx, goa.MethodKey, "Evaluate")
+		ctx = context.WithValue(ctx, goa.ServiceKey, "policy")
+		payload, err := decodeRequest(r)
+		if err != nil {
+			if err := encodeError(ctx, w, err); err != nil {
+				errhandler(ctx, w, err)
+			}
+			return
+		}
+		res, err := endpoint(ctx, payload)
+		if err != nil {
+			if err := encodeError(ctx, w, err); err != nil {
+				errhandler(ctx, w, err)
+			}
+			return
+		}
+		if err := encodeResponse(ctx, w, res); err != nil {
+			errhandler(ctx, w, err)
+		}
+	})
+}
+
+// MountValidateHandler configures the mux to serve the "policy" service
+// "Validate" endpoint.
+func MountValidateHandler(mux goahttp.Muxer, h http.Handler) {
+	f, ok := h.(http.HandlerFunc)
+	if !ok {
+		f = func(w http.ResponseWriter, r *http.Request) {
+			h.ServeHTTP(w, r)
+		}
+	}
+	mux.Handle("GET", "/policy/{repository}/{group}/{policyName}/{version}/validation/did.json", f)
+	mux.Handle("GET", "/policy/{repository}/{group}/{policyName}/{version}/validation", f)
+	mux.Handle("POST", "/policy/{repository}/{group}/{policyName}/{version}/validation", f)
+}
+
+// NewValidateHandler creates a HTTP handler which loads the HTTP request and
+// calls the "policy" service "Validate" endpoint.
+func NewValidateHandler(
+	endpoint goa.Endpoint,
+	mux goahttp.Muxer,
+	decoder func(*http.Request) goahttp.Decoder,
+	encoder func(context.Context, http.ResponseWriter) goahttp.Encoder,
+	errhandler func(context.Context, http.ResponseWriter, error),
+	formatter func(ctx context.Context, err error) goahttp.Statuser,
+) http.Handler {
+	var (
+		decodeRequest  = DecodeValidateRequest(mux, decoder)
+		encodeResponse = EncodeValidateResponse(encoder)
+		encodeError    = goahttp.ErrorEncoder(encoder, formatter)
+	)
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := context.WithValue(r.Context(), goahttp.AcceptTypeKey, r.Header.Get("Accept"))
+		ctx = context.WithValue(ctx, goa.MethodKey, "Validate")
 		ctx = context.WithValue(ctx, goa.ServiceKey, "policy")
 		payload, err := decodeRequest(r)
 		if err != nil {

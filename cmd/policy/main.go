@@ -166,7 +166,7 @@ func main() {
 		healthSvc goahealth.Service
 	)
 	{
-		policySvc = policy.New(storage, regocache, cache, signer, cfg.ExternalAddr, httpClient, logger)
+		policySvc = policy.New(storage, regocache, cache, signer, cfg.ExternalAddr, httpClient, cfg.Policy.LockOnValidationFailure, logger)
 		healthSvc = health.New(Version)
 	}
 

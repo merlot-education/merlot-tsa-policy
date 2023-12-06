@@ -49,7 +49,7 @@ var testMetadata = Metadata{
 }
 
 func TestPolicy_createPolicyBundle(t *testing.T) {
-	svc := New(nil, nil, nil, nil, "https://policyservice.com", http.DefaultClient, zap.NewNop())
+	svc := New(nil, nil, nil, nil, "https://policyservice.com", http.DefaultClient, false, zap.NewNop())
 	bundle, err := svc.createPolicyBundle(testPolicy)
 	assert.NoError(t, err)
 	assert.NotNil(t, bundle)
@@ -98,7 +98,7 @@ func TestPolicy_createPolicyBundle(t *testing.T) {
 }
 
 func TestPolicy_policyFromBundle(t *testing.T) {
-	svc := New(nil, nil, nil, nil, "https://policyservice.com", http.DefaultClient, zap.NewNop())
+	svc := New(nil, nil, nil, nil, "https://policyservice.com", http.DefaultClient, false, zap.NewNop())
 	bundle, err := svc.createPolicyBundle(testPolicy)
 	require.NoError(t, err)
 	require.NotNil(t, bundle)

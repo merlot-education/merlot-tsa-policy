@@ -12,6 +12,7 @@ require (
 	github.com/lestrrat-go/jwx/v2 v2.0.15-0.20231118095921-ee031a0086ff
 	github.com/open-policy-agent/opa v0.58.0
 	github.com/prometheus/client_golang v1.17.0
+	github.com/santhosh-tekuri/jsonschema/v5 v5.3.1
 	github.com/stretchr/testify v1.8.4
 	gitlab.eclipse.org/eclipse/xfsc/tsa/golib v1.3.2
 	go.mongodb.org/mongo-driver v1.13.0

@@ -13,6 +13,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/open-policy-agent/opa/rego"
 	"github.com/open-policy-agent/opa/storage/inmem"
+	"github.com/santhosh-tekuri/jsonschema/v5"
 	"go.uber.org/zap"
 
 	"gitlab.eclipse.org/eclipse/xfsc/tsa/golib/errors"
@@ -48,12 +49,13 @@ type Signer interface {
 }
 
 type Service struct {
-	storage     Storage
-	policyCache RegoCache
-	cache       Cache
-	signer      Signer
-	httpClient  *http.Client
-	logger      *zap.Logger
+	storage        Storage
+	policyCache    RegoCache
+	cache          Cache
+	signer         Signer
+	httpClient     *http.Client
+	validationLock bool
+	logger         *zap.Logger
 
 	// externalHostname specifies the hostname where the policy service can be
 	// reached from the public internet. This setting is very important for
@@ -63,13 +65,14 @@ type Service struct {
 	externalHostname string
 }
 
-func New(storage Storage, policyCache RegoCache, cache Cache, signer Signer, hostname string, httpClient *http.Client, logger *zap.Logger) *Service {
+func New(storage Storage, policyCache RegoCache, cache Cache, signer Signer, hostname string, httpClient *http.Client, validationLock bool, logger *zap.Logger) *Service {
 	return &Service{
 		storage:          storage,
 		policyCache:      policyCache,
 		cache:            cache,
 		signer:           signer,
 		httpClient:       httpClient,
+		validationLock:   validationLock,
 		logger:           logger,
 		externalHostname: hostname,
 	}
@@ -163,6 +166,58 @@ func (s *Service) Evaluate(ctx context.Context, req *policy.EvaluateRequest) (*p
 	}, nil
 }
 
+// Validate executes a policy with given input and then validates the output against
+// a predefined JSON schema.
+func (s *Service) Validate(ctx context.Context, req *policy.EvaluateRequest) (*policy.EvaluateResult, error) {
+	logger := s.logger.With(
+		zap.String("operation", "validate"),
+		zap.String("repository", req.Repository),
+		zap.String("group", req.Group),
+		zap.String("name", req.PolicyName),
+		zap.String("version", req.Version),
+	)
+
+	// retrieve policy
+	pol, err := s.retrievePolicy(ctx, req.Repository, req.Group, req.PolicyName, req.Version)
+	if err != nil {
+		logger.Error("error retrieving policy", zap.Error(err))
+		return nil, errors.New("error retrieving policy", err)
+	}
+
+	if pol.OutputSchema == "" {
+		logger.Error("validation schema for policy output is not found")
+		return nil, errors.New(errors.BadRequest, "validation schema for policy output is not found")
+	}
+
+	// evaluate the policy and get the result
+	res, err := s.Evaluate(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	// compile the validation schema
+	sch, err := jsonschema.CompileString("", pol.OutputSchema)
+	if err != nil {
+		logger.Error("error compiling output validation schema", zap.Error(err))
+		return nil, errors.New("error compiling output validation schema")
+	}
+
+	// validate the policy output
+	if err := sch.Validate(res.Result); err != nil {
+		// lock the policy for execution if configured
+		if s.validationLock {
+			if err := s.lock(ctx, pol); err != nil {
+				logger.Error("error locking policy after validation failure", zap.Error(err))
+			}
+		}
+
+		logger.Error("policy output schema validation failed", zap.Error(err))
+		return nil, errors.New(errors.Unknown, "policy output schema validation failed", err)
+	}
+
+	return res, nil
+}
+
 // Lock a policy so that it cannot be evaluated.
 func (s *Service) Lock(ctx context.Context, req *policy.LockRequest) error {
 	logger := s.logger.With(
@@ -182,16 +237,24 @@ func (s *Service) Lock(ctx context.Context, req *policy.LockRequest) error {
 		return errors.New("error locking policy", err)
 	}
 
-	if pol.Locked {
-		return errors.New(errors.Forbidden, "policy is already locked")
-	}
-
-	if err := s.storage.SetPolicyLock(ctx, req.Repository, req.Group, req.PolicyName, req.Version, true); err != nil {
+	if err := s.lock(ctx, pol); err != nil {
 		logger.Error("error locking policy", zap.Error(err))
-		return errors.New("error locking policy", err)
+		return err
 	}
 
 	logger.Debug("policy is locked")
+
+	return nil
+}
+
+func (s *Service) lock(ctx context.Context, p *storage.Policy) error {
+	if p.Locked {
+		return errors.New(errors.Forbidden, "policy is already locked")
+	}
+
+	if err := s.storage.SetPolicyLock(ctx, p.Repository, p.Group, p.Name, p.Version, true); err != nil {
+		return errors.New("error locking policy", err)
+	}
 
 	return nil
 }
@@ -424,20 +487,10 @@ func (s *Service) SubscribeForPolicyChange(ctx context.Context, req *policy.Subs
 // If the policyCache entry is not found, it will try to prepare a new
 // query and will set it into the policyCache for future use.
 func (s *Service) prepareQuery(ctx context.Context, repository, group, policyName, version string, headers map[string]string) (*rego.PreparedEvalQuery, error) {
-	// retrieve policy from cache
-	key := s.queryCacheKey(repository, group, policyName, version)
-	pol, ok := s.policyCache.Get(key)
-	if !ok {
-		// retrieve policy from database storage
-		var err error
-		pol, err = s.storage.Policy(ctx, repository, group, policyName, version)
-		if err != nil {
-			if errors.Is(errors.NotFound, err) {
-				return nil, err
-			}
-			return nil, errors.New("error getting policy from storage", err)
-		}
-		s.policyCache.Set(key, pol)
+	// retrieve policy
+	pol, err := s.retrievePolicy(ctx, repository, group, policyName, version)
+	if err != nil {
+		return nil, err
 	}
 
 	// if policy is locked, return an error
@@ -492,6 +545,26 @@ func (s *Service) buildRegoArgs(filename, regoPolicy, regoQuery, regoData string
 	}
 
 	return availableFuncs, nil
+}
+
+func (s *Service) retrievePolicy(ctx context.Context, repository, group, policyName, version string) (*storage.Policy, error) {
+	// retrieve policy from cache
+	key := s.queryCacheKey(repository, group, policyName, version)
+	p, ok := s.policyCache.Get(key)
+	if !ok {
+		// retrieve policy from storage
+		var err error
+		p, err = s.storage.Policy(ctx, repository, group, policyName, version)
+		if err != nil {
+			if errors.Is(errors.NotFound, err) {
+				return nil, err
+			}
+			return nil, errors.New("error getting policy from storage", err)
+		}
+		s.policyCache.Set(key, p)
+	}
+
+	return p, nil
 }
 
 func (s *Service) queryCacheKey(repository, group, policyName, version string) string {
