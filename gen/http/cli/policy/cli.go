@@ -23,14 +23,14 @@ import (
 //
 //	command (subcommand1|subcommand2|...)
 func UsageCommands() string {
-	return `policy (evaluate|validate|lock|unlock|export-bundle|list-policies|subscribe-for-policy-change)
+	return `policy (evaluate|validate|lock|unlock|export-bundle|import-bundle|policy-public-key|list-policies|subscribe-for-policy-change)
 health (liveness|readiness)
 `
 }
 
 // UsageExamples produces an example of a valid invocation of the CLI tool.
 func UsageExamples() string {
-	return os.Args[0] + ` policy evaluate --body "Fugiat id praesentium." --repository "policies" --group "example" --policy-name "example" --version "1.0" --evaluation-id "In quis nesciunt autem et." --ttl 1266330156392332621` + "\n" +
+	return os.Args[0] + ` policy evaluate --body "Et qui non quia aut error." --repository "policies" --group "example" --policy-name "example" --version "1.0" --evaluation-id "Sunt in et quia cum." --ttl 2518400637133283188` + "\n" +
 		os.Args[0] + ` health liveness` + "\n" +
 		""
 }
@@ -83,6 +83,16 @@ func ParseEndpoint(
 		policyExportBundlePolicyNameFlag = policyExportBundleFlags.String("policy-name", "REQUIRED", "Policy name.")
 		policyExportBundleVersionFlag    = policyExportBundleFlags.String("version", "REQUIRED", "Policy version.")
 
+		policyImportBundleFlags      = flag.NewFlagSet("import-bundle", flag.ExitOnError)
+		policyImportBundleLengthFlag = policyImportBundleFlags.String("length", "", "")
+		policyImportBundleStreamFlag = policyImportBundleFlags.String("stream", "REQUIRED", "path to file containing the streamed request body")
+
+		policyPolicyPublicKeyFlags          = flag.NewFlagSet("policy-public-key", flag.ExitOnError)
+		policyPolicyPublicKeyRepositoryFlag = policyPolicyPublicKeyFlags.String("repository", "REQUIRED", "Policy repository.")
+		policyPolicyPublicKeyGroupFlag      = policyPolicyPublicKeyFlags.String("group", "REQUIRED", "Policy group.")
+		policyPolicyPublicKeyPolicyNameFlag = policyPolicyPublicKeyFlags.String("policy-name", "REQUIRED", "Policy name.")
+		policyPolicyPublicKeyVersionFlag    = policyPolicyPublicKeyFlags.String("version", "REQUIRED", "Policy version.")
+
 		policyListPoliciesFlags          = flag.NewFlagSet("list-policies", flag.ExitOnError)
 		policyListPoliciesLockedFlag     = policyListPoliciesFlags.String("locked", "", "")
 		policyListPoliciesRegoFlag       = policyListPoliciesFlags.String("rego", "", "")
@@ -108,6 +118,8 @@ func ParseEndpoint(
 	policyLockFlags.Usage = policyLockUsage
 	policyUnlockFlags.Usage = policyUnlockUsage
 	policyExportBundleFlags.Usage = policyExportBundleUsage
+	policyImportBundleFlags.Usage = policyImportBundleUsage
+	policyPolicyPublicKeyFlags.Usage = policyPolicyPublicKeyUsage
 	policyListPoliciesFlags.Usage = policyListPoliciesUsage
 	policySubscribeForPolicyChangeFlags.Usage = policySubscribeForPolicyChangeUsage
 
@@ -166,6 +178,12 @@ func ParseEndpoint(
 			case "export-bundle":
 				epf = policyExportBundleFlags
 
+			case "import-bundle":
+				epf = policyImportBundleFlags
+
+			case "policy-public-key":
+				epf = policyPolicyPublicKeyFlags
+
 			case "list-policies":
 				epf = policyListPoliciesFlags
 
@@ -222,6 +240,15 @@ func ParseEndpoint(
 			case "export-bundle":
 				endpoint = c.ExportBundle()
 				data, err = policyc.BuildExportBundlePayload(*policyExportBundleRepositoryFlag, *policyExportBundleGroupFlag, *policyExportBundlePolicyNameFlag, *policyExportBundleVersionFlag)
+			case "import-bundle":
+				endpoint = c.ImportBundle()
+				data, err = policyc.BuildImportBundlePayload(*policyImportBundleLengthFlag)
+				if err == nil {
+					data, err = policyc.BuildImportBundleStreamPayload(data, *policyImportBundleStreamFlag)
+				}
+			case "policy-public-key":
+				endpoint = c.PolicyPublicKey()
+				data, err = policyc.BuildPolicyPublicKeyPayload(*policyPolicyPublicKeyRepositoryFlag, *policyPolicyPublicKeyGroupFlag, *policyPolicyPublicKeyPolicyNameFlag, *policyPolicyPublicKeyVersionFlag)
 			case "list-policies":
 				endpoint = c.ListPolicies()
 				data, err = policyc.BuildListPoliciesPayload(*policyListPoliciesLockedFlag, *policyListPoliciesRegoFlag, *policyListPoliciesDataFlag, *policyListPoliciesDataConfigFlag)
@@ -260,6 +287,8 @@ COMMAND:
     lock: Lock a policy so that it cannot be evaluated.
     unlock: Unlock a policy so it can be evaluated again.
     export-bundle: Export a signed policy bundle.
+    import-bundle: Import a signed policy bundle.
+    policy-public-key: PolicyPublicKey returns the public key in JWK format which must be used to verify a signed policy bundle.
     list-policies: List policies from storage with optional filters.
     subscribe-for-policy-change: Subscribe for policy change notifications by registering webhook callbacks which the policy service will call.
 
@@ -280,7 +309,7 @@ Evaluate executes a policy with the given 'data' as input.
     -ttl INT: 
 
 Example:
-    %[1]s policy evaluate --body "Fugiat id praesentium." --repository "policies" --group "example" --policy-name "example" --version "1.0" --evaluation-id "In quis nesciunt autem et." --ttl 1266330156392332621
+    %[1]s policy evaluate --body "Et qui non quia aut error." --repository "policies" --group "example" --policy-name "example" --version "1.0" --evaluation-id "Sunt in et quia cum." --ttl 2518400637133283188
 `, os.Args[0])
 }
 
@@ -297,7 +326,7 @@ Validate executes a policy with the given 'data' as input and validates the outp
     -ttl INT: 
 
 Example:
-    %[1]s policy validate --body "Ad quam dolores architecto itaque voluptatum." --repository "policies" --group "example" --policy-name "example" --version "1.0" --evaluation-id "Accusamus enim." --ttl 5827157130043234078
+    %[1]s policy validate --body "Inventore ipsum voluptatibus recusandae dolorum." --repository "policies" --group "example" --policy-name "example" --version "1.0" --evaluation-id "Recusandae est rerum corrupti quia." --ttl 6080810954711754682
 `, os.Args[0])
 }
 
@@ -311,7 +340,7 @@ Lock a policy so that it cannot be evaluated.
     -version STRING: Policy version.
 
 Example:
-    %[1]s policy lock --repository "Voluptate amet." --group "Aut et." --policy-name "Maiores et minus." --version "Veritatis quam qui nostrum eaque."
+    %[1]s policy lock --repository "Aut et." --group "Maiores et minus." --policy-name "Veritatis quam qui nostrum eaque." --version "Et dolores."
 `, os.Args[0])
 }
 
@@ -325,7 +354,7 @@ Unlock a policy so it can be evaluated again.
     -version STRING: Policy version.
 
 Example:
-    %[1]s policy unlock --repository "Vel dolores omnis molestiae tempora sed repellendus." --group "Error minus vel voluptate quasi." --policy-name "Debitis consectetur." --version "Vel sunt dolorem ea architecto iure."
+    %[1]s policy unlock --repository "Error minus vel voluptate quasi." --group "Debitis consectetur." --policy-name "Vel sunt dolorem ea architecto iure." --version "Similique architecto."
 `, os.Args[0])
 }
 
@@ -343,6 +372,32 @@ Example:
 `, os.Args[0])
 }
 
+func policyImportBundleUsage() {
+	fmt.Fprintf(os.Stderr, `%[1]s [flags] policy import-bundle -length INT -stream STRING
+
+Import a signed policy bundle.
+    -length INT: 
+    -stream STRING: path to file containing the streamed request body
+
+Example:
+    %[1]s policy import-bundle --length 5194411292341530474 --stream "goa.png"
+`, os.Args[0])
+}
+
+func policyPolicyPublicKeyUsage() {
+	fmt.Fprintf(os.Stderr, `%[1]s [flags] policy policy-public-key -repository STRING -group STRING -policy-name STRING -version STRING
+
+PolicyPublicKey returns the public key in JWK format which must be used to verify a signed policy bundle.
+    -repository STRING: Policy repository.
+    -group STRING: Policy group.
+    -policy-name STRING: Policy name.
+    -version STRING: Policy version.
+
+Example:
+    %[1]s policy policy-public-key --repository "policies" --group "example" --policy-name "returnDID" --version "1.0"
+`, os.Args[0])
+}
+
 func policyListPoliciesUsage() {
 	fmt.Fprintf(os.Stderr, `%[1]s [flags] policy list-policies -locked BOOL -rego BOOL -data BOOL -data-config BOOL
 
@@ -353,7 +408,7 @@ List policies from storage with optional filters.
     -data-config BOOL: 
 
 Example:
-    %[1]s policy list-policies --locked true --rego false --data true --data-config false
+    %[1]s policy list-policies --locked true --rego true --data true --data-config true
 `, os.Args[0])
 }
 
@@ -369,9 +424,9 @@ Subscribe for policy change notifications by registering webhook callbacks which
 
 Example:
     %[1]s policy subscribe-for-policy-change --body '{
-      "subscriber": "cch",
-      "webhook_url": "http://cruickshank.biz/waylon"
-   }' --repository "Praesentium ut reiciendis fugit." --group "Cupiditate provident laborum dolor dolorem modi." --policy-name "Officiis veritatis." --version "Rerum recusandae eligendi in id quibusdam quia."
+      "subscriber": "jdb",
+      "webhook_url": "http://conn.biz/stefanie_hayes"
+   }' --repository "In id quibusdam." --group "Deserunt officiis ipsa molestiae." --policy-name "Unde doloremque quae ullam." --version "Optio nobis iure rerum non."
 `, os.Args[0])
 }
 

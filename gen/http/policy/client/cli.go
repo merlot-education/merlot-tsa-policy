@@ -25,7 +25,7 @@ func BuildEvaluatePayload(policyEvaluateBody string, policyEvaluateRepository st
 	{
 		err = json.Unmarshal([]byte(policyEvaluateBody), &body)
 		if err != nil {
-			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "\"Fugiat id praesentium.\"")
+			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "\"Et qui non quia aut error.\"")
 		}
 	}
 	var repository string
@@ -84,7 +84,7 @@ func BuildValidatePayload(policyValidateBody string, policyValidateRepository st
 	{
 		err = json.Unmarshal([]byte(policyValidateBody), &body)
 		if err != nil {
-			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "\"Ad quam dolores architecto itaque voluptatum.\"")
+			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "\"Inventore ipsum voluptatibus recusandae dolorum.\"")
 		}
 	}
 	var repository string
@@ -219,6 +219,56 @@ func BuildExportBundlePayload(policyExportBundleRepository string, policyExportB
 	return v, nil
 }
 
+// BuildImportBundlePayload builds the payload for the policy ImportBundle
+// endpoint from CLI flags.
+func BuildImportBundlePayload(policyImportBundleLength string) (*policy.ImportBundlePayload, error) {
+	var err error
+	var length *int
+	{
+		if policyImportBundleLength != "" {
+			var v int64
+			v, err = strconv.ParseInt(policyImportBundleLength, 10, strconv.IntSize)
+			val := int(v)
+			length = &val
+			if err != nil {
+				return nil, fmt.Errorf("invalid value for length, must be INT")
+			}
+		}
+	}
+	v := &policy.ImportBundlePayload{}
+	v.Length = length
+
+	return v, nil
+}
+
+// BuildPolicyPublicKeyPayload builds the payload for the policy
+// PolicyPublicKey endpoint from CLI flags.
+func BuildPolicyPublicKeyPayload(policyPolicyPublicKeyRepository string, policyPolicyPublicKeyGroup string, policyPolicyPublicKeyPolicyName string, policyPolicyPublicKeyVersion string) (*policy.PolicyPublicKeyRequest, error) {
+	var repository string
+	{
+		repository = policyPolicyPublicKeyRepository
+	}
+	var group string
+	{
+		group = policyPolicyPublicKeyGroup
+	}
+	var policyName string
+	{
+		policyName = policyPolicyPublicKeyPolicyName
+	}
+	var version string
+	{
+		version = policyPolicyPublicKeyVersion
+	}
+	v := &policy.PolicyPublicKeyRequest{}
+	v.Repository = repository
+	v.Group = group
+	v.PolicyName = policyName
+	v.Version = version
+
+	return v, nil
+}
+
 // BuildListPoliciesPayload builds the payload for the policy ListPolicies
 // endpoint from CLI flags.
 func BuildListPoliciesPayload(policyListPoliciesLocked string, policyListPoliciesRego string, policyListPoliciesData string, policyListPoliciesDataConfig string) (*policy.PoliciesRequest, error) {
@@ -284,7 +334,7 @@ func BuildSubscribeForPolicyChangePayload(policySubscribeForPolicyChangeBody str
 	{
 		err = json.Unmarshal([]byte(policySubscribeForPolicyChangeBody), &body)
 		if err != nil {
-			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"subscriber\": \"cch\",\n      \"webhook_url\": \"http://cruickshank.biz/waylon\"\n   }'")
+			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"subscriber\": \"jdb\",\n      \"webhook_url\": \"http://conn.biz/stefanie_hayes\"\n   }'")
 		}
 		err = goa.MergeErrors(err, goa.ValidateFormat("body.webhook_url", body.WebhookURL, goa.FormatURI))
 		if utf8.RuneCountInString(body.Subscriber) < 3 {

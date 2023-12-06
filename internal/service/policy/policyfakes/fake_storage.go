@@ -102,6 +102,18 @@ type FakeStorage struct {
 		result1 *storage.Policy
 		result2 error
 	}
+	SavePolicyStub        func(context.Context, *storage.Policy) error
+	savePolicyMutex       sync.RWMutex
+	savePolicyArgsForCall []struct {
+		arg1 context.Context
+		arg2 *storage.Policy
+	}
+	savePolicyReturns struct {
+		result1 error
+	}
+	savePolicyReturnsOnCall map[int]struct {
+		result1 error
+	}
 	SetDataStub        func(context.Context, string, map[string]interface{}) error
 	setDataMutex       sync.RWMutex
 	setDataArgsForCall []struct {
@@ -585,6 +597,68 @@ func (fake *FakeStorage) PolicyReturnsOnCall(i int, result1 *storage.Policy, res
 	}{result1, result2}
 }
 
+func (fake *FakeStorage) SavePolicy(arg1 context.Context, arg2 *storage.Policy) error {
+	fake.savePolicyMutex.Lock()
+	ret, specificReturn := fake.savePolicyReturnsOnCall[len(fake.savePolicyArgsForCall)]
+	fake.savePolicyArgsForCall = append(fake.savePolicyArgsForCall, struct {
+		arg1 context.Context
+		arg2 *storage.Policy
+	}{arg1, arg2})
+	stub := fake.SavePolicyStub
+	fakeReturns := fake.savePolicyReturns
+	fake.recordInvocation("SavePolicy", []interface{}{arg1, arg2})
+	fake.savePolicyMutex.Unlock()
+	if stub != nil {
+		return stub(arg1, arg2)
+	}
+	if specificReturn {
+		return ret.result1
+	}
+	return fakeReturns.result1
+}
+
+func (fake *FakeStorage) SavePolicyCallCount() int {
+	fake.savePolicyMutex.RLock()
+	defer fake.savePolicyMutex.RUnlock()
+	return len(fake.savePolicyArgsForCall)
+}
+
+func (fake *FakeStorage) SavePolicyCalls(stub func(context.Context, *storage.Policy) error) {
+	fake.savePolicyMutex.Lock()
+	defer fake.savePolicyMutex.Unlock()
+	fake.SavePolicyStub = stub
+}
+
+func (fake *FakeStorage) SavePolicyArgsForCall(i int) (context.Context, *storage.Policy) {
+	fake.savePolicyMutex.RLock()
+	defer fake.savePolicyMutex.RUnlock()
+	argsForCall := fake.savePolicyArgsForCall[i]
+	return argsForCall.arg1, argsForCall.arg2
+}
+
+func (fake *FakeStorage) SavePolicyReturns(result1 error) {
+	fake.savePolicyMutex.Lock()
+	defer fake.savePolicyMutex.Unlock()
+	fake.SavePolicyStub = nil
+	fake.savePolicyReturns = struct {
+		result1 error
+	}{result1}
+}
+
+func (fake *FakeStorage) SavePolicyReturnsOnCall(i int, result1 error) {
+	fake.savePolicyMutex.Lock()
+	defer fake.savePolicyMutex.Unlock()
+	fake.SavePolicyStub = nil
+	if fake.savePolicyReturnsOnCall == nil {
+		fake.savePolicyReturnsOnCall = make(map[int]struct {
+			result1 error
+		})
+	}
+	fake.savePolicyReturnsOnCall[i] = struct {
+		result1 error
+	}{result1}
+}
+
 func (fake *FakeStorage) SetData(arg1 context.Context, arg2 string, arg3 map[string]interface{}) error {
 	fake.setDataMutex.Lock()
 	ret, specificReturn := fake.setDataReturnsOnCall[len(fake.setDataArgsForCall)]
@@ -733,6 +807,8 @@ func (fake *FakeStorage) Invocations() map[string][][]interface{} {
 	defer fake.listenPolicyDataChangesMutex.RUnlock()
 	fake.policyMutex.RLock()
 	defer fake.policyMutex.RUnlock()
+	fake.savePolicyMutex.RLock()
+	defer fake.savePolicyMutex.RUnlock()
 	fake.setDataMutex.RLock()
 	defer fake.setDataMutex.RUnlock()
 	fake.setPolicyLockMutex.RLock()

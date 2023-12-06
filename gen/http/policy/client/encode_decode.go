@@ -14,6 +14,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"os"
 	"strconv"
 
 	policy "gitlab.eclipse.org/eclipse/xfsc/tsa/policy/gen/policy"
@@ -426,6 +427,161 @@ func DecodeExportBundleResponse(decoder func(*http.Response) goahttp.Decoder, re
 		default:
 			body, _ := io.ReadAll(resp.Body)
 			return nil, goahttp.ErrInvalidResponse("policy", "ExportBundle", resp.StatusCode, string(body))
+		}
+	}
+}
+
+// BuildImportBundleRequest instantiates a HTTP request object with method and
+// path set to call the "policy" service "ImportBundle" endpoint
+func (c *Client) BuildImportBundleRequest(ctx context.Context, v any) (*http.Request, error) {
+	var (
+		body io.Reader
+	)
+	rd, ok := v.(*policy.ImportBundleRequestData)
+	if !ok {
+		return nil, goahttp.ErrInvalidType("policy", "ImportBundle", "policy.ImportBundleRequestData", v)
+	}
+	body = rd.Body
+	u := &url.URL{Scheme: c.scheme, Host: c.host, Path: ImportBundlePolicyPath()}
+	req, err := http.NewRequest("POST", u.String(), body)
+	if err != nil {
+		return nil, goahttp.ErrInvalidURL("policy", "ImportBundle", u.String(), err)
+	}
+	if ctx != nil {
+		req = req.WithContext(ctx)
+	}
+
+	return req, nil
+}
+
+// EncodeImportBundleRequest returns an encoder for requests sent to the policy
+// ImportBundle server.
+func EncodeImportBundleRequest(encoder func(*http.Request) goahttp.Encoder) func(*http.Request, any) error {
+	return func(req *http.Request, v any) error {
+		data, ok := v.(*policy.ImportBundleRequestData)
+		if !ok {
+			return goahttp.ErrInvalidType("policy", "ImportBundle", "*policy.ImportBundleRequestData", v)
+		}
+		p := data.Payload
+		if p.Length != nil {
+			head := *p.Length
+			headStr := strconv.Itoa(head)
+			req.Header.Set("Content-Length", headStr)
+		}
+		return nil
+	}
+}
+
+// DecodeImportBundleResponse returns a decoder for responses returned by the
+// policy ImportBundle endpoint. restoreBody controls whether the response body
+// should be restored after having been read.
+func DecodeImportBundleResponse(decoder func(*http.Response) goahttp.Decoder, restoreBody bool) func(*http.Response) (any, error) {
+	return func(resp *http.Response) (any, error) {
+		if restoreBody {
+			b, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return nil, err
+			}
+			resp.Body = io.NopCloser(bytes.NewBuffer(b))
+			defer func() {
+				resp.Body = io.NopCloser(bytes.NewBuffer(b))
+			}()
+		} else {
+			defer resp.Body.Close()
+		}
+		switch resp.StatusCode {
+		case http.StatusOK:
+			var (
+				body any
+				err  error
+			)
+			err = decoder(resp).Decode(&body)
+			if err != nil {
+				return nil, goahttp.ErrDecodingError("policy", "ImportBundle", err)
+			}
+			return body, nil
+		default:
+			body, _ := io.ReadAll(resp.Body)
+			return nil, goahttp.ErrInvalidResponse("policy", "ImportBundle", resp.StatusCode, string(body))
+		}
+	}
+}
+
+// // BuildImportBundleStreamPayload creates a streaming endpoint request payload
+// from the method payload and the path to the file to be streamed
+func BuildImportBundleStreamPayload(payload any, fpath string) (*policy.ImportBundleRequestData, error) {
+	f, err := os.Open(fpath)
+	if err != nil {
+		return nil, err
+	}
+	return &policy.ImportBundleRequestData{
+		Payload: payload.(*policy.ImportBundlePayload),
+		Body:    f,
+	}, nil
+}
+
+// BuildPolicyPublicKeyRequest instantiates a HTTP request object with method
+// and path set to call the "policy" service "PolicyPublicKey" endpoint
+func (c *Client) BuildPolicyPublicKeyRequest(ctx context.Context, v any) (*http.Request, error) {
+	var (
+		repository string
+		group      string
+		policyName string
+		version    string
+	)
+	{
+		p, ok := v.(*policy.PolicyPublicKeyRequest)
+		if !ok {
+			return nil, goahttp.ErrInvalidType("policy", "PolicyPublicKey", "*policy.PolicyPublicKeyRequest", v)
+		}
+		repository = p.Repository
+		group = p.Group
+		policyName = p.PolicyName
+		version = p.Version
+	}
+	u := &url.URL{Scheme: c.scheme, Host: c.host, Path: PolicyPublicKeyPolicyPath(repository, group, policyName, version)}
+	req, err := http.NewRequest("GET", u.String(), nil)
+	if err != nil {
+		return nil, goahttp.ErrInvalidURL("policy", "PolicyPublicKey", u.String(), err)
+	}
+	if ctx != nil {
+		req = req.WithContext(ctx)
+	}
+
+	return req, nil
+}
+
+// DecodePolicyPublicKeyResponse returns a decoder for responses returned by
+// the policy PolicyPublicKey endpoint. restoreBody controls whether the
+// response body should be restored after having been read.
+func DecodePolicyPublicKeyResponse(decoder func(*http.Response) goahttp.Decoder, restoreBody bool) func(*http.Response) (any, error) {
+	return func(resp *http.Response) (any, error) {
+		if restoreBody {
+			b, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return nil, err
+			}
+			resp.Body = io.NopCloser(bytes.NewBuffer(b))
+			defer func() {
+				resp.Body = io.NopCloser(bytes.NewBuffer(b))
+			}()
+		} else {
+			defer resp.Body.Close()
+		}
+		switch resp.StatusCode {
+		case http.StatusOK:
+			var (
+				body any
+				err  error
+			)
+			err = decoder(resp).Decode(&body)
+			if err != nil {
+				return nil, goahttp.ErrDecodingError("policy", "PolicyPublicKey", err)
+			}
+			return body, nil
+		default:
+			body, _ := io.ReadAll(resp.Body)
+			return nil, goahttp.ErrInvalidResponse("policy", "PolicyPublicKey", resp.StatusCode, string(body))
 		}
 	}
 }

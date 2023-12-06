@@ -21,18 +21,22 @@ type Client struct {
 	LockEndpoint                     goa.Endpoint
 	UnlockEndpoint                   goa.Endpoint
 	ExportBundleEndpoint             goa.Endpoint
+	ImportBundleEndpoint             goa.Endpoint
+	PolicyPublicKeyEndpoint          goa.Endpoint
 	ListPoliciesEndpoint             goa.Endpoint
 	SubscribeForPolicyChangeEndpoint goa.Endpoint
 }
 
 // NewClient initializes a "policy" service client given the endpoints.
-func NewClient(evaluate, validate, lock, unlock, exportBundle, listPolicies, subscribeForPolicyChange goa.Endpoint) *Client {
+func NewClient(evaluate, validate, lock, unlock, exportBundle, importBundle, policyPublicKey, listPolicies, subscribeForPolicyChange goa.Endpoint) *Client {
 	return &Client{
 		EvaluateEndpoint:                 evaluate,
 		ValidateEndpoint:                 validate,
 		LockEndpoint:                     lock,
 		UnlockEndpoint:                   unlock,
 		ExportBundleEndpoint:             exportBundle,
+		ImportBundleEndpoint:             importBundle,
+		PolicyPublicKeyEndpoint:          policyPublicKey,
 		ListPoliciesEndpoint:             listPolicies,
 		SubscribeForPolicyChangeEndpoint: subscribeForPolicyChange,
 	}
@@ -79,6 +83,26 @@ func (c *Client) ExportBundle(ctx context.Context, p *ExportBundleRequest) (res 
 	}
 	o := ires.(*ExportBundleResponseData)
 	return o.Result, o.Body, nil
+}
+
+// ImportBundle calls the "ImportBundle" endpoint of the "policy" service.
+func (c *Client) ImportBundle(ctx context.Context, p *ImportBundlePayload, req io.ReadCloser) (res any, err error) {
+	var ires any
+	ires, err = c.ImportBundleEndpoint(ctx, &ImportBundleRequestData{Payload: p, Body: req})
+	if err != nil {
+		return
+	}
+	return ires.(any), nil
+}
+
+// PolicyPublicKey calls the "PolicyPublicKey" endpoint of the "policy" service.
+func (c *Client) PolicyPublicKey(ctx context.Context, p *PolicyPublicKeyRequest) (res any, err error) {
+	var ires any
+	ires, err = c.PolicyPublicKeyEndpoint(ctx, p)
+	if err != nil {
+		return
+	}
+	return ires.(any), nil
 }
 
 // ListPolicies calls the "ListPolicies" endpoint of the "policy" service.

@@ -132,6 +132,26 @@ func NewExportBundleRequest(repository string, group string, policyName string, 
 	return v
 }
 
+// NewImportBundlePayload builds a policy service ImportBundle endpoint payload.
+func NewImportBundlePayload(length *int) *policy.ImportBundlePayload {
+	v := &policy.ImportBundlePayload{}
+	v.Length = length
+
+	return v
+}
+
+// NewPolicyPublicKeyRequest builds a policy service PolicyPublicKey endpoint
+// payload.
+func NewPolicyPublicKeyRequest(repository string, group string, policyName string, version string) *policy.PolicyPublicKeyRequest {
+	v := &policy.PolicyPublicKeyRequest{}
+	v.Repository = repository
+	v.Group = group
+	v.PolicyName = policyName
+	v.Version = version
+
+	return v
+}
+
 // NewListPoliciesPoliciesRequest builds a policy service ListPolicies endpoint
 // payload.
 func NewListPoliciesPoliciesRequest(locked *bool, rego *bool, data *bool, dataConfig *bool) *policy.PoliciesRequest {

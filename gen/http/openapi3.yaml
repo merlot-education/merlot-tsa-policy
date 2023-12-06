@@ -21,9 +21,9 @@ paths:
                             schema:
                                 $ref: '#/components/schemas/HealthResponse'
                             example:
-                                service: Nobis iure rerum non.
-                                status: Sapiente laborum.
-                                version: Dolorem aut accusantium.
+                                service: Dolor culpa.
+                                status: Voluptatem culpa voluptates sed ea.
+                                version: Ad omnis possimus.
     /policy/{repository}/{group}/{policyName}/{version}/evaluation:
         get:
             tags:
@@ -95,9 +95,9 @@ paths:
                         schema:
                             type: string
                             description: Input data passed to the policy execution runtime.
-                            example: Qui delectus.
+                            example: Quos autem aut in est.
                             format: binary
-                        example: Et eligendi molestiae.
+                        example: Praesentium rerum dignissimos aliquam cumque.
             responses:
                 "200":
                     description: OK response.
@@ -107,16 +107,16 @@ paths:
                             schema:
                                 type: string
                                 description: ETag contains unique identifier of the policy evaluation and can be used to later retrieve the results from Cache.
-                                example: Nulla eligendi labore.
-                            example: Tempore vero illo deleniti quidem omnis vitae.
+                                example: Reprehenderit est.
+                            example: Praesentium sed quibusdam repudiandae.
                     content:
                         application/json:
                             schema:
                                 type: string
                                 description: Arbitrary JSON response.
-                                example: Quia blanditiis.
+                                example: Iusto porro rerum qui.
                                 format: binary
-                            example: Illum iste repellat sequi libero.
+                            example: Est et dolores unde.
         post:
             tags:
                 - policy
@@ -187,9 +187,9 @@ paths:
                         schema:
                             type: string
                             description: Input data passed to the policy execution runtime.
-                            example: Qui delectus.
+                            example: Quos autem aut in est.
                             format: binary
-                        example: Vitae praesentium ratione enim nihil sit explicabo.
+                        example: Nobis in voluptas eius cupiditate.
             responses:
                 "200":
                     description: OK response.
@@ -199,16 +199,16 @@ paths:
                             schema:
                                 type: string
                                 description: ETag contains unique identifier of the policy evaluation and can be used to later retrieve the results from Cache.
-                                example: Quia dolor rem eius molestias.
-                            example: Voluptas eum eaque sit eum similique est.
+                                example: Ipsam ipsa quod eveniet velit voluptatem eligendi.
+                            example: Provident sint.
                     content:
                         application/json:
                             schema:
                                 type: string
                                 description: Arbitrary JSON response.
-                                example: Quia blanditiis.
+                                example: Iusto porro rerum qui.
                                 format: binary
-                            example: Praesentium rerum dignissimos aliquam cumque.
+                            example: Natus voluptas enim nulla aut aut et.
     /policy/{repository}/{group}/{policyName}/{version}/evaluation/did.json:
         get:
             tags:
@@ -280,9 +280,9 @@ paths:
                         schema:
                             type: string
                             description: Input data passed to the policy execution runtime.
-                            example: Qui delectus.
+                            example: Quos autem aut in est.
                             format: binary
-                        example: Mollitia repellendus consequuntur.
+                        example: Illum iste repellat sequi libero.
             responses:
                 "200":
                     description: OK response.
@@ -292,16 +292,16 @@ paths:
                             schema:
                                 type: string
                                 description: ETag contains unique identifier of the policy evaluation and can be used to later retrieve the results from Cache.
-                                example: Eveniet excepturi repellendus similique in mollitia voluptas.
-                            example: Harum non id sint iusto quaerat.
+                                example: Vitae praesentium ratione enim nihil sit explicabo.
+                            example: Libero voluptas.
                     content:
                         application/json:
                             schema:
                                 type: string
                                 description: Arbitrary JSON response.
-                                example: Quia blanditiis.
+                                example: Iusto porro rerum qui.
                                 format: binary
-                            example: Nisi illum nulla sit in.
+                            example: Voluptas eum eaque sit eum similique est.
     /policy/{repository}/{group}/{policyName}/{version}/export:
         get:
             tags:
@@ -355,28 +355,82 @@ paths:
                             schema:
                                 type: string
                                 description: Content-Disposition response header containing the name of the file.
-                                example: In voluptatem provident deleniti repellendus officia ut.
-                            example: Id quo consequatur fuga laborum enim.
+                                example: Nisi praesentium aut aperiam ratione enim qui.
+                            example: Dolores cum quo tempore alias neque exercitationem.
                         content-length:
                             description: Content-Length response header.
                             schema:
                                 type: integer
                                 description: Content-Length response header.
-                                example: 1826034125285066966
+                                example: 4615959331925552278
                                 format: int64
-                            example: 3838929971011479319
+                            example: 2965301537693291678
                         content-type:
                             description: Content-Type response header.
                             schema:
                                 type: string
                                 description: Content-Type response header.
-                                example: Nemo tenetur.
-                            example: Ut aliquid pariatur et quo error.
+                                example: Rerum et.
+                            example: Ex autem dolor voluptatem.
                     content:
                         application/json:
                             schema:
                                 type: string
                                 format: binary
+    /policy/{repository}/{group}/{policyName}/{version}/key:
+        get:
+            tags:
+                - policy
+            summary: PolicyPublicKey policy
+            description: PolicyPublicKey returns the public key in JWK format which must be used to verify a signed policy bundle.
+            operationId: policy#PolicyPublicKey
+            parameters:
+                - name: repository
+                  in: path
+                  description: Policy repository.
+                  required: true
+                  schema:
+                    type: string
+                    description: Policy repository.
+                    example: policies
+                  example: policies
+                - name: group
+                  in: path
+                  description: Policy group.
+                  required: true
+                  schema:
+                    type: string
+                    description: Policy group.
+                    example: example
+                  example: example
+                - name: policyName
+                  in: path
+                  description: Policy name.
+                  required: true
+                  schema:
+                    type: string
+                    description: Policy name.
+                    example: returnDID
+                  example: returnDID
+                - name: version
+                  in: path
+                  description: Policy version.
+                  required: true
+                  schema:
+                    type: string
+                    description: Policy version.
+                    example: "1.0"
+                  example: "1.0"
+            responses:
+                "200":
+                    description: OK response.
+                    content:
+                        application/json:
+                            schema:
+                                type: string
+                                example: Nam atque.
+                                format: binary
+                            example: Recusandae hic id et aut.
     /policy/{repository}/{group}/{policyName}/{version}/lock:
         delete:
             tags:
@@ -392,8 +446,8 @@ paths:
                   schema:
                     type: string
                     description: Policy repository.
-                    example: Est ipsa veritatis hic.
-                  example: Aperiam nihil sint nostrum.
+                    example: Laboriosam dolorum.
+                  example: Ut aliquid pariatur et quo error.
                 - name: group
                   in: path
                   description: Policy group.
@@ -401,8 +455,8 @@ paths:
                   schema:
                     type: string
                     description: Policy group.
-                    example: Autem aut et recusandae et.
-                  example: Impedit laudantium accusamus ut explicabo est.
+                    example: Quia impedit.
+                  example: In voluptatem provident deleniti repellendus officia ut.
                 - name: policyName
                   in: path
                   description: Policy name.
@@ -410,8 +464,8 @@ paths:
                   schema:
                     type: string
                     description: Policy name.
-                    example: Qui ut amet autem.
-                  example: Consequatur ut ullam.
+                    example: Illum ab mollitia impedit.
+                  example: Id quo consequatur fuga laborum enim.
                 - name: version
                   in: path
                   description: Policy version.
@@ -419,8 +473,8 @@ paths:
                   schema:
                     type: string
                     description: Policy version.
-                    example: Incidunt enim.
-                  example: Ullam occaecati.
+                    example: Voluptas dolores sunt dolorem perspiciatis.
+                  example: Repellat aut reiciendis.
             responses:
                 "200":
                     description: OK response.
@@ -438,8 +492,8 @@ paths:
                   schema:
                     type: string
                     description: Policy repository.
-                    example: Porro earum error quia provident non.
-                  example: Molestiae maxime.
+                    example: Aperiam nihil sint nostrum.
+                  example: Autem aut et recusandae et.
                 - name: group
                   in: path
                   description: Policy group.
@@ -447,8 +501,8 @@ paths:
                   schema:
                     type: string
                     description: Policy group.
-                    example: Ut non molestiae veniam aut.
-                  example: Reiciendis ut perferendis fuga quia.
+                    example: Impedit laudantium accusamus ut explicabo est.
+                  example: Qui ut amet autem.
                 - name: policyName
                   in: path
                   description: Policy name.
@@ -456,8 +510,8 @@ paths:
                   schema:
                     type: string
                     description: Policy name.
-                    example: Et quis fugit ipsam tempora consequatur.
-                  example: Officiis natus illo ex in enim in.
+                    example: Consequatur ut ullam.
+                  example: Incidunt enim.
                 - name: version
                   in: path
                   description: Policy version.
@@ -465,8 +519,8 @@ paths:
                   schema:
                     type: string
                     description: Policy version.
-                    example: Sed excepturi in aut vero.
-                  example: Non et ut nihil voluptate consequuntur sunt.
+                    example: Ullam occaecati.
+                  example: Nemo tenetur.
             responses:
                 "200":
                     description: OK response.
@@ -485,8 +539,8 @@ paths:
                   schema:
                     type: string
                     description: Policy repository.
-                    example: Reiciendis fugiat.
-                  example: Et culpa eaque.
+                    example: Possimus ea dolor debitis iure et.
+                  example: At molestiae ducimus magni est est.
                 - name: group
                   in: path
                   description: Policy group.
@@ -494,8 +548,8 @@ paths:
                   schema:
                     type: string
                     description: Policy group.
-                    example: Quos ex autem dolor voluptatem reiciendis assumenda.
-                  example: Numquam nisi praesentium.
+                    example: Hic qui cupiditate ut.
+                  example: Ea neque ab quia aspernatur.
                 - name: policyName
                   in: path
                   description: Policy name.
@@ -503,8 +557,8 @@ paths:
                   schema:
                     type: string
                     description: Policy name.
-                    example: Aperiam ratione enim qui omnis nihil dolorem.
-                  example: Non consequatur ad dolores cum.
+                    example: A recusandae nihil.
+                  example: Inventore quia quam commodi.
                 - name: version
                   in: path
                   description: Policy version.
@@ -512,8 +566,8 @@ paths:
                   schema:
                     type: string
                     description: Policy version.
-                    example: Tempore alias neque.
-                  example: Vero rerum ipsum.
+                    example: Sed enim est quaerat architecto.
+                  example: Officiis eius dolorem sed cum.
             requestBody:
                 required: true
                 content:
@@ -521,8 +575,8 @@ paths:
                         schema:
                             $ref: '#/components/schemas/SubscribeForPolicyChangeRequestBody'
                         example:
-                            subscriber: cch
-                            webhook_url: http://cruickshank.biz/waylon
+                            subscriber: jdb
+                            webhook_url: http://conn.biz/stefanie_hayes
             responses:
                 "200":
                     description: OK response.
@@ -530,9 +584,9 @@ paths:
                         application/json:
                             schema:
                                 type: string
-                                example: Aut doloremque beatae non sed nihil perferendis.
+                                example: Sed neque est dolore.
                                 format: binary
-                            example: Eligendi ad cum deleniti corrupti voluptatum optio.
+                            example: Ratione in quia.
     /policy/{repository}/{group}/{policyName}/{version}/validation:
         get:
             tags:
@@ -604,9 +658,9 @@ paths:
                         schema:
                             type: string
                             description: Input data passed to the policy execution runtime.
-                            example: Qui et sit maiores architecto alias.
+                            example: Quis qui perferendis provident corrupti rerum exercitationem.
                             format: binary
-                        example: Ipsam ipsa quod eveniet velit voluptatem eligendi.
+                        example: Cupiditate excepturi illum porro mollitia ducimus assumenda.
             responses:
                 "200":
                     description: OK response.
@@ -616,16 +670,16 @@ paths:
                             schema:
                                 type: string
                                 description: ETag contains unique identifier of the policy evaluation and can be used to later retrieve the results from Cache.
-                                example: Tenetur cumque itaque.
-                            example: Natus voluptas enim nulla aut aut et.
+                                example: Porro earum error quia provident non.
+                            example: Ut non molestiae veniam aut.
                     content:
                         application/json:
                             schema:
                                 type: string
                                 description: Arbitrary JSON response.
-                                example: Nesciunt labore voluptatibus.
+                                example: Est debitis.
                                 format: binary
-                            example: Dolores iusto corporis quos recusandae.
+                            example: Reiciendis ut perferendis fuga quia.
         post:
             tags:
                 - policy
@@ -696,9 +750,9 @@ paths:
                         schema:
                             type: string
                             description: Input data passed to the policy execution runtime.
-                            example: Qui et sit maiores architecto alias.
+                            example: Quis qui perferendis provident corrupti rerum exercitationem.
                             format: binary
-                        example: Earum esse.
+                        example: Et quis fugit ipsam tempora consequatur.
             responses:
                 "200":
                     description: OK response.
@@ -708,16 +762,16 @@ paths:
                             schema:
                                 type: string
                                 description: ETag contains unique identifier of the policy evaluation and can be used to later retrieve the results from Cache.
-                                example: Fugit non incidunt ut quidem doloremque.
-                            example: Dolore voluptatem.
+                                example: Officiis natus illo ex in enim in.
+                            example: Non et ut nihil voluptate consequuntur sunt.
                     content:
                         application/json:
                             schema:
                                 type: string
                                 description: Arbitrary JSON response.
-                                example: Nesciunt labore voluptatibus.
+                                example: Est debitis.
                                 format: binary
-                            example: Cupiditate excepturi illum porro mollitia ducimus assumenda.
+                            example: Est ipsa veritatis hic.
     /policy/{repository}/{group}/{policyName}/{version}/validation/did.json:
         get:
             tags:
@@ -789,9 +843,9 @@ paths:
                         schema:
                             type: string
                             description: Input data passed to the policy execution runtime.
-                            example: Qui et sit maiores architecto alias.
+                            example: Quis qui perferendis provident corrupti rerum exercitationem.
                             format: binary
-                        example: Reprehenderit est.
+                        example: Dolores iusto corporis quos recusandae.
             responses:
                 "200":
                     description: OK response.
@@ -801,16 +855,60 @@ paths:
                             schema:
                                 type: string
                                 description: ETag contains unique identifier of the policy evaluation and can be used to later retrieve the results from Cache.
-                                example: Esse est aspernatur quo adipisci numquam excepturi.
-                            example: Est et dolores unde.
+                                example: Earum esse.
+                            example: Nam voluptate placeat fuga ex vero corporis.
                     content:
                         application/json:
                             schema:
                                 type: string
                                 description: Arbitrary JSON response.
-                                example: Nesciunt labore voluptatibus.
+                                example: Est debitis.
                                 format: binary
-                            example: Nobis in voluptas eius cupiditate.
+                            example: Dolore voluptatem.
+    /policy/import:
+        post:
+            tags:
+                - policy
+            summary: ImportBundle policy
+            description: Import a signed policy bundle.
+            operationId: policy#ImportBundle
+            parameters:
+                - name: Content-Length
+                  in: header
+                  allowEmptyValue: true
+                  schema:
+                    type: integer
+                    example: 8124149143823621330
+                    format: int64
+                  example: 7060386429716673067
+            responses:
+                "200":
+                    description: OK response.
+                    content:
+                        application/json:
+                            schema:
+                                type: string
+                                example: Voluptas qui quisquam magnam aut.
+                                format: binary
+                            example: Et eligendi ad cum deleniti.
+                "403":
+                    description: Forbidden response.
+                    content:
+                        application/json:
+                            schema:
+                                type: string
+                                example: Consequatur totam reiciendis molestiae itaque qui.
+                                format: binary
+                            example: Voluptatum optio ut.
+                "500":
+                    description: Internal Server Error response.
+                    content:
+                        application/json:
+                            schema:
+                                type: string
+                                example: Illo temporibus.
+                                format: binary
+                            example: Beatae molestiae ea iste laudantium quae.
     /readiness:
         get:
             tags:
@@ -825,9 +923,9 @@ paths:
                             schema:
                                 $ref: '#/components/schemas/HealthResponse'
                             example:
-                                service: Dolor culpa.
-                                status: Voluptatem culpa voluptates sed ea.
-                                version: Ad omnis possimus.
+                                service: Cupiditate qui quo.
+                                status: Dignissimos enim.
+                                version: Error et sunt maxime aperiam.
     /v1/policies:
         get:
             tags:
@@ -852,8 +950,8 @@ paths:
                   schema:
                     type: boolean
                     description: Include policy source code in results (optional).
-                    example: true
-                  example: false
+                    example: false
+                  example: true
                 - name: data
                   in: query
                   description: 'Include policy static data in results (optional). '
@@ -861,7 +959,7 @@ paths:
                   schema:
                     type: boolean
                     description: 'Include policy static data in results (optional). '
-                    example: false
+                    example: true
                   example: true
                 - name: dataConfig
                   in: query
@@ -881,42 +979,24 @@ paths:
                                 $ref: '#/components/schemas/PoliciesResult'
                             example:
                                 policies:
-                                    - data: Ut quibusdam.
-                                      dataConfig: Eaque fugiat et.
-                                      group: Dolore ducimus accusamus et voluptatibus cupiditate.
-                                      lastUpdate: 1036142546592891419
-                                      locked: true
-                                      policyName: Quae et et unde.
-                                      rego: Nisi vitae iure fugiat sed sit dolores.
-                                      repository: Aperiam aut odio dolorum.
-                                      version: Repellat inventore ut doloremque recusandae earum et.
-                                    - data: Ut quibusdam.
-                                      dataConfig: Eaque fugiat et.
-                                      group: Dolore ducimus accusamus et voluptatibus cupiditate.
-                                      lastUpdate: 1036142546592891419
-                                      locked: true
-                                      policyName: Quae et et unde.
-                                      rego: Nisi vitae iure fugiat sed sit dolores.
-                                      repository: Aperiam aut odio dolorum.
-                                      version: Repellat inventore ut doloremque recusandae earum et.
-                                    - data: Ut quibusdam.
-                                      dataConfig: Eaque fugiat et.
-                                      group: Dolore ducimus accusamus et voluptatibus cupiditate.
-                                      lastUpdate: 1036142546592891419
-                                      locked: true
-                                      policyName: Quae et et unde.
-                                      rego: Nisi vitae iure fugiat sed sit dolores.
-                                      repository: Aperiam aut odio dolorum.
-                                      version: Repellat inventore ut doloremque recusandae earum et.
-                                    - data: Ut quibusdam.
-                                      dataConfig: Eaque fugiat et.
-                                      group: Dolore ducimus accusamus et voluptatibus cupiditate.
-                                      lastUpdate: 1036142546592891419
-                                      locked: true
-                                      policyName: Quae et et unde.
-                                      rego: Nisi vitae iure fugiat sed sit dolores.
-                                      repository: Aperiam aut odio dolorum.
-                                      version: Repellat inventore ut doloremque recusandae earum et.
+                                    - data: Omnis dolores totam voluptatem rerum.
+                                      dataConfig: Architecto et enim omnis.
+                                      group: Et eaque.
+                                      lastUpdate: 7215261286821925125
+                                      locked: false
+                                      policyName: Sit dolores iusto ut.
+                                      rego: Non quo ut molestias rerum sunt.
+                                      repository: Vitae iure fugiat.
+                                      version: Et mollitia.
+                                    - data: Omnis dolores totam voluptatem rerum.
+                                      dataConfig: Architecto et enim omnis.
+                                      group: Et eaque.
+                                      lastUpdate: 7215261286821925125
+                                      locked: false
+                                      policyName: Sit dolores iusto ut.
+                                      rego: Non quo ut molestias rerum sunt.
+                                      repository: Vitae iure fugiat.
+                                      version: Et mollitia.
 components:
     schemas:
         HealthResponse:
@@ -925,19 +1005,19 @@ components:
                 service:
                     type: string
                     description: Service name.
-                    example: Id distinctio perspiciatis.
+                    example: Harum non id sint iusto quaerat.
                 status:
                     type: string
                     description: Status message.
-                    example: Et in dolorem.
+                    example: Nisi illum nulla sit in.
                 version:
                     type: string
                     description: Service runtime version.
-                    example: Consequatur cupiditate aut consequuntur in animi.
+                    example: Et eligendi molestiae.
             example:
-                service: Aspernatur ut ab nam quis repellendus.
-                status: Est repudiandae nihil hic quaerat.
-                version: Blanditiis quia.
+                service: Nulla eligendi labore.
+                status: Et non similique quo qui saepe.
+                version: Tempore vero illo deleniti quidem omnis vitae.
             required:
                 - service
                 - status
@@ -951,53 +1031,71 @@ components:
                         $ref: '#/components/schemas/Policy'
                     description: JSON array of policies.
                     example:
-                        - data: Ut quibusdam.
-                          dataConfig: Eaque fugiat et.
-                          group: Dolore ducimus accusamus et voluptatibus cupiditate.
-                          lastUpdate: 1036142546592891419
-                          locked: true
-                          policyName: Quae et et unde.
-                          rego: Nisi vitae iure fugiat sed sit dolores.
-                          repository: Aperiam aut odio dolorum.
-                          version: Repellat inventore ut doloremque recusandae earum et.
-                        - data: Ut quibusdam.
-                          dataConfig: Eaque fugiat et.
-                          group: Dolore ducimus accusamus et voluptatibus cupiditate.
-                          lastUpdate: 1036142546592891419
-                          locked: true
-                          policyName: Quae et et unde.
-                          rego: Nisi vitae iure fugiat sed sit dolores.
-                          repository: Aperiam aut odio dolorum.
-                          version: Repellat inventore ut doloremque recusandae earum et.
-                        - data: Ut quibusdam.
-                          dataConfig: Eaque fugiat et.
-                          group: Dolore ducimus accusamus et voluptatibus cupiditate.
-                          lastUpdate: 1036142546592891419
-                          locked: true
-                          policyName: Quae et et unde.
-                          rego: Nisi vitae iure fugiat sed sit dolores.
-                          repository: Aperiam aut odio dolorum.
-                          version: Repellat inventore ut doloremque recusandae earum et.
+                        - data: Omnis dolores totam voluptatem rerum.
+                          dataConfig: Architecto et enim omnis.
+                          group: Et eaque.
+                          lastUpdate: 7215261286821925125
+                          locked: false
+                          policyName: Sit dolores iusto ut.
+                          rego: Non quo ut molestias rerum sunt.
+                          repository: Vitae iure fugiat.
+                          version: Et mollitia.
+                        - data: Omnis dolores totam voluptatem rerum.
+                          dataConfig: Architecto et enim omnis.
+                          group: Et eaque.
+                          lastUpdate: 7215261286821925125
+                          locked: false
+                          policyName: Sit dolores iusto ut.
+                          rego: Non quo ut molestias rerum sunt.
+                          repository: Vitae iure fugiat.
+                          version: Et mollitia.
+                        - data: Omnis dolores totam voluptatem rerum.
+                          dataConfig: Architecto et enim omnis.
+                          group: Et eaque.
+                          lastUpdate: 7215261286821925125
+                          locked: false
+                          policyName: Sit dolores iusto ut.
+                          rego: Non quo ut molestias rerum sunt.
+                          repository: Vitae iure fugiat.
+                          version: Et mollitia.
             example:
                 policies:
-                    - data: Ut quibusdam.
-                      dataConfig: Eaque fugiat et.
-                      group: Dolore ducimus accusamus et voluptatibus cupiditate.
-                      lastUpdate: 1036142546592891419
-                      locked: true
-                      policyName: Quae et et unde.
-                      rego: Nisi vitae iure fugiat sed sit dolores.
-                      repository: Aperiam aut odio dolorum.
-                      version: Repellat inventore ut doloremque recusandae earum et.
-                    - data: Ut quibusdam.
-                      dataConfig: Eaque fugiat et.
-                      group: Dolore ducimus accusamus et voluptatibus cupiditate.
-                      lastUpdate: 1036142546592891419
-                      locked: true
-                      policyName: Quae et et unde.
-                      rego: Nisi vitae iure fugiat sed sit dolores.
-                      repository: Aperiam aut odio dolorum.
-                      version: Repellat inventore ut doloremque recusandae earum et.
+                    - data: Omnis dolores totam voluptatem rerum.
+                      dataConfig: Architecto et enim omnis.
+                      group: Et eaque.
+                      lastUpdate: 7215261286821925125
+                      locked: false
+                      policyName: Sit dolores iusto ut.
+                      rego: Non quo ut molestias rerum sunt.
+                      repository: Vitae iure fugiat.
+                      version: Et mollitia.
+                    - data: Omnis dolores totam voluptatem rerum.
+                      dataConfig: Architecto et enim omnis.
+                      group: Et eaque.
+                      lastUpdate: 7215261286821925125
+                      locked: false
+                      policyName: Sit dolores iusto ut.
+                      rego: Non quo ut molestias rerum sunt.
+                      repository: Vitae iure fugiat.
+                      version: Et mollitia.
+                    - data: Omnis dolores totam voluptatem rerum.
+                      dataConfig: Architecto et enim omnis.
+                      group: Et eaque.
+                      lastUpdate: 7215261286821925125
+                      locked: false
+                      policyName: Sit dolores iusto ut.
+                      rego: Non quo ut molestias rerum sunt.
+                      repository: Vitae iure fugiat.
+                      version: Et mollitia.
+                    - data: Omnis dolores totam voluptatem rerum.
+                      dataConfig: Architecto et enim omnis.
+                      group: Et eaque.
+                      lastUpdate: 7215261286821925125
+                      locked: false
+                      policyName: Sit dolores iusto ut.
+                      rego: Non quo ut molestias rerum sunt.
+                      repository: Vitae iure fugiat.
+                      version: Et mollitia.
             required:
                 - policies
         Policy:
@@ -1006,50 +1104,50 @@ components:
                 data:
                     type: string
                     description: Policy static data.
-                    example: Voluptas qui quisquam magnam aut.
+                    example: Aut quis ducimus est quisquam sapiente.
                 dataConfig:
                     type: string
                     description: Policy static data optional configuration.
-                    example: Consequatur totam reiciendis molestiae itaque qui.
+                    example: Dignissimos molestiae ullam totam nihil.
                 group:
                     type: string
                     description: Policy group.
-                    example: Iusto porro rerum qui.
+                    example: Placeat aliquid consectetur dignissimos ea id est.
                 lastUpdate:
                     type: integer
                     description: Last update (Unix timestamp).
-                    example: 1840913794570891998
+                    example: 968056217340219173
                     format: int64
                 locked:
                     type: boolean
                     description: Locked specifies if the policy is locked or allowed to execute.
-                    example: false
+                    example: true
                 policyName:
                     type: string
                     description: Policy name.
-                    example: Quos autem aut in est.
+                    example: Qui earum.
                 rego:
                     type: string
                     description: Policy rego source code.
-                    example: Est debitis.
+                    example: Cum et quas.
                 repository:
                     type: string
                     description: Policy repository.
-                    example: Quia et deserunt expedita facilis maiores.
+                    example: Atque quo nihil incidunt ipsam eum quia.
                 version:
                     type: string
                     description: Policy version.
-                    example: Quis qui perferendis provident corrupti rerum exercitationem.
+                    example: Quidem dolorem doloremque nostrum.
             example:
-                data: Cum et quas.
-                dataConfig: Aut quis ducimus est quisquam sapiente.
-                group: Qui earum.
-                lastUpdate: 1184693064089780446
-                locked: true
-                policyName: Atque quo nihil incidunt ipsam eum quia.
-                rego: Quidem dolorem doloremque nostrum.
-                repository: Incidunt nam atque.
-                version: Placeat aliquid consectetur dignissimos ea id est.
+                data: Eum atque odio quae animi iusto.
+                dataConfig: Quidem eaque et ea nesciunt.
+                group: Quis eaque voluptatem explicabo.
+                lastUpdate: 8123730569289203891
+                locked: false
+                policyName: Quia necessitatibus atque labore nobis modi.
+                rego: Nemo sed nemo voluptatem est.
+                repository: Fugit dolorem.
+                version: Voluptatem autem exercitationem nobis voluptas.
             required:
                 - repository
                 - group
@@ -1063,17 +1161,17 @@ components:
                 subscriber:
                     type: string
                     description: Name of the subscriber for policy.
-                    example: njq
+                    example: i2c
                     minLength: 3
                     maxLength: 100
                 webhook_url:
                     type: string
                     description: Subscriber webhook url.
-                    example: http://yostrunolfsson.net/lou.ziemann
+                    example: http://bosco.info/giovanna
                     format: uri
             example:
-                subscriber: i2c
-                webhook_url: http://bosco.info/giovanna
+                subscriber: dls
+                webhook_url: http://barrows.com/rigoberto_goodwin
             required:
                 - webhook_url
                 - subscriber

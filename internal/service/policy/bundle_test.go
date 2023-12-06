@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"io"
+	"net/http"
 	"testing"
 	"time"
 
@@ -44,10 +45,11 @@ var testMetadata = Metadata{
 		Locked:     true,
 		LastUpdate: time.Date(2023, 11, 7, 1, 0, 0, 0, time.UTC),
 	},
+	PublicKeyURL: "https://policyservice.com/policy/myrepo/example/mypolicy/1.0/key",
 }
 
 func TestPolicy_createPolicyBundle(t *testing.T) {
-	svc := New(nil, nil, nil, nil, false, zap.NewNop())
+	svc := New(nil, nil, nil, nil, "https://policyservice.com", http.DefaultClient, false, zap.NewNop())
 	bundle, err := svc.createPolicyBundle(testPolicy)
 	assert.NoError(t, err)
 	assert.NotNil(t, bundle)
@@ -93,4 +95,16 @@ func TestPolicy_createPolicyBundle(t *testing.T) {
 	dataConfig, err := io.ReadAll(dataConfigFile)
 	require.NoError(t, err)
 	assert.Equal(t, `{"cfg":"static data config"}`, string(dataConfig))
+}
+
+func TestPolicy_policyFromBundle(t *testing.T) {
+	svc := New(nil, nil, nil, nil, "https://policyservice.com", http.DefaultClient, false, zap.NewNop())
+	bundle, err := svc.createPolicyBundle(testPolicy)
+	require.NoError(t, err)
+	require.NotNil(t, bundle)
+
+	policy, err := svc.policyFromBundle(bundle)
+	require.NoError(t, err)
+	require.NotNil(t, policy)
+	assert.Equal(t, testPolicy, policy)
 }

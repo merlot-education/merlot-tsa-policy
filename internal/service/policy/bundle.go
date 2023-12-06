@@ -4,9 +4,12 @@ import (
 	"archive/zip"
 	"bytes"
 	"encoding/json"
+	"fmt"
+	"io"
 	"strings"
 	"time"
 
+	"gitlab.eclipse.org/eclipse/xfsc/tsa/golib/errors"
 	"gitlab.eclipse.org/eclipse/xfsc/tsa/policy/internal/storage"
 )
 
@@ -24,6 +27,7 @@ type Metadata struct {
 		Locked     bool      `json:"locked"`
 		LastUpdate time.Time `json:"lastUpdate"`
 	} `json:"policy"`
+	PublicKeyURL string `json:"publicKeyURL"`
 }
 
 func (s *Service) createPolicyBundle(policy *storage.Policy) ([]byte, error) {
@@ -62,6 +66,14 @@ func (s *Service) createPolicyBundle(policy *storage.Policy) ([]byte, error) {
 		})
 	}
 
+	// prepare json schema config file
+	if strings.TrimSpace(policy.OutputSchema) != "" {
+		files = append(files, ZipFile{
+			Name:    "output-schema.json",
+			Content: []byte(policy.OutputSchema),
+		})
+	}
+
 	return s.createZipArchive(files)
 }
 
@@ -73,6 +85,7 @@ func (s *Service) createMetadata(policy *storage.Policy) ([]byte, error) {
 	meta.Policy.Repository = policy.Repository
 	meta.Policy.Locked = policy.Locked
 	meta.Policy.LastUpdate = policy.LastUpdate
+	meta.PublicKeyURL = s.policyPublicKeyURL(policy)
 	return json.Marshal(meta)
 }
 
@@ -96,4 +109,73 @@ func (s *Service) createZipArchive(files []ZipFile) ([]byte, error) {
 	}
 
 	return buf.Bytes(), nil
+}
+
+func (s *Service) unzip(archive []byte) ([]ZipFile, error) {
+	r, err := zip.NewReader(bytes.NewReader(archive), int64(len(archive)))
+	if err != nil {
+		return nil, err
+	}
+
+	var files []ZipFile
+	for _, file := range r.File {
+		reader, err := file.Open()
+		if err != nil {
+			return nil, err
+		}
+		content, err := io.ReadAll(reader)
+		if err != nil {
+			return nil, err
+		}
+		files = append(files, ZipFile{
+			Name:    file.Name,
+			Content: content,
+		})
+	}
+
+	return files, nil
+}
+
+func (s *Service) policyPublicKeyURL(policy *storage.Policy) string {
+	return fmt.Sprintf("%s/policy/%s/%s/%s/%s/key",
+		s.externalHostname,
+		policy.Repository,
+		policy.Group,
+		policy.Name,
+		policy.Version,
+	)
+}
+
+func (s *Service) policyFromBundle(bundle []byte) (*storage.Policy, error) {
+	bundleFiles, err := s.unzip(bundle)
+	if err != nil {
+		return nil, errors.New("error unzipping bundle archive", err)
+	}
+
+	var policy storage.Policy
+	for _, f := range bundleFiles {
+		switch f.Name {
+		case "metadata.json":
+			var metadata Metadata
+			if err := json.Unmarshal(f.Content, &metadata); err != nil {
+				return nil, err
+			}
+			policy.Repository = metadata.Policy.Repository
+			policy.Group = metadata.Policy.Group
+			policy.Name = metadata.Policy.Name
+			policy.Version = metadata.Policy.Version
+			policy.Locked = metadata.Policy.Locked
+			policy.LastUpdate = metadata.Policy.LastUpdate
+		case "policy.rego":
+			policy.Rego = string(f.Content)
+		case "data.json":
+			policy.Data = string(f.Content)
+		case "data-config.json":
+			policy.DataConfig = string(f.Content)
+		case "output-schema.json":
+			policy.OutputSchema = string(f.Content)
+		}
+	}
+
+	return &policy, nil
 }
