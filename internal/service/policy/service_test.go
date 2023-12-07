@@ -1142,7 +1142,7 @@ func TestService_ExportBundleError(t *testing.T) {
 		assert.True(t, errors.Is(errors.Unknown, e))
 	})
 
-	t.Run("error making signature", func(t *testing.T) {
+	t.Run("undefined policy export configuration", func(t *testing.T) {
 		storage := &policyfakes.FakeStorage{
 			PolicyStub: func(ctx context.Context, s string, s2 string, s3 string, s4 string) (*storage.Policy, error) {
 				return &storage.Policy{
@@ -1155,6 +1155,32 @@ func TestService_ExportBundleError(t *testing.T) {
 					DataConfig: `{"new":"value"}`,
 					Locked:     false,
 					LastUpdate: time.Date(2023, 10, 8, 0, 0, 0, 0, time.UTC),
+				}, nil
+			},
+		}
+
+		svc := policy.New(storage, nil, nil, nil, "https://policyservice.com", http.DefaultClient, false, zap.NewNop())
+		res, reader, err := svc.ExportBundle(context.Background(), &goapolicy.ExportBundleRequest{})
+		assert.Nil(t, res)
+		assert.Nil(t, reader)
+		require.Error(t, err)
+		assert.ErrorContains(t, err, "policy export configuration is not defined")
+	})
+
+	t.Run("error making signature", func(t *testing.T) {
+		storage := &policyfakes.FakeStorage{
+			PolicyStub: func(ctx context.Context, s string, s2 string, s3 string, s4 string) (*storage.Policy, error) {
+				return &storage.Policy{
+					Repository:   "myrepo",
+					Name:         "myname",
+					Group:        "mygroup",
+					Version:      "1.52",
+					Rego:         "package test",
+					Data:         `{"key":"value"}`,
+					DataConfig:   `{"new":"value"}`,
+					ExportConfig: `{"namespace":"transit","key":"key1"}`,
+					Locked:       false,
+					LastUpdate:   time.Date(2023, 10, 8, 0, 0, 0, 0, time.UTC),
 				}, nil
 			},
 		}
@@ -1178,15 +1204,16 @@ func TestService_ExportBundleSuccess(t *testing.T) {
 	storage := &policyfakes.FakeStorage{
 		PolicyStub: func(ctx context.Context, s string, s2 string, s3 string, s4 string) (*storage.Policy, error) {
 			return &storage.Policy{
-				Repository: "myrepo",
-				Name:       "myname",
-				Group:      "mygroup",
-				Version:    "1.52",
-				Rego:       "package test",
-				Data:       `{"key":"value"}`,
-				DataConfig: `{"new":"value"}`,
-				Locked:     false,
-				LastUpdate: time.Date(2023, 10, 8, 0, 0, 0, 0, time.UTC),
+				Repository:   "myrepo",
+				Name:         "myname",
+				Group:        "mygroup",
+				Version:      "1.52",
+				Rego:         "package test",
+				Data:         `{"key":"value"}`,
+				DataConfig:   `{"new":"value"}`,
+				ExportConfig: `{"namespace":"transit","key":"key1"}`,
+				Locked:       false,
+				LastUpdate:   time.Date(2023, 10, 8, 0, 0, 0, 0, time.UTC),
 			}, nil
 		},
 	}
@@ -1232,4 +1259,109 @@ func TestService_ExportBundleSuccess(t *testing.T) {
 	require.NotNil(t, sig)
 
 	assert.Equal(t, []byte("signature"), sig)
+}
+
+func TestService_PolicyPublicKey(t *testing.T) {
+	tests := []struct {
+		name    string
+		storage policy.Storage
+		signer  policy.Signer
+		key     any
+		errtext string
+		errkind errors.Kind
+	}{
+		{
+			name: "policy not found",
+			storage: &policyfakes.FakeStorage{
+				PolicyStub: func(ctx context.Context, s string, s2 string, s3 string, s4 string) (*storage.Policy, error) {
+					return nil, errors.New(errors.NotFound, "policy not found")
+				},
+			},
+			errtext: "policy not found",
+			errkind: errors.NotFound,
+		},
+		{
+			name: "failed to get policy from storage",
+			storage: &policyfakes.FakeStorage{
+				PolicyStub: func(ctx context.Context, s string, s2 string, s3 string, s4 string) (*storage.Policy, error) {
+					return nil, errors.New("some internal error")
+				},
+			},
+			errtext: "some internal error",
+			errkind: errors.Unknown,
+		},
+		{
+			name: "undefined policy export configuration",
+			storage: &policyfakes.FakeStorage{
+				PolicyStub: func(ctx context.Context, s string, s2 string, s3 string, s4 string) (*storage.Policy, error) {
+					return &storage.Policy{}, nil
+				},
+			},
+			errtext: "policy export configuration is not defined",
+			errkind: errors.Unknown,
+		},
+		{
+			name: "wrong format for policy export configuration",
+			storage: &policyfakes.FakeStorage{
+				PolicyStub: func(ctx context.Context, s string, s2 string, s3 string, s4 string) (*storage.Policy, error) {
+					return &storage.Policy{
+						ExportConfig: "invalid",
+					}, nil
+				},
+			},
+			errtext: "cannot unmarshal policy export configuration",
+			errkind: errors.Unknown,
+		},
+		{
+			name: "fail to get key from signer",
+			storage: &policyfakes.FakeStorage{
+				PolicyStub: func(ctx context.Context, s string, s2 string, s3 string, s4 string) (*storage.Policy, error) {
+					return &storage.Policy{
+						ExportConfig: `{"namespace":"transit","key":"key1"}`,
+					}, nil
+				},
+			},
+			signer: &policyfakes.FakeSigner{
+				KeyStub: func(ctx context.Context, s string, s2 string) (any, error) {
+					return nil, fmt.Errorf("cannot get key")
+				},
+			},
+			errtext: "cannot get key",
+			errkind: errors.Unknown,
+		},
+		{
+			name: "key is successfully returned",
+			storage: &policyfakes.FakeStorage{
+				PolicyStub: func(ctx context.Context, s string, s2 string, s3 string, s4 string) (*storage.Policy, error) {
+					return &storage.Policy{
+						ExportConfig: `{"namespace":"transit","key":"key1"}`,
+					}, nil
+				},
+			},
+			signer: &policyfakes.FakeSigner{
+				KeyStub: func(ctx context.Context, s string, s2 string) (any, error) {
+					return map[string]interface{}{"key": "ed25519"}, nil
+				},
+			},
+			key: map[string]interface{}{"key": "ed25519"},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			svc := policy.New(test.storage, nil, nil, test.signer, "hostname.com", http.DefaultClient, false, zap.NewNop())
+			key, err := svc.PolicyPublicKey(context.Background(), &goapolicy.PolicyPublicKeyRequest{})
+			if err != nil {
+				require.NotEmpty(t, test.errtext)
+				require.Contains(t, err.Error(), test.errtext)
+				if e, ok := err.(*errors.Error); ok {
+					assert.Equal(t, test.errkind, e.Kind)
+				}
+			} else {
+				require.Empty(t, test.errtext)
+				require.NotNil(t, key)
+				assert.Equal(t, test.key, key)
+			}
+		})
+	}
 }

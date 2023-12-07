@@ -18,12 +18,13 @@ import (
 )
 
 const (
-	pathSeperator      = string(os.PathSeparator)
-	policyFilename     = "policy.rego"
-	cloneFolder        = "temp"
-	dataFilename       = "data.json"
-	dataConfigFilename = "data-config.json"
-	jsonSchemaFilename = "output-schema.json"
+	pathSeperator        = string(os.PathSeparator)
+	policyFilename       = "policy.rego"
+	cloneFolder          = "temp"
+	dataFilename         = "data.json"
+	dataConfigFilename   = "data-config.json"
+	jsonSchemaFilename   = "output-schema.json"
+	exportConfigFilename = "export-config.json"
 )
 
 type Cloner struct {
@@ -143,6 +144,12 @@ func createPolicy(p, repository string) (*storage.Policy, error) {
 		return nil, err
 	}
 
+	// check if there is policy export configuration in the same folder as the policy
+	exportConfigBytes, err := os.ReadFile(strings.TrimSuffix(p, policyFilename) + exportConfigFilename)
+	if err != nil && !os.IsNotExist(err) {
+		return nil, err
+	}
+
 	return &storage.Policy{
 		Repository:   repository,
 		Filename:     dbFilename,
@@ -153,6 +160,7 @@ func createPolicy(p, repository string) (*storage.Policy, error) {
 		Data:         string(dataBytes),
 		DataConfig:   string(configBytes),
 		OutputSchema: string(schemaBytes),
+		ExportConfig: string(exportConfigBytes),
 		Locked:       false,
 	}, nil
 }

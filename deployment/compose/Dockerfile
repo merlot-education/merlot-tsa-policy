@@ -1,4 +1,4 @@
-FROM golang:1.21.4
+FROM golang:1.21.5
 
 RUN go install github.com/ysmood/kit/cmd/guard@v0.25.11
 

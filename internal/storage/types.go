@@ -24,6 +24,7 @@ type Policy struct {
 	Data                string
 	DataConfig          string
 	OutputSchema        string
+	ExportConfig        string
 	Locked              bool
 	LastUpdate          time.Time
 	NextDataRefreshTime time.Time
