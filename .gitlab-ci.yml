@@ -15,7 +15,7 @@ linters:
     - golangci-lint run
 
 unit tests:
-  image: golang:1.21.4
+  image: golang:1.21.5
   stage: test
   script:
     - go version
@@ -24,7 +24,7 @@ unit tests:
   coverage: '/total:\s+\(statements\)\s+(\d+.\d+\%)/'
 
 govulncheck:
-  image: golang:1.21.4
+  image: golang:1.21.5
   stage: test
   script:
     - go version
