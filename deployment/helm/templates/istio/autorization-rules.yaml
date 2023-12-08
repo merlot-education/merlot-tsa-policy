@@ -1,0 +1,18 @@
+# templates/istio/authorization-rules.yaml
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: { { include "my_chart.fullname" . } }
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: { { include "my_chart.name" . } }
+      app.kubernetes.io/instance: { { .Release.Name } }
+  action: ALLOW
+  rules:
+    - from:
+        - source:
+            principals: ["cluster.local/ns/default/sa/default"]
+      to:
+        - operation:
+            methods: ["GET"]
