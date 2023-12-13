@@ -56,19 +56,24 @@ func ExportBundlePolicyPath(repository string, group string, policyName string, 
 	return fmt.Sprintf("/policy/%v/%v/%v/%v/export", repository, group, policyName, version)
 }
 
-// ImportBundlePolicyPath returns the URL path to the policy service ImportBundle HTTP endpoint.
-func ImportBundlePolicyPath() string {
-	return "/policy/import"
-}
-
 // PolicyPublicKeyPolicyPath returns the URL path to the policy service PolicyPublicKey HTTP endpoint.
 func PolicyPublicKeyPolicyPath(repository string, group string, policyName string, version string) string {
 	return fmt.Sprintf("/policy/%v/%v/%v/%v/key", repository, group, policyName, version)
 }
 
+// ImportBundlePolicyPath returns the URL path to the policy service ImportBundle HTTP endpoint.
+func ImportBundlePolicyPath() string {
+	return "/v1/policy/import"
+}
+
 // ListPoliciesPolicyPath returns the URL path to the policy service ListPolicies HTTP endpoint.
 func ListPoliciesPolicyPath() string {
 	return "/v1/policies"
+}
+
+// SetPolicyAutoImportPolicyPath returns the URL path to the policy service SetPolicyAutoImport HTTP endpoint.
+func SetPolicyAutoImportPolicyPath() string {
+	return "/v1/policy/import/config"
 }
 
 // SubscribeForPolicyChangePolicyPath returns the URL path to the policy service SubscribeForPolicyChange HTTP endpoint.

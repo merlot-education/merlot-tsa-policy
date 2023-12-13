@@ -12,6 +12,15 @@ import (
 	goa "goa.design/goa/v3/pkg"
 )
 
+// SetPolicyAutoImportRequestBody is the type of the "policy" service
+// "SetPolicyAutoImport" endpoint HTTP request body.
+type SetPolicyAutoImportRequestBody struct {
+	// PolicyURL defines the address from where a policy bundle will be taken.
+	PolicyURL string `form:"policyURL" json:"policyURL" xml:"policyURL"`
+	// Interval defines the period for automatic bundle import.
+	Interval string `form:"interval" json:"interval" xml:"interval"`
+}
+
 // SubscribeForPolicyChangeRequestBody is the type of the "policy" service
 // "SubscribeForPolicyChange" endpoint HTTP request body.
 type SubscribeForPolicyChangeRequestBody struct {
@@ -48,6 +57,16 @@ type PolicyResponseBody struct {
 	Locked *bool `form:"locked,omitempty" json:"locked,omitempty" xml:"locked,omitempty"`
 	// Last update (Unix timestamp).
 	LastUpdate *int64 `form:"lastUpdate,omitempty" json:"lastUpdate,omitempty" xml:"lastUpdate,omitempty"`
+}
+
+// NewSetPolicyAutoImportRequestBody builds the HTTP request body from the
+// payload of the "SetPolicyAutoImport" endpoint of the "policy" service.
+func NewSetPolicyAutoImportRequestBody(p *policy.SetPolicyImportRequest) *SetPolicyAutoImportRequestBody {
+	body := &SetPolicyAutoImportRequestBody{
+		PolicyURL: p.PolicyURL,
+		Interval:  p.Interval,
+	}
+	return body
 }
 
 // NewSubscribeForPolicyChangeRequestBody builds the HTTP request body from the

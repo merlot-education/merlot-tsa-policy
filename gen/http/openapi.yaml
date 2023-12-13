@@ -558,36 +558,6 @@ paths:
                             type: string
             schemes:
                 - http
-    /policy/import:
-        post:
-            tags:
-                - policy
-            summary: ImportBundle policy
-            description: Import a signed policy bundle.
-            operationId: policy#ImportBundle
-            parameters:
-                - name: Content-Length
-                  in: header
-                  required: false
-                  type: integer
-            responses:
-                "200":
-                    description: OK response.
-                    schema:
-                        type: string
-                        format: binary
-                "403":
-                    description: Forbidden response.
-                    schema:
-                        type: string
-                        format: binary
-                "500":
-                    description: Internal Server Error response.
-                    schema:
-                        type: string
-                        format: binary
-            schemes:
-                - http
     /readiness:
         get:
             tags:
@@ -642,6 +612,60 @@ paths:
                             - policies
             schemes:
                 - http
+    /v1/policy/import:
+        post:
+            tags:
+                - policy
+            summary: ImportBundle policy
+            description: Import a signed policy bundle.
+            operationId: policy#ImportBundle
+            parameters:
+                - name: Content-Length
+                  in: header
+                  required: false
+                  type: integer
+            responses:
+                "200":
+                    description: OK response.
+                    schema:
+                        type: string
+                        format: binary
+                "403":
+                    description: Forbidden response.
+                    schema:
+                        type: string
+                        format: binary
+                "500":
+                    description: Internal Server Error response.
+                    schema:
+                        type: string
+                        format: binary
+            schemes:
+                - http
+    /v1/policy/import/config:
+        post:
+            tags:
+                - policy
+            summary: SetPolicyAutoImport policy
+            description: SetPolicyAutoImport enables automatic import of policy bundle on a given time interval.
+            operationId: policy#SetPolicyAutoImport
+            parameters:
+                - name: SetPolicyAutoImportRequestBody
+                  in: body
+                  required: true
+                  schema:
+                    $ref: '#/definitions/PolicySetPolicyAutoImportRequestBody'
+                    required:
+                        - policyURL
+                        - interval
+            responses:
+                "200":
+                    description: OK response.
+                    schema:
+                        type: string
+                        format: binary
+            schemes:
+                - http
 definitions:
     HealthLivenessResponseBody:
         title: HealthLivenessResponseBody
@@ -650,19 +674,19 @@ definitions:
             service:
                 type: string
                 description: Service name.
-                example: Dolor provident dolorum.
+                example: Sequi culpa consequatur dolorum incidunt dolorum.
             status:
                 type: string
                 description: Status message.
-                example: Quidem eius culpa velit est impedit.
+                example: Expedita ea non minus reiciendis.
             version:
                 type: string
                 description: Service runtime version.
-                example: Numquam non rerum repellendus quis.
+                example: Aspernatur sit est corrupti ullam commodi porro.
         example:
-            service: Voluptas est.
-            status: Assumenda rerum exercitationem odit tempora.
-            version: In aliquid omnis deleniti odit.
+            service: Perferendis necessitatibus.
+            status: Aut doloremque beatae non sed nihil perferendis.
+            version: Id distinctio perspiciatis.
         required:
             - service
             - status
@@ -674,19 +698,19 @@ definitions:
             service:
                 type: string
                 description: Service name.
-                example: Et et qui libero.
+                example: Et in dolorem.
             status:
                 type: string
                 description: Status message.
-                example: A at ipsum.
+                example: Consequatur cupiditate aut consequuntur in animi.
             version:
                 type: string
                 description: Service runtime version.
-                example: Delectus sint quia blanditiis.
+                example: Aspernatur ut ab nam quis repellendus.
         example:
-            service: Qui et sit maiores architecto alias.
-            status: Nesciunt labore voluptatibus.
-            version: Quia et deserunt expedita facilis maiores.
+            service: Est repudiandae nihil hic quaerat.
+            status: Blanditiis quia.
+            version: Mollitia repellendus consequuntur.
         required:
             - service
             - status
@@ -701,62 +725,62 @@ definitions:
                     $ref: '#/definitions/PolicyResponseBody'
                 description: JSON array of policies.
                 example:
-                    - data: Omnis dolores totam voluptatem rerum.
-                      dataConfig: Architecto et enim omnis.
-                      group: Et eaque.
-                      lastUpdate: 7215261286821925125
+                    - data: Ut reiciendis fugit dolorum cupiditate.
+                      dataConfig: Laborum dolor dolorem modi aut.
+                      group: Voluptate et ut similique doloremque quis.
+                      lastUpdate: 5209352704007170203
                       locked: false
-                      policyName: Sit dolores iusto ut.
-                      rego: Non quo ut molestias rerum sunt.
-                      repository: Vitae iure fugiat.
-                      version: Et mollitia.
-                    - data: Omnis dolores totam voluptatem rerum.
-                      dataConfig: Architecto et enim omnis.
-                      group: Et eaque.
-                      lastUpdate: 7215261286821925125
+                      policyName: Et occaecati quam tempora laborum.
+                      rego: Vel saepe nisi et.
+                      repository: Velit aut nobis repellendus quis.
+                      version: Expedita ipsum minus ipsam.
+                    - data: Ut reiciendis fugit dolorum cupiditate.
+                      dataConfig: Laborum dolor dolorem modi aut.
+                      group: Voluptate et ut similique doloremque quis.
+                      lastUpdate: 5209352704007170203
                       locked: false
-                      policyName: Sit dolores iusto ut.
-                      rego: Non quo ut molestias rerum sunt.
-                      repository: Vitae iure fugiat.
-                      version: Et mollitia.
-                    - data: Omnis dolores totam voluptatem rerum.
-                      dataConfig: Architecto et enim omnis.
-                      group: Et eaque.
-                      lastUpdate: 7215261286821925125
-                      locked: false
-                      policyName: Sit dolores iusto ut.
-                      rego: Non quo ut molestias rerum sunt.
-                      repository: Vitae iure fugiat.
-                      version: Et mollitia.
-                    - data: Omnis dolores totam voluptatem rerum.
-                      dataConfig: Architecto et enim omnis.
-                      group: Et eaque.
-                      lastUpdate: 7215261286821925125
-                      locked: false
-                      policyName: Sit dolores iusto ut.
-                      rego: Non quo ut molestias rerum sunt.
-                      repository: Vitae iure fugiat.
-                      version: Et mollitia.
+                      policyName: Et occaecati quam tempora laborum.
+                      rego: Vel saepe nisi et.
+                      repository: Velit aut nobis repellendus quis.
+                      version: Expedita ipsum minus ipsam.
         example:
             policies:
-                - data: Omnis dolores totam voluptatem rerum.
-                  dataConfig: Architecto et enim omnis.
-                  group: Et eaque.
-                  lastUpdate: 7215261286821925125
+                - data: Ut reiciendis fugit dolorum cupiditate.
+                  dataConfig: Laborum dolor dolorem modi aut.
+                  group: Voluptate et ut similique doloremque quis.
+                  lastUpdate: 5209352704007170203
                   locked: false
-                  policyName: Sit dolores iusto ut.
-                  rego: Non quo ut molestias rerum sunt.
-                  repository: Vitae iure fugiat.
-                  version: Et mollitia.
-                - data: Omnis dolores totam voluptatem rerum.
-                  dataConfig: Architecto et enim omnis.
-                  group: Et eaque.
-                  lastUpdate: 7215261286821925125
+                  policyName: Et occaecati quam tempora laborum.
+                  rego: Vel saepe nisi et.
+                  repository: Velit aut nobis repellendus quis.
+                  version: Expedita ipsum minus ipsam.
+                - data: Ut reiciendis fugit dolorum cupiditate.
+                  dataConfig: Laborum dolor dolorem modi aut.
+                  group: Voluptate et ut similique doloremque quis.
+                  lastUpdate: 5209352704007170203
                   locked: false
-                  policyName: Sit dolores iusto ut.
-                  rego: Non quo ut molestias rerum sunt.
-                  repository: Vitae iure fugiat.
-                  version: Et mollitia.
+                  policyName: Et occaecati quam tempora laborum.
+                  rego: Vel saepe nisi et.
+                  repository: Velit aut nobis repellendus quis.
+                  version: Expedita ipsum minus ipsam.
+                - data: Ut reiciendis fugit dolorum cupiditate.
+                  dataConfig: Laborum dolor dolorem modi aut.
+                  group: Voluptate et ut similique doloremque quis.
+                  lastUpdate: 5209352704007170203
+                  locked: false
+                  policyName: Et occaecati quam tempora laborum.
+                  rego: Vel saepe nisi et.
+                  repository: Velit aut nobis repellendus quis.
+                  version: Expedita ipsum minus ipsam.
+                - data: Ut reiciendis fugit dolorum cupiditate.
+                  dataConfig: Laborum dolor dolorem modi aut.
+                  group: Voluptate et ut similique doloremque quis.
+                  lastUpdate: 5209352704007170203
+                  locked: false
+                  policyName: Et occaecati quam tempora laborum.
+                  rego: Vel saepe nisi et.
+                  repository: Velit aut nobis repellendus quis.
+                  version: Expedita ipsum minus ipsam.
         required:
             - policies
     PolicyResponseBody:
@@ -766,19 +790,19 @@ definitions:
             data:
                 type: string
                 description: Policy static data.
-                example: Eius sed.
+                example: Ut unde pariatur velit esse.
             dataConfig:
                 type: string
                 description: Policy static data optional configuration.
-                example: Rerum saepe dolores laborum odio.
+                example: Veniam repudiandae delectus facere est.
             group:
                 type: string
                 description: Policy group.
-                example: Molestiae fugiat harum quia corporis ullam natus.
+                example: Earum quis odit eius saepe.
             lastUpdate:
                 type: integer
                 description: Last update (Unix timestamp).
-                example: 1570624797132186719
+                example: 8976518078932316020
                 format: int64
             locked:
                 type: boolean
@@ -787,29 +811,29 @@ definitions:
             policyName:
                 type: string
                 description: Policy name.
-                example: Et exercitationem perspiciatis quidem accusamus.
+                example: Accusamus dolores non temporibus est magni.
             rego:
                 type: string
                 description: Policy rego source code.
-                example: Ipsum explicabo assumenda delectus.
+                example: Deserunt blanditiis repudiandae quasi.
             repository:
                 type: string
                 description: Policy repository.
-                example: Et sit qui fugit enim labore.
+                example: Ratione sit numquam non cupiditate sed omnis.
             version:
                 type: string
                 description: Policy version.
-                example: Animi omnis minima fuga numquam.
+                example: Delectus sit saepe dicta mollitia molestiae.
         example:
-            data: Ut iusto mollitia rerum quis ut.
-            dataConfig: Numquam ipsam est alias officiis voluptas qui.
-            group: Voluptatem aut provident ducimus vero.
-            lastUpdate: 3390168524686033661
+            data: Quis eius voluptas est ipsum.
+            dataConfig: Rerum exercitationem odit tempora ab in aliquid.
+            group: Quibusdam rem voluptatum dolor provident dolorum nihil.
+            lastUpdate: 213633216693143283
             locked: false
-            policyName: Tempora dolor consectetur voluptatibus consequatur aut.
-            rego: Laborum quod quos saepe dolorum qui tenetur.
-            repository: Repudiandae vel eveniet voluptas rerum inventore.
-            version: Nemo perferendis.
+            policyName: Dolore nostrum animi omnis qui nihil.
+            rego: Et numquam non rerum.
+            repository: Repellendus reiciendis molestias.
+            version: Eius culpa velit est.
         required:
             - repository
             - group
@@ -817,6 +841,26 @@ definitions:
             - version
             - locked
             - lastUpdate
+    PolicySetPolicyAutoImportRequestBody:
+        title: PolicySetPolicyAutoImportRequestBody
+        type: object
+        properties:
+            interval:
+                type: string
+                description: Interval defines the period for automatic bundle import.
+                example: 1h30m
+                minLength: 2
+            policyURL:
+                type: string
+                description: PolicyURL defines the address from where a policy bundle will be taken.
+                example: http://brekke.info/marques.mohr
+                format: uri
+        example:
+            interval: 1h30m
+            policyURL: http://hilll.name/mia
+        required:
+            - policyURL
+            - interval
     PolicySubscribeForPolicyChangeRequestBody:
         title: PolicySubscribeForPolicyChangeRequestBody
         type: object
@@ -824,17 +868,17 @@ definitions:
             subscriber:
                 type: string
                 description: Name of the subscriber for policy.
-                example: r04
+                example: ny1
                 minLength: 3
                 maxLength: 100
             webhook_url:
                 type: string
                 description: Subscriber webhook url.
-                example: http://hilll.net/caroline.weber
+                example: http://langworthmarvin.name/olin.ward
                 format: uri
         example:
-            subscriber: f0c
-            webhook_url: http://schoen.biz/gennaro_mclaughlin
+            subscriber: oj8
+            webhook_url: http://goodwin.com/shania
         required:
             - webhook_url
             - subscriber

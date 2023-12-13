@@ -21,23 +21,25 @@ type Client struct {
 	LockEndpoint                     goa.Endpoint
 	UnlockEndpoint                   goa.Endpoint
 	ExportBundleEndpoint             goa.Endpoint
-	ImportBundleEndpoint             goa.Endpoint
 	PolicyPublicKeyEndpoint          goa.Endpoint
+	ImportBundleEndpoint             goa.Endpoint
 	ListPoliciesEndpoint             goa.Endpoint
+	SetPolicyAutoImportEndpoint      goa.Endpoint
 	SubscribeForPolicyChangeEndpoint goa.Endpoint
 }
 
 // NewClient initializes a "policy" service client given the endpoints.
-func NewClient(evaluate, validate, lock, unlock, exportBundle, importBundle, policyPublicKey, listPolicies, subscribeForPolicyChange goa.Endpoint) *Client {
+func NewClient(evaluate, validate, lock, unlock, exportBundle, policyPublicKey, importBundle, listPolicies, setPolicyAutoImport, subscribeForPolicyChange goa.Endpoint) *Client {
 	return &Client{
 		EvaluateEndpoint:                 evaluate,
 		ValidateEndpoint:                 validate,
 		LockEndpoint:                     lock,
 		UnlockEndpoint:                   unlock,
 		ExportBundleEndpoint:             exportBundle,
-		ImportBundleEndpoint:             importBundle,
 		PolicyPublicKeyEndpoint:          policyPublicKey,
+		ImportBundleEndpoint:             importBundle,
 		ListPoliciesEndpoint:             listPolicies,
+		SetPolicyAutoImportEndpoint:      setPolicyAutoImport,
 		SubscribeForPolicyChangeEndpoint: subscribeForPolicyChange,
 	}
 }
@@ -85,20 +87,20 @@ func (c *Client) ExportBundle(ctx context.Context, p *ExportBundleRequest) (res 
 	return o.Result, o.Body, nil
 }
 
-// ImportBundle calls the "ImportBundle" endpoint of the "policy" service.
-func (c *Client) ImportBundle(ctx context.Context, p *ImportBundlePayload, req io.ReadCloser) (res any, err error) {
+// PolicyPublicKey calls the "PolicyPublicKey" endpoint of the "policy" service.
+func (c *Client) PolicyPublicKey(ctx context.Context, p *PolicyPublicKeyRequest) (res any, err error) {
 	var ires any
-	ires, err = c.ImportBundleEndpoint(ctx, &ImportBundleRequestData{Payload: p, Body: req})
+	ires, err = c.PolicyPublicKeyEndpoint(ctx, p)
 	if err != nil {
 		return
 	}
 	return ires.(any), nil
 }
 
-// PolicyPublicKey calls the "PolicyPublicKey" endpoint of the "policy" service.
-func (c *Client) PolicyPublicKey(ctx context.Context, p *PolicyPublicKeyRequest) (res any, err error) {
+// ImportBundle calls the "ImportBundle" endpoint of the "policy" service.
+func (c *Client) ImportBundle(ctx context.Context, p *ImportBundlePayload, req io.ReadCloser) (res any, err error) {
 	var ires any
-	ires, err = c.PolicyPublicKeyEndpoint(ctx, p)
+	ires, err = c.ImportBundleEndpoint(ctx, &ImportBundleRequestData{Payload: p, Body: req})
 	if err != nil {
 		return
 	}
@@ -113,6 +115,17 @@ func (c *Client) ListPolicies(ctx context.Context, p *PoliciesRequest) (res *Pol
 		return
 	}
 	return ires.(*PoliciesResult), nil
+}
+
+// SetPolicyAutoImport calls the "SetPolicyAutoImport" endpoint of the "policy"
+// service.
+func (c *Client) SetPolicyAutoImport(ctx context.Context, p *SetPolicyImportRequest) (res any, err error) {
+	var ires any
+	ires, err = c.SetPolicyAutoImportEndpoint(ctx, p)
+	if err != nil {
+		return
+	}
+	return ires.(any), nil
 }
 
 // SubscribeForPolicyChange calls the "SubscribeForPolicyChange" endpoint of
