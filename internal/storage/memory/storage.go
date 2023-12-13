@@ -29,6 +29,9 @@ type Storage struct {
 	muCommonStorage sync.RWMutex
 	commonStorage   map[string]interface{}
 
+	muAutoImport sync.RWMutex
+	autoImport   map[string]*storage.PolicyAutoImport
+
 	logger *zap.Logger
 }
 
@@ -191,6 +194,7 @@ func (s *Storage) GetData(_ context.Context, key string) (any, error) {
 
 	return data, nil
 }
+
 func (s *Storage) SetData(_ context.Context, key string, data map[string]interface{}) error {
 	s.muCommonStorage.Lock()
 	defer s.muCommonStorage.Unlock()
@@ -199,6 +203,7 @@ func (s *Storage) SetData(_ context.Context, key string, data map[string]interfa
 
 	return nil
 }
+
 func (s *Storage) DeleteData(_ context.Context, key string) error {
 	s.muCommonStorage.Lock()
 	defer s.muCommonStorage.Unlock()
@@ -216,4 +221,29 @@ func (s *Storage) Close(_ context.Context) {}
 
 func (s *Storage) CreateSubscriber(_ context.Context, _ *storage.Subscriber) (*storage.Subscriber, error) {
 	return nil, errors.New(errors.Internal, "function CreateSubscriber is not implemented for memory storage")
+}
+
+func (s *Storage) SaveAutoImportConfig(_ context.Context, importConfig *storage.PolicyAutoImport) error {
+	s.muAutoImport.Lock()
+	s.autoImport[importConfig.PolicyURL] = importConfig
+	s.muAutoImport.Unlock()
+
+	return nil
+}
+
+func (s *Storage) ActiveImportConfigs(_ context.Context) ([]*storage.PolicyAutoImport, error) {
+	s.muAutoImport.Lock()
+	defer s.muAutoImport.Unlock()
+
+	var active []*storage.PolicyAutoImport
+	for key, cfg := range s.autoImport {
+		if cfg.NextImport.After(time.Now()) {
+			c := *cfg
+			c.NextImport = c.NextImport.Add(c.Interval)
+			s.autoImport[key] = &c
+			active = append(active, &c)
+		}
+	}
+
+	return active, nil
 }

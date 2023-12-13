@@ -20,6 +20,7 @@ import (
 const (
 	subscriberCollectionName = "subscribers"
 	commonStorage            = "common_storage"
+	autoImportCollection     = "policy_auto_import"
 	lockedField              = "locked"
 	dataField                = "data"
 	nextDataRefreshTimeField = "nextDataRefreshTime"
@@ -30,6 +31,7 @@ type Storage struct {
 	policy        *mongo.Collection
 	subscriber    *mongo.Collection
 	commonStorage *mongo.Collection
+	autoImport    *mongo.Collection
 	subscribers   []storage.PolicyChangeSubscriber
 	logger        *zap.Logger
 }
@@ -46,18 +48,12 @@ func New(db *mongo.Client, dbname, collection string, logger *zap.Logger) (*Stor
 		policy:        database.Collection(collection),
 		subscriber:    database.Collection(subscriberCollectionName),
 		commonStorage: database.Collection(commonStorage),
+		autoImport:    database.Collection(autoImportCollection),
 		logger:        logger,
 	}, nil
 }
 
 func (s *Storage) Policy(ctx context.Context, repository, group, name, version string) (*storage.Policy, error) {
-	s.logger.Debug("get policy from storage",
-		zap.String("repository", repository),
-		zap.String("group", group),
-		zap.String("policy", name),
-		zap.String("version", version),
-	)
-
 	result := s.policy.FindOne(ctx, bson.M{
 		"repository": repository,
 		"group":      group,
@@ -377,4 +373,76 @@ func (s *Storage) policyExist(ctx context.Context, repository, name, group, vers
 		return false, err
 	}
 	return true, nil
+}
+
+func (s *Storage) SaveAutoImportConfig(ctx context.Context, importConfig *storage.PolicyAutoImport) error {
+	opts := options.Update().SetUpsert(true)
+	filter := bson.M{
+		"policyURL": importConfig.PolicyURL,
+	}
+	update := bson.M{"$set": bson.M{
+		"interval":   importConfig.Interval,
+		"nextImport": importConfig.NextImport,
+	}}
+
+	_, err := s.autoImport.UpdateOne(ctx, filter, update, opts)
+
+	return err
+}
+
+func (s *Storage) ActiveImportConfigs(ctx context.Context) ([]*storage.PolicyAutoImport, error) {
+	// create a callback for the mongodb transaction
+	callback := func(mCtx mongo.SessionContext) (interface{}, error) {
+		filter := bson.M{"nextImport": bson.M{
+			"$lte": time.Now(),
+		}}
+
+		cursor, err := s.autoImport.Find(ctx, filter)
+		if err != nil {
+			return nil, err
+		}
+
+		var imports []*storage.PolicyAutoImport
+		if err := cursor.All(ctx, &imports); err != nil {
+			return nil, err
+		}
+
+		if len(imports) == 0 {
+			return nil, nil
+		}
+
+		for _, i := range imports {
+			if err := s.updateAutoImportNextInterval(ctx, i); err != nil {
+				s.logger.Error("failed to update next import interval", zap.Error(err))
+			}
+		}
+
+		return imports, nil
+	}
+
+	// execute transaction
+	res, err := s.Transaction(ctx, callback)
+	if err != nil {
+		return nil, err
+	}
+
+	if res == nil {
+		return nil, nil
+	}
+
+	imports, ok := res.([]*storage.PolicyAutoImport)
+	if !ok {
+		return nil, fmt.Errorf("failed to cast auto import result: %T", res)
+	}
+
+	return imports, nil
+}
+
+// updateAutoImportNextInterval sets the next update time by adding the interval
+// to the current time.
+func (s *Storage) updateAutoImportNextInterval(ctx context.Context, importConfig *storage.PolicyAutoImport) error {
+	filter := bson.M{"_id": importConfig.MongoID}
+	update := bson.M{"$set": bson.M{"nextImport": time.Now().Add(importConfig.Interval)}}
+	_, err := s.autoImport.UpdateOne(ctx, filter, update)
+	return err
 }

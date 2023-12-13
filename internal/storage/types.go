@@ -46,3 +46,10 @@ type CommonStorage struct {
 	Key  string
 	Data map[string]interface{}
 }
+
+type PolicyAutoImport struct {
+	MongoID    primitive.ObjectID `bson:"_id"`
+	PolicyURL  string
+	Interval   time.Duration
+	NextImport time.Time
+}

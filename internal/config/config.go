@@ -17,12 +17,13 @@ type Config struct {
 	IPFilter    ipFilterConfig
 	Nats        natsConfig
 	Policy      policyConfig
+	AutoImport  autoimportConfig
 
 	// ExternalAddr specifies the external address where
 	// the policy service could be reached, so that
 	// policy bundle verifiers can fetch public keys
 	// for verification.
-	ExternalAddr string `envconfig:"EXTERNAL_HTTP_ADDR" default:"http://localhost:8081"`
+	ExternalAddr string `envconfig:"EXTERNAL_HTTP_ADDR" default:"http://policy:8080"`
 
 	LogLevel string `envconfig:"LOG_LEVEL" default:"INFO"`
 }
@@ -108,4 +109,8 @@ type ipFilterConfig struct {
 type natsConfig struct {
 	Addr    string `envconfig:"NATS_ADDR" required:"true"`
 	Subject string `envconfig:"NATS_SUBJECT" default:"policy_notifier"`
+}
+
+type autoimportConfig struct {
+	PollInterval time.Duration `envconfig:"AUTO_IMPORT_POLL_INTERVAL" default:"10s"`
 }

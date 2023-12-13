@@ -18,4 +18,9 @@ type Storage interface {
 	GetData(ctx context.Context, key string) (any, error)
 	SetData(ctx context.Context, key string, data map[string]interface{}) error
 	DeleteData(ctx context.Context, key string) error
+	SaveAutoImportConfig(ctx context.Context, importConfig *storage.PolicyAutoImport) error
+
+	// ActiveImportConfigs returns all import configurations which specify
+	// that the time to automatically import a policy bundle has been reached.
+	ActiveImportConfigs(ctx context.Context) ([]*storage.PolicyAutoImport, error)
 }

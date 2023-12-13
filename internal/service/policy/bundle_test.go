@@ -3,6 +3,7 @@ package policy
 import (
 	"archive/zip"
 	"bytes"
+	"context"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -50,7 +51,7 @@ var testMetadata = Metadata{
 }
 
 func TestPolicy_createPolicyBundle(t *testing.T) {
-	svc := New(nil, nil, nil, nil, "https://policyservice.com", http.DefaultClient, false, zap.NewNop())
+	svc := New(context.Background(), nil, nil, nil, nil, "https://policyservice.com", false, 10*time.Second, http.DefaultClient, zap.NewNop())
 	bundle, err := svc.createPolicyBundle(testPolicy)
 	assert.NoError(t, err)
 	assert.NotNil(t, bundle)
@@ -99,7 +100,7 @@ func TestPolicy_createPolicyBundle(t *testing.T) {
 }
 
 func TestPolicy_policyFromBundle(t *testing.T) {
-	svc := New(nil, nil, nil, nil, "https://policyservice.com", http.DefaultClient, false, zap.NewNop())
+	svc := New(context.Background(), nil, nil, nil, nil, "https://policyservice.com", false, 10*time.Second, http.DefaultClient, zap.NewNop())
 	bundle, err := svc.createPolicyBundle(testPolicy)
 	require.NoError(t, err)
 	require.NotNil(t, bundle)

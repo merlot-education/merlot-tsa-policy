@@ -160,13 +160,30 @@ func main() {
 		regofunc.Register("storageDelete", rego.Function1(storageFuncs.DeleteData()))
 	}
 
+	// create the errgroup running all background processes here
+	// so that the context could be given to components which
+	// themselves run long-running processes, which should be
+	// cancelled when the context is cancelled.
+	g, ctx := errgroup.WithContext(context.Background())
+
 	// create services
 	var (
 		policySvc goapolicy.Service
 		healthSvc goahealth.Service
 	)
 	{
-		policySvc = policy.New(storage, regocache, cache, signer, cfg.ExternalAddr, httpClient, cfg.Policy.LockOnValidationFailure, logger)
+		policySvc = policy.New(
+			ctx,
+			storage,
+			regocache,
+			cache,
+			signer,
+			cfg.ExternalAddr,
+			cfg.Policy.LockOnValidationFailure,
+			cfg.AutoImport.PollInterval,
+			httpClient,
+			logger,
+		)
 		healthSvc = health.New(Version)
 	}
 
@@ -251,7 +268,6 @@ func main() {
 		WriteTimeout:      cfg.HTTP.WriteTimeout,
 	}
 
-	g, ctx := errgroup.WithContext(context.Background())
 	g.Go(func() error {
 		// use ngrok to expose the service externally
 		if useNgrok := os.Getenv("USE_NGROK"); useNgrok == "true" {
