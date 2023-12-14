@@ -25,6 +25,8 @@ type Endpoints struct {
 	ImportBundle             goa.Endpoint
 	ListPolicies             goa.Endpoint
 	SetPolicyAutoImport      goa.Endpoint
+	PolicyAutoImport         goa.Endpoint
+	DeletePolicyAutoImport   goa.Endpoint
 	SubscribeForPolicyChange goa.Endpoint
 }
 
@@ -58,6 +60,8 @@ func NewEndpoints(s Service) *Endpoints {
 		ImportBundle:             NewImportBundleEndpoint(s),
 		ListPolicies:             NewListPoliciesEndpoint(s),
 		SetPolicyAutoImport:      NewSetPolicyAutoImportEndpoint(s),
+		PolicyAutoImport:         NewPolicyAutoImportEndpoint(s),
+		DeletePolicyAutoImport:   NewDeletePolicyAutoImportEndpoint(s),
 		SubscribeForPolicyChange: NewSubscribeForPolicyChangeEndpoint(s),
 	}
 }
@@ -73,6 +77,8 @@ func (e *Endpoints) Use(m func(goa.Endpoint) goa.Endpoint) {
 	e.ImportBundle = m(e.ImportBundle)
 	e.ListPolicies = m(e.ListPolicies)
 	e.SetPolicyAutoImport = m(e.SetPolicyAutoImport)
+	e.PolicyAutoImport = m(e.PolicyAutoImport)
+	e.DeletePolicyAutoImport = m(e.DeletePolicyAutoImport)
 	e.SubscribeForPolicyChange = m(e.SubscribeForPolicyChange)
 }
 
@@ -156,8 +162,25 @@ func NewListPoliciesEndpoint(s Service) goa.Endpoint {
 // method "SetPolicyAutoImport" of service "policy".
 func NewSetPolicyAutoImportEndpoint(s Service) goa.Endpoint {
 	return func(ctx context.Context, req any) (any, error) {
-		p := req.(*SetPolicyImportRequest)
+		p := req.(*SetPolicyAutoImportRequest)
 		return s.SetPolicyAutoImport(ctx, p)
+	}
+}
+
+// NewPolicyAutoImportEndpoint returns an endpoint function that calls the
+// method "PolicyAutoImport" of service "policy".
+func NewPolicyAutoImportEndpoint(s Service) goa.Endpoint {
+	return func(ctx context.Context, req any) (any, error) {
+		return s.PolicyAutoImport(ctx)
+	}
+}
+
+// NewDeletePolicyAutoImportEndpoint returns an endpoint function that calls
+// the method "DeletePolicyAutoImport" of service "policy".
+func NewDeletePolicyAutoImportEndpoint(s Service) goa.Endpoint {
+	return func(ctx context.Context, req any) (any, error) {
+		p := req.(*DeletePolicyAutoImportRequest)
+		return s.DeletePolicyAutoImport(ctx, p)
 	}
 }
 

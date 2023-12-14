@@ -23,14 +23,14 @@ import (
 //
 //	command (subcommand1|subcommand2|...)
 func UsageCommands() string {
-	return `policy (evaluate|validate|lock|unlock|export-bundle|policy-public-key|import-bundle|list-policies|set-policy-auto-import|subscribe-for-policy-change)
+	return `policy (evaluate|validate|lock|unlock|export-bundle|policy-public-key|import-bundle|list-policies|set-policy-auto-import|policy-auto-import|delete-policy-auto-import|subscribe-for-policy-change)
 health (liveness|readiness)
 `
 }
 
 // UsageExamples produces an example of a valid invocation of the CLI tool.
 func UsageExamples() string {
-	return os.Args[0] + ` policy evaluate --body "Voluptatem pariatur corporis est rem." --repository "policies" --group "example" --policy-name "example" --version "1.0" --evaluation-id "Voluptas ad corporis adipisci inventore ipsum." --ttl 2309987010488779403` + "\n" +
+	return os.Args[0] + ` policy evaluate --body "Ipsa ad voluptatum maxime ut." --repository "policies" --group "example" --policy-name "example" --version "1.0" --evaluation-id "Et dolores." --ttl 2774440846631434065` + "\n" +
 		os.Args[0] + ` health liveness` + "\n" +
 		""
 }
@@ -102,6 +102,11 @@ func ParseEndpoint(
 		policySetPolicyAutoImportFlags    = flag.NewFlagSet("set-policy-auto-import", flag.ExitOnError)
 		policySetPolicyAutoImportBodyFlag = policySetPolicyAutoImportFlags.String("body", "REQUIRED", "")
 
+		policyPolicyAutoImportFlags = flag.NewFlagSet("policy-auto-import", flag.ExitOnError)
+
+		policyDeletePolicyAutoImportFlags    = flag.NewFlagSet("delete-policy-auto-import", flag.ExitOnError)
+		policyDeletePolicyAutoImportBodyFlag = policyDeletePolicyAutoImportFlags.String("body", "REQUIRED", "")
+
 		policySubscribeForPolicyChangeFlags          = flag.NewFlagSet("subscribe-for-policy-change", flag.ExitOnError)
 		policySubscribeForPolicyChangeBodyFlag       = policySubscribeForPolicyChangeFlags.String("body", "REQUIRED", "")
 		policySubscribeForPolicyChangeRepositoryFlag = policySubscribeForPolicyChangeFlags.String("repository", "REQUIRED", "Policy repository.")
@@ -125,6 +130,8 @@ func ParseEndpoint(
 	policyImportBundleFlags.Usage = policyImportBundleUsage
 	policyListPoliciesFlags.Usage = policyListPoliciesUsage
 	policySetPolicyAutoImportFlags.Usage = policySetPolicyAutoImportUsage
+	policyPolicyAutoImportFlags.Usage = policyPolicyAutoImportUsage
+	policyDeletePolicyAutoImportFlags.Usage = policyDeletePolicyAutoImportUsage
 	policySubscribeForPolicyChangeFlags.Usage = policySubscribeForPolicyChangeUsage
 
 	healthFlags.Usage = healthUsage
@@ -194,6 +201,12 @@ func ParseEndpoint(
 			case "set-policy-auto-import":
 				epf = policySetPolicyAutoImportFlags
 
+			case "policy-auto-import":
+				epf = policyPolicyAutoImportFlags
+
+			case "delete-policy-auto-import":
+				epf = policyDeletePolicyAutoImportFlags
+
 			case "subscribe-for-policy-change":
 				epf = policySubscribeForPolicyChangeFlags
 
@@ -262,6 +275,12 @@ func ParseEndpoint(
 			case "set-policy-auto-import":
 				endpoint = c.SetPolicyAutoImport()
 				data, err = policyc.BuildSetPolicyAutoImportPayload(*policySetPolicyAutoImportBodyFlag)
+			case "policy-auto-import":
+				endpoint = c.PolicyAutoImport()
+				data = nil
+			case "delete-policy-auto-import":
+				endpoint = c.DeletePolicyAutoImport()
+				data, err = policyc.BuildDeletePolicyAutoImportPayload(*policyDeletePolicyAutoImportBodyFlag)
 			case "subscribe-for-policy-change":
 				endpoint = c.SubscribeForPolicyChange()
 				data, err = policyc.BuildSubscribeForPolicyChangePayload(*policySubscribeForPolicyChangeBodyFlag, *policySubscribeForPolicyChangeRepositoryFlag, *policySubscribeForPolicyChangeGroupFlag, *policySubscribeForPolicyChangePolicyNameFlag, *policySubscribeForPolicyChangeVersionFlag)
@@ -301,6 +320,8 @@ COMMAND:
     import-bundle: Import a signed policy bundle.
     list-policies: List policies from storage with optional filters.
     set-policy-auto-import: SetPolicyAutoImport enables automatic import of policy bundle on a given time interval.
+    policy-auto-import: PolicyAutoImport returns all automatic import configurations.
+    delete-policy-auto-import: DeletePolicyAutoImport removes a single automatic import configuration.
     subscribe-for-policy-change: Subscribe for policy change notifications by registering webhook callbacks which the policy service will call.
 
 Additional help:
@@ -320,7 +341,7 @@ Evaluate executes a policy with the given 'data' as input.
     -ttl INT: 
 
 Example:
-    %[1]s policy evaluate --body "Voluptatem pariatur corporis est rem." --repository "policies" --group "example" --policy-name "example" --version "1.0" --evaluation-id "Voluptas ad corporis adipisci inventore ipsum." --ttl 2309987010488779403
+    %[1]s policy evaluate --body "Ipsa ad voluptatum maxime ut." --repository "policies" --group "example" --policy-name "example" --version "1.0" --evaluation-id "Et dolores." --ttl 2774440846631434065
 `, os.Args[0])
 }
 
@@ -337,7 +358,7 @@ Validate executes a policy with the given 'data' as input and validates the outp
     -ttl INT: 
 
 Example:
-    %[1]s policy validate --body "Dolores et." --repository "policies" --group "example" --policy-name "example" --version "1.0" --evaluation-id "Maiores et minus." --ttl 5064246703715279636
+    %[1]s policy validate --body "At ut dolore." --repository "policies" --group "example" --policy-name "example" --version "1.0" --evaluation-id "Similique architecto." --ttl 873309878343572558
 `, os.Args[0])
 }
 
@@ -351,7 +372,7 @@ Lock a policy so that it cannot be evaluated.
     -version STRING: Policy version.
 
 Example:
-    %[1]s policy lock --repository "Similique architecto." --group "Sunt ut est ut molestias." --policy-name "Ipsam porro." --version "Ut dolore laborum aperiam aut odio dolorum."
+    %[1]s policy lock --repository "Vel non quo." --group "Molestias rerum sunt eaque." --policy-name "Dolores totam voluptatem." --version "Sapiente architecto et enim omnis."
 `, os.Args[0])
 }
 
@@ -365,7 +386,7 @@ Unlock a policy so it can be evaluated again.
     -version STRING: Policy version.
 
 Example:
-    %[1]s policy unlock --repository "Ut quibusdam." --group "Eaque fugiat et." --policy-name "Vel non quo." --version "Molestias rerum sunt eaque."
+    %[1]s policy unlock --repository "Tenetur rerum necessitatibus fugit." --group "Ut velit aut nobis repellendus." --policy-name "Rem et occaecati quam." --version "Laborum harum voluptate et ut similique doloremque."
 `, os.Args[0])
 }
 
@@ -405,7 +426,7 @@ Import a signed policy bundle.
     -stream STRING: path to file containing the streamed request body
 
 Example:
-    %[1]s policy import-bundle --length 7430715742439101594 --stream "goa.png"
+    %[1]s policy import-bundle --length 1580298023389806623 --stream "goa.png"
 `, os.Args[0])
 }
 
@@ -419,7 +440,7 @@ List policies from storage with optional filters.
     -data-config BOOL: 
 
 Example:
-    %[1]s policy list-policies --locked false --rego false --data true --data-config false
+    %[1]s policy list-policies --locked false --rego true --data false --data-config false
 `, os.Args[0])
 }
 
@@ -432,7 +453,30 @@ SetPolicyAutoImport enables automatic import of policy bundle on a given time in
 Example:
     %[1]s policy set-policy-auto-import --body '{
       "interval": "1h30m",
-      "policyURL": "http://windler.name/maximo.emmerich"
+      "policyURL": "http://altenwerthstrosin.info/ressie"
+   }'
+`, os.Args[0])
+}
+
+func policyPolicyAutoImportUsage() {
+	fmt.Fprintf(os.Stderr, `%[1]s [flags] policy policy-auto-import
+
+PolicyAutoImport returns all automatic import configurations.
+
+Example:
+    %[1]s policy policy-auto-import
+`, os.Args[0])
+}
+
+func policyDeletePolicyAutoImportUsage() {
+	fmt.Fprintf(os.Stderr, `%[1]s [flags] policy delete-policy-auto-import -body JSON
+
+DeletePolicyAutoImport removes a single automatic import configuration.
+    -body JSON: 
+
+Example:
+    %[1]s policy delete-policy-auto-import --body '{
+      "policyURL": "http://harvey.info/mossie_wilkinson"
    }'
 `, os.Args[0])
 }
@@ -449,9 +493,9 @@ Subscribe for policy change notifications by registering webhook callbacks which
 
 Example:
     %[1]s policy subscribe-for-policy-change --body '{
-      "subscriber": "wjy",
-      "webhook_url": "http://erdman.org/yadira_blick"
-   }' --repository "Dolorum qui." --group "Aut ut." --policy-name "Mollitia rerum quis ut et." --version "Ipsam est alias officiis."
+      "subscriber": "bsm",
+      "webhook_url": "http://yundt.org/bart"
+   }' --repository "Quis eius voluptas est ipsum." --group "Rerum exercitationem odit tempora ab in aliquid." --policy-name "Deleniti odit dolor et et." --version "Libero sed a at."
 `, os.Args[0])
 }
 

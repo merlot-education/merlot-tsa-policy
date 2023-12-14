@@ -643,6 +643,20 @@ paths:
             schemes:
                 - http
     /v1/policy/import/config:
+        get:
+            tags:
+                - policy
+            summary: PolicyAutoImport policy
+            description: PolicyAutoImport returns all automatic import configurations.
+            operationId: policy#PolicyAutoImport
+            responses:
+                "200":
+                    description: OK response.
+                    schema:
+                        type: string
+                        format: binary
+            schemes:
+                - http
         post:
             tags:
                 - policy
@@ -666,6 +680,28 @@ paths:
                         format: binary
             schemes:
                 - http
+        delete:
+            tags:
+                - policy
+            summary: DeletePolicyAutoImport policy
+            description: DeletePolicyAutoImport removes a single automatic import configuration.
+            operationId: policy#DeletePolicyAutoImport
+            parameters:
+                - name: DeletePolicyAutoImportRequestBody
+                  in: body
+                  required: true
+                  schema:
+                    $ref: '#/definitions/PolicyDeletePolicyAutoImportRequestBody'
+                    required:
+                        - policyURL
+            responses:
+                "200":
+                    description: OK response.
+                    schema:
+                        type: string
+                        format: binary
+            schemes:
+                - http
 definitions:
     HealthLivenessResponseBody:
         title: HealthLivenessResponseBody
@@ -674,19 +710,19 @@ definitions:
             service:
                 type: string
                 description: Service name.
-                example: Sequi culpa consequatur dolorum incidunt dolorum.
+                example: Ut quidem.
             status:
                 type: string
                 description: Status message.
-                example: Expedita ea non minus reiciendis.
+                example: Totam nam voluptate placeat fuga ex.
             version:
                 type: string
                 description: Service runtime version.
-                example: Aspernatur sit est corrupti ullam commodi porro.
+                example: Corporis non.
         example:
-            service: Perferendis necessitatibus.
-            status: Aut doloremque beatae non sed nihil perferendis.
-            version: Id distinctio perspiciatis.
+            service: Voluptatem voluptas cupiditate.
+            status: Illum porro mollitia ducimus assumenda rerum.
+            version: Earum error quia.
         required:
             - service
             - status
@@ -698,23 +734,36 @@ definitions:
             service:
                 type: string
                 description: Service name.
-                example: Et in dolorem.
+                example: Non quibusdam.
             status:
                 type: string
                 description: Status message.
-                example: Consequatur cupiditate aut consequuntur in animi.
+                example: Maxime ducimus ut non.
             version:
                 type: string
                 description: Service runtime version.
-                example: Aspernatur ut ab nam quis repellendus.
+                example: Veniam aut est.
         example:
-            service: Est repudiandae nihil hic quaerat.
-            status: Blanditiis quia.
-            version: Mollitia repellendus consequuntur.
+            service: Ut perferendis.
+            status: Quia sed et quis fugit ipsam tempora.
+            version: Nobis officiis natus illo ex in.
         required:
             - service
             - status
             - version
+    PolicyDeletePolicyAutoImportRequestBody:
+        title: PolicyDeletePolicyAutoImportRequestBody
+        type: object
+        properties:
+            policyURL:
+                type: string
+                description: PolicyURL defines the address from where a policy bundle will be taken.
+                example: http://deckow.name/marcella.grant
+                format: uri
+        example:
+            policyURL: http://king.com/art
+        required:
+            - policyURL
     PolicyListPoliciesResponseBody:
         title: PolicyListPoliciesResponseBody
         type: object
@@ -725,62 +774,53 @@ definitions:
                     $ref: '#/definitions/PolicyResponseBody'
                 description: JSON array of policies.
                 example:
-                    - data: Ut reiciendis fugit dolorum cupiditate.
-                      dataConfig: Laborum dolor dolorem modi aut.
-                      group: Voluptate et ut similique doloremque quis.
-                      lastUpdate: 5209352704007170203
+                    - data: Enim adipisci error et sunt maxime aperiam.
+                      dataConfig: Et sit qui fugit enim labore.
+                      group: Deserunt voluptatem.
+                      lastUpdate: 1267958255738368405
                       locked: false
-                      policyName: Et occaecati quam tempora laborum.
-                      rego: Vel saepe nisi et.
-                      repository: Velit aut nobis repellendus quis.
-                      version: Expedita ipsum minus ipsam.
-                    - data: Ut reiciendis fugit dolorum cupiditate.
-                      dataConfig: Laborum dolor dolorem modi aut.
-                      group: Voluptate et ut similique doloremque quis.
-                      lastUpdate: 5209352704007170203
+                      policyName: Laborum voluptas dolorem aut accusantium in dolor.
+                      rego: Possimus eveniet cupiditate qui quo tenetur.
+                      repository: Qui optio nobis iure rerum non cumque.
+                      version: Voluptates sed ea et ad.
+                    - data: Enim adipisci error et sunt maxime aperiam.
+                      dataConfig: Et sit qui fugit enim labore.
+                      group: Deserunt voluptatem.
+                      lastUpdate: 1267958255738368405
                       locked: false
-                      policyName: Et occaecati quam tempora laborum.
-                      rego: Vel saepe nisi et.
-                      repository: Velit aut nobis repellendus quis.
-                      version: Expedita ipsum minus ipsam.
+                      policyName: Laborum voluptas dolorem aut accusantium in dolor.
+                      rego: Possimus eveniet cupiditate qui quo tenetur.
+                      repository: Qui optio nobis iure rerum non cumque.
+                      version: Voluptates sed ea et ad.
+                    - data: Enim adipisci error et sunt maxime aperiam.
+                      dataConfig: Et sit qui fugit enim labore.
+                      group: Deserunt voluptatem.
+                      lastUpdate: 1267958255738368405
+                      locked: false
+                      policyName: Laborum voluptas dolorem aut accusantium in dolor.
+                      rego: Possimus eveniet cupiditate qui quo tenetur.
+                      repository: Qui optio nobis iure rerum non cumque.
+                      version: Voluptates sed ea et ad.
         example:
             policies:
-                - data: Ut reiciendis fugit dolorum cupiditate.
-                  dataConfig: Laborum dolor dolorem modi aut.
-                  group: Voluptate et ut similique doloremque quis.
-                  lastUpdate: 5209352704007170203
+                - data: Enim adipisci error et sunt maxime aperiam.
+                  dataConfig: Et sit qui fugit enim labore.
+                  group: Deserunt voluptatem.
+                  lastUpdate: 1267958255738368405
                   locked: false
-                  policyName: Et occaecati quam tempora laborum.
-                  rego: Vel saepe nisi et.
-                  repository: Velit aut nobis repellendus quis.
-                  version: Expedita ipsum minus ipsam.
-                - data: Ut reiciendis fugit dolorum cupiditate.
-                  dataConfig: Laborum dolor dolorem modi aut.
-                  group: Voluptate et ut similique doloremque quis.
-                  lastUpdate: 5209352704007170203
+                  policyName: Laborum voluptas dolorem aut accusantium in dolor.
+                  rego: Possimus eveniet cupiditate qui quo tenetur.
+                  repository: Qui optio nobis iure rerum non cumque.
+                  version: Voluptates sed ea et ad.
+                - data: Enim adipisci error et sunt maxime aperiam.
+                  dataConfig: Et sit qui fugit enim labore.
+                  group: Deserunt voluptatem.
+                  lastUpdate: 1267958255738368405
                   locked: false
-                  policyName: Et occaecati quam tempora laborum.
-                  rego: Vel saepe nisi et.
-                  repository: Velit aut nobis repellendus quis.
-                  version: Expedita ipsum minus ipsam.
-                - data: Ut reiciendis fugit dolorum cupiditate.
-                  dataConfig: Laborum dolor dolorem modi aut.
-                  group: Voluptate et ut similique doloremque quis.
-                  lastUpdate: 5209352704007170203
-                  locked: false
-                  policyName: Et occaecati quam tempora laborum.
-                  rego: Vel saepe nisi et.
-                  repository: Velit aut nobis repellendus quis.
-                  version: Expedita ipsum minus ipsam.
-                - data: Ut reiciendis fugit dolorum cupiditate.
-                  dataConfig: Laborum dolor dolorem modi aut.
-                  group: Voluptate et ut similique doloremque quis.
-                  lastUpdate: 5209352704007170203
-                  locked: false
-                  policyName: Et occaecati quam tempora laborum.
-                  rego: Vel saepe nisi et.
-                  repository: Velit aut nobis repellendus quis.
-                  version: Expedita ipsum minus ipsam.
+                  policyName: Laborum voluptas dolorem aut accusantium in dolor.
+                  rego: Possimus eveniet cupiditate qui quo tenetur.
+                  repository: Qui optio nobis iure rerum non cumque.
+                  version: Voluptates sed ea et ad.
         required:
             - policies
     PolicyResponseBody:
@@ -790,50 +830,50 @@ definitions:
             data:
                 type: string
                 description: Policy static data.
-                example: Ut unde pariatur velit esse.
+                example: Atque quo nihil incidunt ipsam eum quia.
             dataConfig:
                 type: string
                 description: Policy static data optional configuration.
-                example: Veniam repudiandae delectus facere est.
+                example: Qui earum.
             group:
                 type: string
                 description: Policy group.
-                example: Earum quis odit eius saepe.
+                example: Consequatur totam reiciendis molestiae itaque qui.
             lastUpdate:
                 type: integer
                 description: Last update (Unix timestamp).
-                example: 8976518078932316020
+                example: 681919687689063126
                 format: int64
             locked:
                 type: boolean
                 description: Locked specifies if the policy is locked or allowed to execute.
-                example: false
+                example: true
             policyName:
                 type: string
                 description: Policy name.
-                example: Accusamus dolores non temporibus est magni.
+                example: Voluptas qui quisquam magnam aut.
             rego:
                 type: string
                 description: Policy rego source code.
-                example: Deserunt blanditiis repudiandae quasi.
+                example: Nam atque.
             repository:
                 type: string
                 description: Policy repository.
-                example: Ratione sit numquam non cupiditate sed omnis.
+                example: Est debitis.
             version:
                 type: string
                 description: Policy version.
-                example: Delectus sit saepe dicta mollitia molestiae.
+                example: Illo temporibus.
         example:
-            data: Quis eius voluptas est ipsum.
-            dataConfig: Rerum exercitationem odit tempora ab in aliquid.
-            group: Quibusdam rem voluptatum dolor provident dolorum nihil.
-            lastUpdate: 213633216693143283
+            data: Eum rem.
+            dataConfig: Dolorem asperiores quia.
+            group: Cum et quas.
+            lastUpdate: 2356902041027235212
             locked: false
-            policyName: Dolore nostrum animi omnis qui nihil.
-            rego: Et numquam non rerum.
-            repository: Repellendus reiciendis molestias.
-            version: Eius culpa velit est.
+            policyName: Quidem dolorem doloremque nostrum.
+            rego: Dignissimos molestiae ullam totam nihil.
+            repository: Consectetur dignissimos ea id est.
+            version: Aut quis ducimus est quisquam sapiente.
         required:
             - repository
             - group
@@ -853,11 +893,11 @@ definitions:
             policyURL:
                 type: string
                 description: PolicyURL defines the address from where a policy bundle will be taken.
-                example: http://brekke.info/marques.mohr
+                example: http://schoenbeatty.com/emmitt_beahan
                 format: uri
         example:
             interval: 1h30m
-            policyURL: http://hilll.name/mia
+            policyURL: http://glovermertz.biz/cayla
         required:
             - policyURL
             - interval
@@ -868,17 +908,17 @@ definitions:
             subscriber:
                 type: string
                 description: Name of the subscriber for policy.
-                example: ny1
+                example: uvu
                 minLength: 3
                 maxLength: 100
             webhook_url:
                 type: string
                 description: Subscriber webhook url.
-                example: http://langworthmarvin.name/olin.ward
+                example: http://tromp.net/jamey_russel
                 format: uri
         example:
-            subscriber: oj8
-            webhook_url: http://goodwin.com/shania
+            subscriber: mxu
+            webhook_url: http://yundtwisoky.biz/rosella_ziemann
         required:
             - webhook_url
             - subscriber

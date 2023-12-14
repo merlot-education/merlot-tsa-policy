@@ -247,3 +247,37 @@ func (s *Storage) ActiveImportConfigs(_ context.Context) ([]*storage.PolicyAutoI
 
 	return active, nil
 }
+
+func (s *Storage) AutoImportConfigs(_ context.Context) ([]*storage.PolicyAutoImport, error) {
+	s.muAutoImport.RLock()
+	defer s.muAutoImport.RUnlock()
+
+	var configs []*storage.PolicyAutoImport
+	for _, cfg := range s.autoImport {
+		c := *cfg
+		configs = append(configs, &c)
+	}
+
+	return configs, nil
+}
+
+func (s *Storage) AutoImportConfig(_ context.Context, policyURL string) (*storage.PolicyAutoImport, error) {
+	s.muAutoImport.RLock()
+	defer s.muAutoImport.RUnlock()
+
+	for _, cfg := range s.autoImport {
+		if cfg.PolicyURL == policyURL {
+			return cfg, nil
+		}
+	}
+
+	return nil, errors.New(errors.NotFound)
+}
+
+func (s *Storage) DeleteAutoImportConfig(_ context.Context, policyURL string) error {
+	s.muAutoImport.Lock()
+	defer s.muAutoImport.Unlock()
+	delete(s.autoImport, policyURL)
+
+	return nil
+}

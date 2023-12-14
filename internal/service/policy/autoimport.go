@@ -35,7 +35,7 @@ func (s *Service) StartAutoImporter(ctx context.Context, pollInterval time.Durat
 				continue
 			}
 
-			s.logger.Info("automatic policy import completed", zap.Int("importCount", count))
+			s.logger.Debug("automatic policy import completed", zap.Int("importCount", count))
 		}
 	}
 }

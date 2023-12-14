@@ -34,7 +34,11 @@ type Service interface {
 	ListPolicies(context.Context, *PoliciesRequest) (res *PoliciesResult, err error)
 	// SetPolicyAutoImport enables automatic import of policy bundle on a given
 	// time interval.
-	SetPolicyAutoImport(context.Context, *SetPolicyImportRequest) (res any, err error)
+	SetPolicyAutoImport(context.Context, *SetPolicyAutoImportRequest) (res any, err error)
+	// PolicyAutoImport returns all automatic import configurations.
+	PolicyAutoImport(context.Context) (res any, err error)
+	// DeletePolicyAutoImport removes a single automatic import configuration.
+	DeletePolicyAutoImport(context.Context, *DeletePolicyAutoImportRequest) (res any, err error)
 	// Subscribe for policy change notifications by registering webhook callbacks
 	// which the policy service will call.
 	SubscribeForPolicyChange(context.Context, *SubscribeRequest) (res any, err error)
@@ -48,7 +52,14 @@ const ServiceName = "policy"
 // MethodNames lists the service method names as defined in the design. These
 // are the same values that are set in the endpoint request contexts under the
 // MethodKey key.
-var MethodNames = [10]string{"Evaluate", "Validate", "Lock", "Unlock", "ExportBundle", "PolicyPublicKey", "ImportBundle", "ListPolicies", "SetPolicyAutoImport", "SubscribeForPolicyChange"}
+var MethodNames = [12]string{"Evaluate", "Validate", "Lock", "Unlock", "ExportBundle", "PolicyPublicKey", "ImportBundle", "ListPolicies", "SetPolicyAutoImport", "PolicyAutoImport", "DeletePolicyAutoImport", "SubscribeForPolicyChange"}
+
+// DeletePolicyAutoImportRequest is the payload type of the policy service
+// DeletePolicyAutoImport method.
+type DeletePolicyAutoImportRequest struct {
+	// PolicyURL defines the address from where a policy bundle will be taken.
+	PolicyURL string
+}
 
 // EvaluateRequest is the payload type of the policy service Evaluate method.
 type EvaluateRequest struct {
@@ -169,9 +180,9 @@ type PolicyPublicKeyRequest struct {
 	Version string
 }
 
-// SetPolicyImportRequest is the payload type of the policy service
+// SetPolicyAutoImportRequest is the payload type of the policy service
 // SetPolicyAutoImport method.
-type SetPolicyImportRequest struct {
+type SetPolicyAutoImportRequest struct {
 	// PolicyURL defines the address from where a policy bundle will be taken.
 	PolicyURL string
 	// Interval defines the period for automatic bundle import.

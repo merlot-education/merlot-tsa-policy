@@ -151,7 +151,7 @@ var _ = Service("policy", func() {
 
 	Method("SetPolicyAutoImport", func() {
 		Description("SetPolicyAutoImport enables automatic import of policy bundle on a given time interval.")
-		Payload(SetPolicyImportRequest)
+		Payload(SetPolicyAutoImportRequest)
 		Result(Any)
 		HTTP(func() {
 			POST("/v1/policy/import/config")
@@ -159,25 +159,25 @@ var _ = Service("policy", func() {
 		})
 	})
 
-	//Method("PolicyAutoImport", func() {
-	//	Description("PolicyAutoImport returns all automatic import configurations.")
-	//	Payload(Empty)
-	//	Result(PolicyAutoImportResult)
-	//	HTTP(func() {
-	//		GET("/v1/policy/import/config")
-	//		Response(StatusOK)
-	//	})
-	//})
+	Method("PolicyAutoImport", func() {
+		Description("PolicyAutoImport returns all automatic import configurations.")
+		Payload(Empty)
+		Result(Any)
+		HTTP(func() {
+			GET("/v1/policy/import/config")
+			Response(StatusOK)
+		})
+	})
 
-	//Method("DeletePolicyImport", func() {
-	//	Description("DeletePolicyImport removes automatic import configuration.")
-	//	Payload(Empty)
-	//	Result(GetPolicyImportResult)
-	//	HTTP(func() {
-	//		DELETE("/v1/policy/import/config")
-	//		Response(StatusOK)
-	//	})
-	//})
+	Method("DeletePolicyAutoImport", func() {
+		Description("DeletePolicyAutoImport removes a single automatic import configuration.")
+		Payload(DeletePolicyAutoImportRequest)
+		Result(Any)
+		HTTP(func() {
+			DELETE("/v1/policy/import/config")
+			Response(StatusOK)
+		})
+	})
 
 	Method("SubscribeForPolicyChange", func() {
 		Description("Subscribe for policy change notifications by registering webhook callbacks which the policy service will call.")

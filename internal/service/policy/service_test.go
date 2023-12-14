@@ -1501,7 +1501,7 @@ func TestService_PolicyPublicKey(t *testing.T) {
 func TestService_SetPolicyAutoImport(t *testing.T) {
 	tests := []struct {
 		name    string
-		req     *goapolicy.SetPolicyImportRequest
+		req     *goapolicy.SetPolicyAutoImportRequest
 		storage policy.Storage
 		result  map[string]string
 		errtext string
@@ -1509,7 +1509,7 @@ func TestService_SetPolicyAutoImport(t *testing.T) {
 	}{
 		{
 			name: "missing interval",
-			req: &goapolicy.SetPolicyImportRequest{
+			req: &goapolicy.SetPolicyAutoImportRequest{
 				PolicyURL: "http://example.com",
 				Interval:  "",
 			},
@@ -1518,7 +1518,7 @@ func TestService_SetPolicyAutoImport(t *testing.T) {
 		},
 		{
 			name: "invalid interval without unit",
-			req: &goapolicy.SetPolicyImportRequest{
+			req: &goapolicy.SetPolicyAutoImportRequest{
 				PolicyURL: "http://example.com",
 				Interval:  "1",
 			},
@@ -1527,7 +1527,7 @@ func TestService_SetPolicyAutoImport(t *testing.T) {
 		},
 		{
 			name: "invalid interval duration",
-			req: &goapolicy.SetPolicyImportRequest{
+			req: &goapolicy.SetPolicyAutoImportRequest{
 				PolicyURL: "http://example.com",
 				Interval:  "s",
 			},
@@ -1536,7 +1536,7 @@ func TestService_SetPolicyAutoImport(t *testing.T) {
 		},
 		{
 			name: "error saving autoimport configuration",
-			req: &goapolicy.SetPolicyImportRequest{
+			req: &goapolicy.SetPolicyAutoImportRequest{
 				PolicyURL: "http://example.com",
 				Interval:  "1m",
 			},
@@ -1550,7 +1550,7 @@ func TestService_SetPolicyAutoImport(t *testing.T) {
 		},
 		{
 			name: "error saving autoimport configuration",
-			req: &goapolicy.SetPolicyImportRequest{
+			req: &goapolicy.SetPolicyAutoImportRequest{
 				PolicyURL: "http://example.com",
 				Interval:  "1m",
 			},

@@ -21,6 +21,13 @@ type SetPolicyAutoImportRequestBody struct {
 	Interval string `form:"interval" json:"interval" xml:"interval"`
 }
 
+// DeletePolicyAutoImportRequestBody is the type of the "policy" service
+// "DeletePolicyAutoImport" endpoint HTTP request body.
+type DeletePolicyAutoImportRequestBody struct {
+	// PolicyURL defines the address from where a policy bundle will be taken.
+	PolicyURL string `form:"policyURL" json:"policyURL" xml:"policyURL"`
+}
+
 // SubscribeForPolicyChangeRequestBody is the type of the "policy" service
 // "SubscribeForPolicyChange" endpoint HTTP request body.
 type SubscribeForPolicyChangeRequestBody struct {
@@ -61,10 +68,19 @@ type PolicyResponseBody struct {
 
 // NewSetPolicyAutoImportRequestBody builds the HTTP request body from the
 // payload of the "SetPolicyAutoImport" endpoint of the "policy" service.
-func NewSetPolicyAutoImportRequestBody(p *policy.SetPolicyImportRequest) *SetPolicyAutoImportRequestBody {
+func NewSetPolicyAutoImportRequestBody(p *policy.SetPolicyAutoImportRequest) *SetPolicyAutoImportRequestBody {
 	body := &SetPolicyAutoImportRequestBody{
 		PolicyURL: p.PolicyURL,
 		Interval:  p.Interval,
+	}
+	return body
+}
+
+// NewDeletePolicyAutoImportRequestBody builds the HTTP request body from the
+// payload of the "DeletePolicyAutoImport" endpoint of the "policy" service.
+func NewDeletePolicyAutoImportRequestBody(p *policy.DeletePolicyAutoImportRequest) *DeletePolicyAutoImportRequestBody {
+	body := &DeletePolicyAutoImportRequestBody{
+		PolicyURL: p.PolicyURL,
 	}
 	return body
 }

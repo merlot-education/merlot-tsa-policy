@@ -461,7 +461,7 @@ func (s *Service) ImportBundle(ctx context.Context, _ *policy.ImportBundlePayloa
 
 // SetPolicyAutoImport enables automatic import of policy
 // bundle on a given time interval.
-func (s *Service) SetPolicyAutoImport(ctx context.Context, req *policy.SetPolicyImportRequest) (res any, err error) {
+func (s *Service) SetPolicyAutoImport(ctx context.Context, req *policy.SetPolicyAutoImportRequest) (res any, err error) {
 	logger := s.logger.With(
 		zap.String("operation", "setPolicyAutoImport"),
 		zap.String("policyURL", req.PolicyURL),
@@ -487,6 +487,50 @@ func (s *Service) SetPolicyAutoImport(ctx context.Context, req *policy.SetPolicy
 	return map[string]string{
 		"policyURL": req.PolicyURL,
 		"interval":  req.Interval,
+	}, nil
+}
+
+// PolicyAutoImport returns all automatic import configurations.
+func (s *Service) PolicyAutoImport(ctx context.Context) (res any, err error) {
+	logger := s.logger.With(zap.String("operation", "policyAutoImport"))
+
+	configs, err := s.storage.AutoImportConfigs(ctx)
+	if err != nil {
+		logger.Error("error getting auto import configurations", zap.Error(err))
+		return nil, errors.New("error getting auto import configurations", err)
+	}
+
+	// return an empty json array instead of null
+	if configs == nil {
+		configs = []*storage.PolicyAutoImport{}
+	}
+
+	return map[string]interface{}{
+		"autoimport": configs,
+	}, nil
+}
+
+// DeletePolicyAutoImport removes automatic import configuration.
+func (s *Service) DeletePolicyAutoImport(ctx context.Context, req *policy.DeletePolicyAutoImportRequest) (res any, err error) {
+	logger := s.logger.With(
+		zap.String("operation", "deletePolicyAutoImport"),
+		zap.String("policyURL", req.PolicyURL),
+	)
+
+	config, err := s.storage.AutoImportConfig(ctx, req.PolicyURL)
+	if err != nil {
+		logger.Error("cannot get auto import configuration", zap.Error(err))
+		return nil, errors.New("cannot get auto import configuration", err)
+	}
+
+	if err := s.storage.DeleteAutoImportConfig(ctx, req.PolicyURL); err != nil {
+		logger.Error("failed to delete auto import configuration", zap.Error(err))
+		return nil, errors.New("failed to delete auto import configuration", err)
+	}
+
+	return map[string]string{
+		"policyURL": config.PolicyURL,
+		"interval":  config.Interval.String(),
 	}, nil
 }
 

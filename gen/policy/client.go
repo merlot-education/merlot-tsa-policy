@@ -25,11 +25,13 @@ type Client struct {
 	ImportBundleEndpoint             goa.Endpoint
 	ListPoliciesEndpoint             goa.Endpoint
 	SetPolicyAutoImportEndpoint      goa.Endpoint
+	PolicyAutoImportEndpoint         goa.Endpoint
+	DeletePolicyAutoImportEndpoint   goa.Endpoint
 	SubscribeForPolicyChangeEndpoint goa.Endpoint
 }
 
 // NewClient initializes a "policy" service client given the endpoints.
-func NewClient(evaluate, validate, lock, unlock, exportBundle, policyPublicKey, importBundle, listPolicies, setPolicyAutoImport, subscribeForPolicyChange goa.Endpoint) *Client {
+func NewClient(evaluate, validate, lock, unlock, exportBundle, policyPublicKey, importBundle, listPolicies, setPolicyAutoImport, policyAutoImport, deletePolicyAutoImport, subscribeForPolicyChange goa.Endpoint) *Client {
 	return &Client{
 		EvaluateEndpoint:                 evaluate,
 		ValidateEndpoint:                 validate,
@@ -40,6 +42,8 @@ func NewClient(evaluate, validate, lock, unlock, exportBundle, policyPublicKey, 
 		ImportBundleEndpoint:             importBundle,
 		ListPoliciesEndpoint:             listPolicies,
 		SetPolicyAutoImportEndpoint:      setPolicyAutoImport,
+		PolicyAutoImportEndpoint:         policyAutoImport,
+		DeletePolicyAutoImportEndpoint:   deletePolicyAutoImport,
 		SubscribeForPolicyChangeEndpoint: subscribeForPolicyChange,
 	}
 }
@@ -119,9 +123,31 @@ func (c *Client) ListPolicies(ctx context.Context, p *PoliciesRequest) (res *Pol
 
 // SetPolicyAutoImport calls the "SetPolicyAutoImport" endpoint of the "policy"
 // service.
-func (c *Client) SetPolicyAutoImport(ctx context.Context, p *SetPolicyImportRequest) (res any, err error) {
+func (c *Client) SetPolicyAutoImport(ctx context.Context, p *SetPolicyAutoImportRequest) (res any, err error) {
 	var ires any
 	ires, err = c.SetPolicyAutoImportEndpoint(ctx, p)
+	if err != nil {
+		return
+	}
+	return ires.(any), nil
+}
+
+// PolicyAutoImport calls the "PolicyAutoImport" endpoint of the "policy"
+// service.
+func (c *Client) PolicyAutoImport(ctx context.Context) (res any, err error) {
+	var ires any
+	ires, err = c.PolicyAutoImportEndpoint(ctx, nil)
+	if err != nil {
+		return
+	}
+	return ires.(any), nil
+}
+
+// DeletePolicyAutoImport calls the "DeletePolicyAutoImport" endpoint of the
+// "policy" service.
+func (c *Client) DeletePolicyAutoImport(ctx context.Context, p *DeletePolicyAutoImportRequest) (res any, err error) {
+	var ires any
+	ires, err = c.DeletePolicyAutoImportEndpoint(ctx, p)
 	if err != nil {
 		return
 	}

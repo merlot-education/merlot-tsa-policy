@@ -125,7 +125,7 @@ var SubscribeRequest = Type("SubscribeRequest", func() {
 	Required("webhook_url", "subscriber", "repository", "policyName", "group", "version")
 })
 
-var SetPolicyImportRequest = Type("SetPolicyImportRequest", func() {
+var SetPolicyAutoImportRequest = Type("SetPolicyAutoImportRequest", func() {
 	Field(1, "policyURL", String, "PolicyURL defines the address from where a policy bundle will be taken.", func() {
 		Format(FormatURI)
 	})
@@ -134,6 +134,13 @@ var SetPolicyImportRequest = Type("SetPolicyImportRequest", func() {
 		Example("1h30m")
 	})
 	Required("policyURL", "interval")
+})
+
+var DeletePolicyAutoImportRequest = Type("DeletePolicyAutoImportRequest", func() {
+	Field(1, "policyURL", String, "PolicyURL defines the address from where a policy bundle will be taken.", func() {
+		Format(FormatURI)
+	})
+	Required("policyURL")
 })
 
 var HealthResponse = Type("HealthResponse", func() {

@@ -402,22 +402,22 @@ func (s *Storage) ActiveImportConfigs(ctx context.Context) ([]*storage.PolicyAut
 			return nil, err
 		}
 
-		var imports []*storage.PolicyAutoImport
-		if err := cursor.All(ctx, &imports); err != nil {
+		var configs []*storage.PolicyAutoImport
+		if err := cursor.All(ctx, &configs); err != nil {
 			return nil, err
 		}
 
-		if len(imports) == 0 {
+		if len(configs) == 0 {
 			return nil, nil
 		}
 
-		for _, i := range imports {
+		for _, i := range configs {
 			if err := s.updateAutoImportNextInterval(ctx, i); err != nil {
 				s.logger.Error("failed to update next import interval", zap.Error(err))
 			}
 		}
 
-		return imports, nil
+		return configs, nil
 	}
 
 	// execute transaction
@@ -445,4 +445,51 @@ func (s *Storage) updateAutoImportNextInterval(ctx context.Context, importConfig
 	update := bson.M{"$set": bson.M{"nextImport": time.Now().Add(importConfig.Interval)}}
 	_, err := s.autoImport.UpdateOne(ctx, filter, update)
 	return err
+}
+
+func (s *Storage) AutoImportConfigs(ctx context.Context) ([]*storage.PolicyAutoImport, error) {
+	cursor, err := s.autoImport.Find(ctx, bson.D{}, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var configs []*storage.PolicyAutoImport
+	if err := cursor.All(ctx, &configs); err != nil {
+		return nil, err
+	}
+
+	return configs, nil
+}
+
+func (s *Storage) AutoImportConfig(ctx context.Context, policyURL string) (*storage.PolicyAutoImport, error) {
+	filter := bson.M{"policyURL": policyURL}
+
+	result := s.autoImport.FindOne(ctx, filter)
+	if result.Err() != nil {
+		if goerrors.Is(result.Err(), mongo.ErrNoDocuments) {
+			return nil, errors.New(errors.NotFound, result.Err())
+		}
+		return nil, result.Err()
+	}
+
+	var cfg storage.PolicyAutoImport
+	if err := result.Decode(&cfg); err != nil {
+		return nil, err
+	}
+
+	return &cfg, nil
+}
+
+func (s *Storage) DeleteAutoImportConfig(ctx context.Context, policyURL string) error {
+	filter := bson.M{"policyURL": policyURL}
+	result, err := s.autoImport.DeleteOne(ctx, filter)
+	if err != nil {
+		return err
+	}
+
+	if result.DeletedCount == 0 {
+		return errors.New(errors.NotFound)
+	}
+
+	return nil
 }

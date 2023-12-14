@@ -76,6 +76,16 @@ func SetPolicyAutoImportPolicyPath() string {
 	return "/v1/policy/import/config"
 }
 
+// PolicyAutoImportPolicyPath returns the URL path to the policy service PolicyAutoImport HTTP endpoint.
+func PolicyAutoImportPolicyPath() string {
+	return "/v1/policy/import/config"
+}
+
+// DeletePolicyAutoImportPolicyPath returns the URL path to the policy service DeletePolicyAutoImport HTTP endpoint.
+func DeletePolicyAutoImportPolicyPath() string {
+	return "/v1/policy/import/config"
+}
+
 // SubscribeForPolicyChangePolicyPath returns the URL path to the policy service SubscribeForPolicyChange HTTP endpoint.
 func SubscribeForPolicyChangePolicyPath(repository string, group string, policyName string, version string) string {
 	return fmt.Sprintf("/policy/%v/%v/%v/%v/notifychange", repository, group, policyName, version)

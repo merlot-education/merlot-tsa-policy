@@ -52,6 +52,14 @@ type Client struct {
 	// SetPolicyAutoImport endpoint.
 	SetPolicyAutoImportDoer goahttp.Doer
 
+	// PolicyAutoImport Doer is the HTTP client used to make requests to the
+	// PolicyAutoImport endpoint.
+	PolicyAutoImportDoer goahttp.Doer
+
+	// DeletePolicyAutoImport Doer is the HTTP client used to make requests to the
+	// DeletePolicyAutoImport endpoint.
+	DeletePolicyAutoImportDoer goahttp.Doer
+
 	// SubscribeForPolicyChange Doer is the HTTP client used to make requests to
 	// the SubscribeForPolicyChange endpoint.
 	SubscribeForPolicyChangeDoer goahttp.Doer
@@ -85,6 +93,8 @@ func NewClient(
 		ImportBundleDoer:             doer,
 		ListPoliciesDoer:             doer,
 		SetPolicyAutoImportDoer:      doer,
+		PolicyAutoImportDoer:         doer,
+		DeletePolicyAutoImportDoer:   doer,
 		SubscribeForPolicyChangeDoer: doer,
 		RestoreResponseBody:          restoreBody,
 		scheme:                       scheme,
@@ -290,6 +300,49 @@ func (c *Client) SetPolicyAutoImport() goa.Endpoint {
 		resp, err := c.SetPolicyAutoImportDoer.Do(req)
 		if err != nil {
 			return nil, goahttp.ErrRequestError("policy", "SetPolicyAutoImport", err)
+		}
+		return decodeResponse(resp)
+	}
+}
+
+// PolicyAutoImport returns an endpoint that makes HTTP requests to the policy
+// service PolicyAutoImport server.
+func (c *Client) PolicyAutoImport() goa.Endpoint {
+	var (
+		decodeResponse = DecodePolicyAutoImportResponse(c.decoder, c.RestoreResponseBody)
+	)
+	return func(ctx context.Context, v any) (any, error) {
+		req, err := c.BuildPolicyAutoImportRequest(ctx, v)
+		if err != nil {
+			return nil, err
+		}
+		resp, err := c.PolicyAutoImportDoer.Do(req)
+		if err != nil {
+			return nil, goahttp.ErrRequestError("policy", "PolicyAutoImport", err)
+		}
+		return decodeResponse(resp)
+	}
+}
+
+// DeletePolicyAutoImport returns an endpoint that makes HTTP requests to the
+// policy service DeletePolicyAutoImport server.
+func (c *Client) DeletePolicyAutoImport() goa.Endpoint {
+	var (
+		encodeRequest  = EncodeDeletePolicyAutoImportRequest(c.encoder)
+		decodeResponse = DecodeDeletePolicyAutoImportResponse(c.decoder, c.RestoreResponseBody)
+	)
+	return func(ctx context.Context, v any) (any, error) {
+		req, err := c.BuildDeletePolicyAutoImportRequest(ctx, v)
+		if err != nil {
+			return nil, err
+		}
+		err = encodeRequest(req, v)
+		if err != nil {
+			return nil, err
+		}
+		resp, err := c.DeletePolicyAutoImportDoer.Do(req)
+		if err != nil {
+			return nil, goahttp.ErrRequestError("policy", "DeletePolicyAutoImport", err)
 		}
 		return decodeResponse(resp)
 	}

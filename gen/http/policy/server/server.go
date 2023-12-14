@@ -30,6 +30,8 @@ type Server struct {
 	ImportBundle             http.Handler
 	ListPolicies             http.Handler
 	SetPolicyAutoImport      http.Handler
+	PolicyAutoImport         http.Handler
+	DeletePolicyAutoImport   http.Handler
 	SubscribeForPolicyChange http.Handler
 }
 
@@ -73,6 +75,8 @@ func New(
 			{"ImportBundle", "POST", "/v1/policy/import"},
 			{"ListPolicies", "GET", "/v1/policies"},
 			{"SetPolicyAutoImport", "POST", "/v1/policy/import/config"},
+			{"PolicyAutoImport", "GET", "/v1/policy/import/config"},
+			{"DeletePolicyAutoImport", "DELETE", "/v1/policy/import/config"},
 			{"SubscribeForPolicyChange", "POST", "/policy/{repository}/{group}/{policyName}/{version}/notifychange"},
 		},
 		Evaluate:                 NewEvaluateHandler(e.Evaluate, mux, decoder, encoder, errhandler, formatter),
@@ -84,6 +88,8 @@ func New(
 		ImportBundle:             NewImportBundleHandler(e.ImportBundle, mux, decoder, encoder, errhandler, formatter),
 		ListPolicies:             NewListPoliciesHandler(e.ListPolicies, mux, decoder, encoder, errhandler, formatter),
 		SetPolicyAutoImport:      NewSetPolicyAutoImportHandler(e.SetPolicyAutoImport, mux, decoder, encoder, errhandler, formatter),
+		PolicyAutoImport:         NewPolicyAutoImportHandler(e.PolicyAutoImport, mux, decoder, encoder, errhandler, formatter),
+		DeletePolicyAutoImport:   NewDeletePolicyAutoImportHandler(e.DeletePolicyAutoImport, mux, decoder, encoder, errhandler, formatter),
 		SubscribeForPolicyChange: NewSubscribeForPolicyChangeHandler(e.SubscribeForPolicyChange, mux, decoder, encoder, errhandler, formatter),
 	}
 }
@@ -102,6 +108,8 @@ func (s *Server) Use(m func(http.Handler) http.Handler) {
 	s.ImportBundle = m(s.ImportBundle)
 	s.ListPolicies = m(s.ListPolicies)
 	s.SetPolicyAutoImport = m(s.SetPolicyAutoImport)
+	s.PolicyAutoImport = m(s.PolicyAutoImport)
+	s.DeletePolicyAutoImport = m(s.DeletePolicyAutoImport)
 	s.SubscribeForPolicyChange = m(s.SubscribeForPolicyChange)
 }
 
@@ -119,6 +127,8 @@ func Mount(mux goahttp.Muxer, h *Server) {
 	MountImportBundleHandler(mux, h.ImportBundle)
 	MountListPoliciesHandler(mux, h.ListPolicies)
 	MountSetPolicyAutoImportHandler(mux, h.SetPolicyAutoImport)
+	MountPolicyAutoImportHandler(mux, h.PolicyAutoImport)
+	MountDeletePolicyAutoImportHandler(mux, h.DeletePolicyAutoImport)
 	MountSubscribeForPolicyChangeHandler(mux, h.SubscribeForPolicyChange)
 }
 
@@ -587,6 +597,101 @@ func NewSetPolicyAutoImportHandler(
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := context.WithValue(r.Context(), goahttp.AcceptTypeKey, r.Header.Get("Accept"))
 		ctx = context.WithValue(ctx, goa.MethodKey, "SetPolicyAutoImport")
+		ctx = context.WithValue(ctx, goa.ServiceKey, "policy")
+		payload, err := decodeRequest(r)
+		if err != nil {
+			if err := encodeError(ctx, w, err); err != nil {
+				errhandler(ctx, w, err)
+			}
+			return
+		}
+		res, err := endpoint(ctx, payload)
+		if err != nil {
+			if err := encodeError(ctx, w, err); err != nil {
+				errhandler(ctx, w, err)
+			}
+			return
+		}
+		if err := encodeResponse(ctx, w, res); err != nil {
+			errhandler(ctx, w, err)
+		}
+	})
+}
+
+// MountPolicyAutoImportHandler configures the mux to serve the "policy"
+// service "PolicyAutoImport" endpoint.
+func MountPolicyAutoImportHandler(mux goahttp.Muxer, h http.Handler) {
+	f, ok := h.(http.HandlerFunc)
+	if !ok {
+		f = func(w http.ResponseWriter, r *http.Request) {
+			h.ServeHTTP(w, r)
+		}
+	}
+	mux.Handle("GET", "/v1/policy/import/config", f)
+}
+
+// NewPolicyAutoImportHandler creates a HTTP handler which loads the HTTP
+// request and calls the "policy" service "PolicyAutoImport" endpoint.
+func NewPolicyAutoImportHandler(
+	endpoint goa.Endpoint,
+	mux goahttp.Muxer,
+	decoder func(*http.Request) goahttp.Decoder,
+	encoder func(context.Context, http.ResponseWriter) goahttp.Encoder,
+	errhandler func(context.Context, http.ResponseWriter, error),
+	formatter func(ctx context.Context, err error) goahttp.Statuser,
+) http.Handler {
+	var (
+		encodeResponse = EncodePolicyAutoImportResponse(encoder)
+		encodeError    = goahttp.ErrorEncoder(encoder, formatter)
+	)
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := context.WithValue(r.Context(), goahttp.AcceptTypeKey, r.Header.Get("Accept"))
+		ctx = context.WithValue(ctx, goa.MethodKey, "PolicyAutoImport")
+		ctx = context.WithValue(ctx, goa.ServiceKey, "policy")
+		var err error
+		res, err := endpoint(ctx, nil)
+		if err != nil {
+			if err := encodeError(ctx, w, err); err != nil {
+				errhandler(ctx, w, err)
+			}
+			return
+		}
+		if err := encodeResponse(ctx, w, res); err != nil {
+			errhandler(ctx, w, err)
+		}
+	})
+}
+
+// MountDeletePolicyAutoImportHandler configures the mux to serve the "policy"
+// service "DeletePolicyAutoImport" endpoint.
+func MountDeletePolicyAutoImportHandler(mux goahttp.Muxer, h http.Handler) {
+	f, ok := h.(http.HandlerFunc)
+	if !ok {
+		f = func(w http.ResponseWriter, r *http.Request) {
+			h.ServeHTTP(w, r)
+		}
+	}
+	mux.Handle("DELETE", "/v1/policy/import/config", f)
+}
+
+// NewDeletePolicyAutoImportHandler creates a HTTP handler which loads the HTTP
+// request and calls the "policy" service "DeletePolicyAutoImport" endpoint.
+func NewDeletePolicyAutoImportHandler(
+	endpoint goa.Endpoint,
+	mux goahttp.Muxer,
+	decoder func(*http.Request) goahttp.Decoder,
+	encoder func(context.Context, http.ResponseWriter) goahttp.Encoder,
+	errhandler func(context.Context, http.ResponseWriter, error),
+	formatter func(ctx context.Context, err error) goahttp.Statuser,
+) http.Handler {
+	var (
+		decodeRequest  = DecodeDeletePolicyAutoImportRequest(mux, decoder)
+		encodeResponse = EncodeDeletePolicyAutoImportResponse(encoder)
+		encodeError    = goahttp.ErrorEncoder(encoder, formatter)
+	)
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := context.WithValue(r.Context(), goahttp.AcceptTypeKey, r.Header.Get("Accept"))
+		ctx = context.WithValue(ctx, goa.MethodKey, "DeletePolicyAutoImport")
 		ctx = context.WithValue(ctx, goa.ServiceKey, "policy")
 		payload, err := decodeRequest(r)
 		if err != nil {
