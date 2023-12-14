@@ -1497,3 +1497,98 @@ func TestService_PolicyPublicKey(t *testing.T) {
 		})
 	}
 }
+
+func TestService_SetPolicyAutoImport(t *testing.T) {
+	tests := []struct {
+		name    string
+		req     *goapolicy.SetPolicyImportRequest
+		storage policy.Storage
+		result  map[string]string
+		errtext string
+		errkind errors.Kind
+	}{
+		{
+			name: "missing interval",
+			req: &goapolicy.SetPolicyImportRequest{
+				PolicyURL: "http://example.com",
+				Interval:  "",
+			},
+			errtext: "invalid interval definition: time: invalid duration",
+			errkind: errors.BadRequest,
+		},
+		{
+			name: "invalid interval without unit",
+			req: &goapolicy.SetPolicyImportRequest{
+				PolicyURL: "http://example.com",
+				Interval:  "1",
+			},
+			errtext: "invalid interval definition: time: missing unit in duration",
+			errkind: errors.BadRequest,
+		},
+		{
+			name: "invalid interval duration",
+			req: &goapolicy.SetPolicyImportRequest{
+				PolicyURL: "http://example.com",
+				Interval:  "s",
+			},
+			errtext: "invalid interval definition: time: invalid duration",
+			errkind: errors.BadRequest,
+		},
+		{
+			name: "error saving autoimport configuration",
+			req: &goapolicy.SetPolicyImportRequest{
+				PolicyURL: "http://example.com",
+				Interval:  "1m",
+			},
+			storage: &policyfakes.FakeStorage{
+				SaveAutoImportConfigStub: func(ctx context.Context, autoImport *storage.PolicyAutoImport) error {
+					return fmt.Errorf("some error")
+				},
+			},
+			errtext: "some error",
+			errkind: errors.Unknown,
+		},
+		{
+			name: "error saving autoimport configuration",
+			req: &goapolicy.SetPolicyImportRequest{
+				PolicyURL: "http://example.com",
+				Interval:  "1m",
+			},
+			storage: &policyfakes.FakeStorage{
+				SaveAutoImportConfigStub: func(ctx context.Context, autoImport *storage.PolicyAutoImport) error {
+					return nil
+				},
+			},
+			result: map[string]string{
+				"policyURL": "http://example.com",
+				"interval":  "1m",
+			},
+		},
+	}
+
+	for _, test := range tests {
+		svc := policy.New(
+			context.Background(),
+			test.storage,
+			nil,
+			nil,
+			nil,
+			"hostname.com",
+			false,
+			10*time.Second,
+			http.DefaultClient,
+			zap.NewNop(),
+		)
+
+		res, err := svc.SetPolicyAutoImport(context.Background(), test.req)
+		if err != nil {
+			require.NotEmpty(t, test.errtext)
+			assert.Contains(t, err.Error(), test.errtext)
+			assert.True(t, errors.Is(test.errkind, err), fmt.Sprintf("error kind must be: %v", test.errkind))
+			assert.Nil(t, test.result)
+		} else {
+			require.Empty(t, test.errtext, "error is not expected, but got: %v", err)
+			assert.Equal(t, test.result, res)
+		}
+	}
+}
