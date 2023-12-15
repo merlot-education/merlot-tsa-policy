@@ -95,6 +95,9 @@ and the ZIP bundle will be returned to the client.
 wget http://localhost:8081/repository/policy/xfsc/didresolve/1.0/export
 ```
 
+>See [here](./doc/policy_bundles.md) for more detailed overview of 
+>policy bundles export/import.
+
 ### Policy Storage
 
 Policies (rego source code and metadata) are stored in a storage, which is an interface
