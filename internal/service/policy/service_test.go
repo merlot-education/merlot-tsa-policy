@@ -1549,7 +1549,7 @@ func TestService_SetPolicyAutoImport(t *testing.T) {
 			errkind: errors.Unknown,
 		},
 		{
-			name: "error saving autoimport configuration",
+			name: "autoimport is saved successfully",
 			req: &goapolicy.SetPolicyAutoImportRequest{
 				PolicyURL: "http://example.com",
 				Interval:  "1m",
