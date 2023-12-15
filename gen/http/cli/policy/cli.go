@@ -23,14 +23,14 @@ import (
 //
 //	command (subcommand1|subcommand2|...)
 func UsageCommands() string {
-	return `policy (evaluate|validate|lock|unlock|export-bundle|import-bundle|policy-public-key|list-policies|subscribe-for-policy-change)
+	return `policy (evaluate|validate|lock|unlock|export-bundle|policy-public-key|import-bundle|list-policies|set-policy-auto-import|policy-auto-import|delete-policy-auto-import|subscribe-for-policy-change)
 health (liveness|readiness)
 `
 }
 
 // UsageExamples produces an example of a valid invocation of the CLI tool.
 func UsageExamples() string {
-	return os.Args[0] + ` policy evaluate --body "Et qui non quia aut error." --repository "policies" --group "example" --policy-name "example" --version "1.0" --evaluation-id "Sunt in et quia cum." --ttl 2518400637133283188` + "\n" +
+	return os.Args[0] + ` policy evaluate --body "Ipsa ad voluptatum maxime ut." --repository "policies" --group "example" --policy-name "example" --version "1.0" --evaluation-id "Et dolores." --ttl 2774440846631434065` + "\n" +
 		os.Args[0] + ` health liveness` + "\n" +
 		""
 }
@@ -83,21 +83,29 @@ func ParseEndpoint(
 		policyExportBundlePolicyNameFlag = policyExportBundleFlags.String("policy-name", "REQUIRED", "Policy name.")
 		policyExportBundleVersionFlag    = policyExportBundleFlags.String("version", "REQUIRED", "Policy version.")
 
-		policyImportBundleFlags      = flag.NewFlagSet("import-bundle", flag.ExitOnError)
-		policyImportBundleLengthFlag = policyImportBundleFlags.String("length", "", "")
-		policyImportBundleStreamFlag = policyImportBundleFlags.String("stream", "REQUIRED", "path to file containing the streamed request body")
-
 		policyPolicyPublicKeyFlags          = flag.NewFlagSet("policy-public-key", flag.ExitOnError)
 		policyPolicyPublicKeyRepositoryFlag = policyPolicyPublicKeyFlags.String("repository", "REQUIRED", "Policy repository.")
 		policyPolicyPublicKeyGroupFlag      = policyPolicyPublicKeyFlags.String("group", "REQUIRED", "Policy group.")
 		policyPolicyPublicKeyPolicyNameFlag = policyPolicyPublicKeyFlags.String("policy-name", "REQUIRED", "Policy name.")
 		policyPolicyPublicKeyVersionFlag    = policyPolicyPublicKeyFlags.String("version", "REQUIRED", "Policy version.")
 
+		policyImportBundleFlags      = flag.NewFlagSet("import-bundle", flag.ExitOnError)
+		policyImportBundleLengthFlag = policyImportBundleFlags.String("length", "", "")
+		policyImportBundleStreamFlag = policyImportBundleFlags.String("stream", "REQUIRED", "path to file containing the streamed request body")
+
 		policyListPoliciesFlags          = flag.NewFlagSet("list-policies", flag.ExitOnError)
 		policyListPoliciesLockedFlag     = policyListPoliciesFlags.String("locked", "", "")
 		policyListPoliciesRegoFlag       = policyListPoliciesFlags.String("rego", "", "")
 		policyListPoliciesDataFlag       = policyListPoliciesFlags.String("data", "", "")
 		policyListPoliciesDataConfigFlag = policyListPoliciesFlags.String("data-config", "", "")
+
+		policySetPolicyAutoImportFlags    = flag.NewFlagSet("set-policy-auto-import", flag.ExitOnError)
+		policySetPolicyAutoImportBodyFlag = policySetPolicyAutoImportFlags.String("body", "REQUIRED", "")
+
+		policyPolicyAutoImportFlags = flag.NewFlagSet("policy-auto-import", flag.ExitOnError)
+
+		policyDeletePolicyAutoImportFlags    = flag.NewFlagSet("delete-policy-auto-import", flag.ExitOnError)
+		policyDeletePolicyAutoImportBodyFlag = policyDeletePolicyAutoImportFlags.String("body", "REQUIRED", "")
 
 		policySubscribeForPolicyChangeFlags          = flag.NewFlagSet("subscribe-for-policy-change", flag.ExitOnError)
 		policySubscribeForPolicyChangeBodyFlag       = policySubscribeForPolicyChangeFlags.String("body", "REQUIRED", "")
@@ -118,9 +126,12 @@ func ParseEndpoint(
 	policyLockFlags.Usage = policyLockUsage
 	policyUnlockFlags.Usage = policyUnlockUsage
 	policyExportBundleFlags.Usage = policyExportBundleUsage
-	policyImportBundleFlags.Usage = policyImportBundleUsage
 	policyPolicyPublicKeyFlags.Usage = policyPolicyPublicKeyUsage
+	policyImportBundleFlags.Usage = policyImportBundleUsage
 	policyListPoliciesFlags.Usage = policyListPoliciesUsage
+	policySetPolicyAutoImportFlags.Usage = policySetPolicyAutoImportUsage
+	policyPolicyAutoImportFlags.Usage = policyPolicyAutoImportUsage
+	policyDeletePolicyAutoImportFlags.Usage = policyDeletePolicyAutoImportUsage
 	policySubscribeForPolicyChangeFlags.Usage = policySubscribeForPolicyChangeUsage
 
 	healthFlags.Usage = healthUsage
@@ -178,14 +189,23 @@ func ParseEndpoint(
 			case "export-bundle":
 				epf = policyExportBundleFlags
 
-			case "import-bundle":
-				epf = policyImportBundleFlags
-
 			case "policy-public-key":
 				epf = policyPolicyPublicKeyFlags
 
+			case "import-bundle":
+				epf = policyImportBundleFlags
+
 			case "list-policies":
 				epf = policyListPoliciesFlags
+
+			case "set-policy-auto-import":
+				epf = policySetPolicyAutoImportFlags
+
+			case "policy-auto-import":
+				epf = policyPolicyAutoImportFlags
+
+			case "delete-policy-auto-import":
+				epf = policyDeletePolicyAutoImportFlags
 
 			case "subscribe-for-policy-change":
 				epf = policySubscribeForPolicyChangeFlags
@@ -240,18 +260,27 @@ func ParseEndpoint(
 			case "export-bundle":
 				endpoint = c.ExportBundle()
 				data, err = policyc.BuildExportBundlePayload(*policyExportBundleRepositoryFlag, *policyExportBundleGroupFlag, *policyExportBundlePolicyNameFlag, *policyExportBundleVersionFlag)
+			case "policy-public-key":
+				endpoint = c.PolicyPublicKey()
+				data, err = policyc.BuildPolicyPublicKeyPayload(*policyPolicyPublicKeyRepositoryFlag, *policyPolicyPublicKeyGroupFlag, *policyPolicyPublicKeyPolicyNameFlag, *policyPolicyPublicKeyVersionFlag)
 			case "import-bundle":
 				endpoint = c.ImportBundle()
 				data, err = policyc.BuildImportBundlePayload(*policyImportBundleLengthFlag)
 				if err == nil {
 					data, err = policyc.BuildImportBundleStreamPayload(data, *policyImportBundleStreamFlag)
 				}
-			case "policy-public-key":
-				endpoint = c.PolicyPublicKey()
-				data, err = policyc.BuildPolicyPublicKeyPayload(*policyPolicyPublicKeyRepositoryFlag, *policyPolicyPublicKeyGroupFlag, *policyPolicyPublicKeyPolicyNameFlag, *policyPolicyPublicKeyVersionFlag)
 			case "list-policies":
 				endpoint = c.ListPolicies()
 				data, err = policyc.BuildListPoliciesPayload(*policyListPoliciesLockedFlag, *policyListPoliciesRegoFlag, *policyListPoliciesDataFlag, *policyListPoliciesDataConfigFlag)
+			case "set-policy-auto-import":
+				endpoint = c.SetPolicyAutoImport()
+				data, err = policyc.BuildSetPolicyAutoImportPayload(*policySetPolicyAutoImportBodyFlag)
+			case "policy-auto-import":
+				endpoint = c.PolicyAutoImport()
+				data = nil
+			case "delete-policy-auto-import":
+				endpoint = c.DeletePolicyAutoImport()
+				data, err = policyc.BuildDeletePolicyAutoImportPayload(*policyDeletePolicyAutoImportBodyFlag)
 			case "subscribe-for-policy-change":
 				endpoint = c.SubscribeForPolicyChange()
 				data, err = policyc.BuildSubscribeForPolicyChangePayload(*policySubscribeForPolicyChangeBodyFlag, *policySubscribeForPolicyChangeRepositoryFlag, *policySubscribeForPolicyChangeGroupFlag, *policySubscribeForPolicyChangePolicyNameFlag, *policySubscribeForPolicyChangeVersionFlag)
@@ -287,9 +316,12 @@ COMMAND:
     lock: Lock a policy so that it cannot be evaluated.
     unlock: Unlock a policy so it can be evaluated again.
     export-bundle: Export a signed policy bundle.
-    import-bundle: Import a signed policy bundle.
     policy-public-key: PolicyPublicKey returns the public key in JWK format which must be used to verify a signed policy bundle.
+    import-bundle: Import a signed policy bundle.
     list-policies: List policies from storage with optional filters.
+    set-policy-auto-import: SetPolicyAutoImport enables automatic import of policy bundle on a given time interval.
+    policy-auto-import: PolicyAutoImport returns all automatic import configurations.
+    delete-policy-auto-import: DeletePolicyAutoImport removes a single automatic import configuration.
     subscribe-for-policy-change: Subscribe for policy change notifications by registering webhook callbacks which the policy service will call.
 
 Additional help:
@@ -309,7 +341,7 @@ Evaluate executes a policy with the given 'data' as input.
     -ttl INT: 
 
 Example:
-    %[1]s policy evaluate --body "Et qui non quia aut error." --repository "policies" --group "example" --policy-name "example" --version "1.0" --evaluation-id "Sunt in et quia cum." --ttl 2518400637133283188
+    %[1]s policy evaluate --body "Ipsa ad voluptatum maxime ut." --repository "policies" --group "example" --policy-name "example" --version "1.0" --evaluation-id "Et dolores." --ttl 2774440846631434065
 `, os.Args[0])
 }
 
@@ -326,7 +358,7 @@ Validate executes a policy with the given 'data' as input and validates the outp
     -ttl INT: 
 
 Example:
-    %[1]s policy validate --body "Inventore ipsum voluptatibus recusandae dolorum." --repository "policies" --group "example" --policy-name "example" --version "1.0" --evaluation-id "Recusandae est rerum corrupti quia." --ttl 6080810954711754682
+    %[1]s policy validate --body "At ut dolore." --repository "policies" --group "example" --policy-name "example" --version "1.0" --evaluation-id "Similique architecto." --ttl 873309878343572558
 `, os.Args[0])
 }
 
@@ -340,7 +372,7 @@ Lock a policy so that it cannot be evaluated.
     -version STRING: Policy version.
 
 Example:
-    %[1]s policy lock --repository "Aut et." --group "Maiores et minus." --policy-name "Veritatis quam qui nostrum eaque." --version "Et dolores."
+    %[1]s policy lock --repository "Vel non quo." --group "Molestias rerum sunt eaque." --policy-name "Dolores totam voluptatem." --version "Sapiente architecto et enim omnis."
 `, os.Args[0])
 }
 
@@ -354,7 +386,7 @@ Unlock a policy so it can be evaluated again.
     -version STRING: Policy version.
 
 Example:
-    %[1]s policy unlock --repository "Error minus vel voluptate quasi." --group "Debitis consectetur." --policy-name "Vel sunt dolorem ea architecto iure." --version "Similique architecto."
+    %[1]s policy unlock --repository "Tenetur rerum necessitatibus fugit." --group "Ut velit aut nobis repellendus." --policy-name "Rem et occaecati quam." --version "Laborum harum voluptate et ut similique doloremque."
 `, os.Args[0])
 }
 
@@ -372,18 +404,6 @@ Example:
 `, os.Args[0])
 }
 
-func policyImportBundleUsage() {
-	fmt.Fprintf(os.Stderr, `%[1]s [flags] policy import-bundle -length INT -stream STRING
-
-Import a signed policy bundle.
-    -length INT: 
-    -stream STRING: path to file containing the streamed request body
-
-Example:
-    %[1]s policy import-bundle --length 5194411292341530474 --stream "goa.png"
-`, os.Args[0])
-}
-
 func policyPolicyPublicKeyUsage() {
 	fmt.Fprintf(os.Stderr, `%[1]s [flags] policy policy-public-key -repository STRING -group STRING -policy-name STRING -version STRING
 
@@ -398,6 +418,18 @@ Example:
 `, os.Args[0])
 }
 
+func policyImportBundleUsage() {
+	fmt.Fprintf(os.Stderr, `%[1]s [flags] policy import-bundle -length INT -stream STRING
+
+Import a signed policy bundle.
+    -length INT: 
+    -stream STRING: path to file containing the streamed request body
+
+Example:
+    %[1]s policy import-bundle --length 1580298023389806623 --stream "goa.png"
+`, os.Args[0])
+}
+
 func policyListPoliciesUsage() {
 	fmt.Fprintf(os.Stderr, `%[1]s [flags] policy list-policies -locked BOOL -rego BOOL -data BOOL -data-config BOOL
 
@@ -408,7 +440,44 @@ List policies from storage with optional filters.
     -data-config BOOL: 
 
 Example:
-    %[1]s policy list-policies --locked true --rego true --data true --data-config true
+    %[1]s policy list-policies --locked false --rego true --data false --data-config false
+`, os.Args[0])
+}
+
+func policySetPolicyAutoImportUsage() {
+	fmt.Fprintf(os.Stderr, `%[1]s [flags] policy set-policy-auto-import -body JSON
+
+SetPolicyAutoImport enables automatic import of policy bundle on a given time interval.
+    -body JSON: 
+
+Example:
+    %[1]s policy set-policy-auto-import --body '{
+      "interval": "1h30m",
+      "policyURL": "http://altenwerthstrosin.info/ressie"
+   }'
+`, os.Args[0])
+}
+
+func policyPolicyAutoImportUsage() {
+	fmt.Fprintf(os.Stderr, `%[1]s [flags] policy policy-auto-import
+
+PolicyAutoImport returns all automatic import configurations.
+
+Example:
+    %[1]s policy policy-auto-import
+`, os.Args[0])
+}
+
+func policyDeletePolicyAutoImportUsage() {
+	fmt.Fprintf(os.Stderr, `%[1]s [flags] policy delete-policy-auto-import -body JSON
+
+DeletePolicyAutoImport removes a single automatic import configuration.
+    -body JSON: 
+
+Example:
+    %[1]s policy delete-policy-auto-import --body '{
+      "policyURL": "http://harvey.info/mossie_wilkinson"
+   }'
 `, os.Args[0])
 }
 
@@ -424,9 +493,9 @@ Subscribe for policy change notifications by registering webhook callbacks which
 
 Example:
     %[1]s policy subscribe-for-policy-change --body '{
-      "subscriber": "jdb",
-      "webhook_url": "http://conn.biz/stefanie_hayes"
-   }' --repository "In id quibusdam." --group "Deserunt officiis ipsa molestiae." --policy-name "Unde doloremque quae ullam." --version "Optio nobis iure rerum non."
+      "subscriber": "bsm",
+      "webhook_url": "http://yundt.org/bart"
+   }' --repository "Quis eius voluptas est ipsum." --group "Rerum exercitationem odit tempora ab in aliquid." --policy-name "Deleniti odit dolor et et." --version "Libero sed a at."
 `, os.Args[0])
 }
 

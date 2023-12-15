@@ -9,6 +9,7 @@ import (
 	"io"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/open-policy-agent/opa/rego"
@@ -65,8 +66,19 @@ type Service struct {
 	externalHostname string
 }
 
-func New(storage Storage, policyCache RegoCache, cache Cache, signer Signer, hostname string, httpClient *http.Client, validationLock bool, logger *zap.Logger) *Service {
-	return &Service{
+func New(
+	ctx context.Context,
+	storage Storage,
+	policyCache RegoCache,
+	cache Cache,
+	signer Signer,
+	hostname string,
+	validationLock bool,
+	importPollInterval time.Duration,
+	httpClient *http.Client,
+	logger *zap.Logger,
+) *Service {
+	svc := &Service{
 		storage:          storage,
 		policyCache:      policyCache,
 		cache:            cache,
@@ -76,6 +88,11 @@ func New(storage Storage, policyCache RegoCache, cache Cache, signer Signer, hos
 		logger:           logger,
 		externalHostname: hostname,
 	}
+
+	// start process to auto import policy bundles
+	go svc.StartAutoImporter(ctx, importPollInterval)
+
+	return svc
 }
 
 // Evaluate executes a policy with the given input.
@@ -395,6 +412,7 @@ func (s *Service) PolicyPublicKey(ctx context.Context, req *policy.PolicyPublicK
 // ImportBundle imports a signed policy bundle.
 func (s *Service) ImportBundle(ctx context.Context, _ *policy.ImportBundlePayload, payload io.ReadCloser) (any, error) {
 	logger := s.logger.With(zap.String("operation", "importBundle"))
+	defer payload.Close() //nolint:errcheck
 
 	archive, err := io.ReadAll(payload)
 	if err != nil {
@@ -418,7 +436,7 @@ func (s *Service) ImportBundle(ctx context.Context, _ *policy.ImportBundlePayloa
 		logger.Error("failed to verify bundle", zap.Error(err))
 		return nil, errors.New(errors.Forbidden, "failed to verify bundle", err)
 	}
-	logger.Debug("signature is valid")
+	logger.Debug("bundle signature is valid")
 
 	policy, err := s.policyFromBundle(files[0].Content)
 	if err != nil {
@@ -439,6 +457,81 @@ func (s *Service) ImportBundle(ctx context.Context, _ *policy.ImportBundlePayloa
 		"locked":     policy.Locked,
 		"lastUpdate": policy.LastUpdate,
 	}, err
+}
+
+// SetPolicyAutoImport enables automatic import of policy
+// bundle on a given time interval.
+func (s *Service) SetPolicyAutoImport(ctx context.Context, req *policy.SetPolicyAutoImportRequest) (res any, err error) {
+	logger := s.logger.With(
+		zap.String("operation", "setPolicyAutoImport"),
+		zap.String("policyURL", req.PolicyURL),
+		zap.String("interval", req.Interval),
+	)
+
+	interval, err := time.ParseDuration(req.Interval)
+	if err != nil {
+		logger.Error("invalid interval definition", zap.Error(err))
+		return nil, errors.New(errors.BadRequest, fmt.Sprintf("invalid interval definition: %v", err))
+	}
+
+	err = s.storage.SaveAutoImportConfig(ctx, &storage.PolicyAutoImport{
+		PolicyURL:  req.PolicyURL,
+		Interval:   interval,
+		NextImport: time.Now().Add(interval),
+	})
+	if err != nil {
+		logger.Error("error saving auto import configuration", zap.Error(err))
+		return nil, errors.New("error saving auto import configuration", err)
+	}
+
+	return map[string]string{
+		"policyURL": req.PolicyURL,
+		"interval":  req.Interval,
+	}, nil
+}
+
+// PolicyAutoImport returns all automatic import configurations.
+func (s *Service) PolicyAutoImport(ctx context.Context) (res any, err error) {
+	logger := s.logger.With(zap.String("operation", "policyAutoImport"))
+
+	configs, err := s.storage.AutoImportConfigs(ctx)
+	if err != nil {
+		logger.Error("error getting auto import configurations", zap.Error(err))
+		return nil, errors.New("error getting auto import configurations", err)
+	}
+
+	// return an empty json array instead of null
+	if configs == nil {
+		configs = []*storage.PolicyAutoImport{}
+	}
+
+	return map[string]interface{}{
+		"autoimport": configs,
+	}, nil
+}
+
+// DeletePolicyAutoImport removes automatic import configuration.
+func (s *Service) DeletePolicyAutoImport(ctx context.Context, req *policy.DeletePolicyAutoImportRequest) (res any, err error) {
+	logger := s.logger.With(
+		zap.String("operation", "deletePolicyAutoImport"),
+		zap.String("policyURL", req.PolicyURL),
+	)
+
+	config, err := s.storage.AutoImportConfig(ctx, req.PolicyURL)
+	if err != nil {
+		logger.Error("cannot get auto import configuration", zap.Error(err))
+		return nil, errors.New("cannot get auto import configuration", err)
+	}
+
+	if err := s.storage.DeleteAutoImportConfig(ctx, req.PolicyURL); err != nil {
+		logger.Error("failed to delete auto import configuration", zap.Error(err))
+		return nil, errors.New("failed to delete auto import configuration", err)
+	}
+
+	return map[string]string{
+		"policyURL": config.PolicyURL,
+		"interval":  config.Interval.String(),
+	}, nil
 }
 
 func (s *Service) ListPolicies(ctx context.Context, req *policy.PoliciesRequest) (*policy.PoliciesResult, error) {

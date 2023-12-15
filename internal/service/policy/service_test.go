@@ -25,7 +25,7 @@ import (
 )
 
 func TestNew(t *testing.T) {
-	svc := policy.New(nil, nil, nil, nil, "hostname.com", http.DefaultClient, false, zap.NewNop())
+	svc := policy.New(context.Background(), nil, nil, nil, nil, "hostname.com", false, 10*time.Second, http.DefaultClient, zap.NewNop())
 	assert.Implements(t, (*goapolicy.Service)(nil), svc)
 }
 
@@ -372,7 +372,18 @@ func TestService_Evaluate(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			svc := policy.New(test.storage, test.regocache, test.cache, nil, "hostname.com", http.DefaultClient, false, zap.NewNop())
+			svc := policy.New(
+				context.Background(),
+				test.storage,
+				test.regocache,
+				test.cache,
+				nil,
+				"hostname.com",
+				false,
+				10*time.Second,
+				http.DefaultClient,
+				zap.NewNop(),
+			)
 			ctx := context.Background()
 			if test.ctx != nil {
 				ctx = test.ctx
@@ -596,7 +607,18 @@ func TestService_Validate(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			svc := policy.New(test.storage, test.regocache, test.cache, nil, "hostname.com", http.DefaultClient, false, zap.NewNop())
+			svc := policy.New(
+				context.Background(),
+				test.storage,
+				test.regocache,
+				test.cache,
+				nil,
+				"hostname.com",
+				false,
+				10*time.Second,
+				http.DefaultClient,
+				zap.NewNop(),
+			)
 
 			res, err := svc.Validate(context.Background(), test.req)
 			if err == nil {
@@ -699,7 +721,18 @@ func TestService_Lock(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			svc := policy.New(test.storage, nil, nil, nil, "hostname.com", http.DefaultClient, false, zap.NewNop())
+			svc := policy.New(
+				context.Background(),
+				test.storage,
+				nil,
+				nil,
+				nil,
+				"hostname.com",
+				false,
+				10*time.Second,
+				http.DefaultClient,
+				zap.NewNop(),
+			)
 			err := svc.Lock(context.Background(), test.req)
 			if err == nil {
 				assert.Empty(t, test.errtext)
@@ -797,7 +830,18 @@ func TestService_Unlock(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			svc := policy.New(test.storage, nil, nil, nil, "hostname.com", http.DefaultClient, false, zap.NewNop())
+			svc := policy.New(
+				context.Background(),
+				test.storage,
+				nil,
+				nil,
+				nil,
+				"hostname.com",
+				false,
+				10*time.Second,
+				http.DefaultClient,
+				zap.NewNop(),
+			)
 			err := svc.Unlock(context.Background(), test.req)
 			if err == nil {
 				assert.Empty(t, test.errtext)
@@ -1029,7 +1073,18 @@ func TestService_ListPolicies(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			svc := policy.New(test.storage, nil, nil, nil, "hostname.com", http.DefaultClient, false, zap.NewNop())
+			svc := policy.New(
+				context.Background(),
+				test.storage,
+				nil,
+				nil,
+				nil,
+				"hostname.com",
+				false,
+				10*time.Second,
+				http.DefaultClient,
+				zap.NewNop(),
+			)
 			result, err := svc.ListPolicies(context.Background(), test.request)
 
 			if test.errText != "" {
@@ -1094,7 +1149,18 @@ func TestService_SubscribeForPolicyChange(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			svc := policy.New(test.storage, nil, nil, nil, "hostname.com", http.DefaultClient, false, zap.NewNop())
+			svc := policy.New(
+				context.Background(),
+				test.storage,
+				nil,
+				nil,
+				nil,
+				"hostname.com",
+				false,
+				10*time.Second,
+				http.DefaultClient,
+				zap.NewNop(),
+			)
 			res, err := svc.SubscribeForPolicyChange(context.Background(), test.request)
 			if test.errText != "" {
 				assert.ErrorContains(t, err, test.errText)
@@ -1114,7 +1180,18 @@ func TestService_ExportBundleError(t *testing.T) {
 				return nil, errors.New(errors.NotFound, "policy not found")
 			},
 		}
-		svc := policy.New(storage, nil, nil, nil, "https://policyservice.com", http.DefaultClient, false, zap.NewNop())
+		svc := policy.New(
+			context.Background(),
+			storage,
+			nil,
+			nil,
+			nil,
+			"https://policyservice.com",
+			false,
+			10*time.Second,
+			http.DefaultClient,
+			zap.NewNop(),
+		)
 		res, reader, err := svc.ExportBundle(context.Background(), &goapolicy.ExportBundleRequest{})
 		assert.Nil(t, res)
 		assert.Nil(t, reader)
@@ -1131,7 +1208,18 @@ func TestService_ExportBundleError(t *testing.T) {
 				return nil, errors.New("unexpected error")
 			},
 		}
-		svc := policy.New(storage, nil, nil, nil, "https://policyservice.com", http.DefaultClient, false, zap.NewNop())
+		svc := policy.New(
+			context.Background(),
+			storage,
+			nil,
+			nil,
+			nil,
+			"https://policyservice.com",
+			false,
+			10*time.Second,
+			http.DefaultClient,
+			zap.NewNop(),
+		)
 		res, reader, err := svc.ExportBundle(context.Background(), &goapolicy.ExportBundleRequest{})
 		assert.Nil(t, res)
 		assert.Nil(t, reader)
@@ -1159,7 +1247,18 @@ func TestService_ExportBundleError(t *testing.T) {
 			},
 		}
 
-		svc := policy.New(storage, nil, nil, nil, "https://policyservice.com", http.DefaultClient, false, zap.NewNop())
+		svc := policy.New(
+			context.Background(),
+			storage,
+			nil,
+			nil,
+			nil,
+			"https://policyservice.com",
+			false,
+			10*time.Second,
+			http.DefaultClient,
+			zap.NewNop(),
+		)
 		res, reader, err := svc.ExportBundle(context.Background(), &goapolicy.ExportBundleRequest{})
 		assert.Nil(t, res)
 		assert.Nil(t, reader)
@@ -1191,7 +1290,18 @@ func TestService_ExportBundleError(t *testing.T) {
 			},
 		}
 
-		svc := policy.New(storage, nil, nil, signer, "https://policyservice.com", http.DefaultClient, false, zap.NewNop())
+		svc := policy.New(
+			context.Background(),
+			storage,
+			nil,
+			nil,
+			signer,
+			"https://policyservice.com",
+			false,
+			10*time.Second,
+			http.DefaultClient,
+			zap.NewNop(),
+		)
 		res, reader, err := svc.ExportBundle(context.Background(), &goapolicy.ExportBundleRequest{})
 		assert.Nil(t, res)
 		assert.Nil(t, reader)
@@ -1224,7 +1334,18 @@ func TestService_ExportBundleSuccess(t *testing.T) {
 		},
 	}
 
-	svc := policy.New(storage, nil, nil, signer, "https://policyservice.com", http.DefaultClient, false, zap.NewNop())
+	svc := policy.New(
+		context.Background(),
+		storage,
+		nil,
+		nil,
+		signer,
+		"https://policyservice.com",
+		false,
+		10*time.Second,
+		http.DefaultClient,
+		zap.NewNop(),
+	)
 	res, reader, err := svc.ExportBundle(context.Background(), &goapolicy.ExportBundleRequest{})
 	require.NoError(t, err)
 	require.NotNil(t, res)
@@ -1349,7 +1470,18 @@ func TestService_PolicyPublicKey(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			svc := policy.New(test.storage, nil, nil, test.signer, "hostname.com", http.DefaultClient, false, zap.NewNop())
+			svc := policy.New(
+				context.Background(),
+				test.storage,
+				nil,
+				nil,
+				test.signer,
+				"hostname.com",
+				false,
+				10*time.Second,
+				http.DefaultClient,
+				zap.NewNop(),
+			)
 			key, err := svc.PolicyPublicKey(context.Background(), &goapolicy.PolicyPublicKeyRequest{})
 			if err != nil {
 				require.NotEmpty(t, test.errtext)
@@ -1363,5 +1495,100 @@ func TestService_PolicyPublicKey(t *testing.T) {
 				assert.Equal(t, test.key, key)
 			}
 		})
+	}
+}
+
+func TestService_SetPolicyAutoImport(t *testing.T) {
+	tests := []struct {
+		name    string
+		req     *goapolicy.SetPolicyAutoImportRequest
+		storage policy.Storage
+		result  map[string]string
+		errtext string
+		errkind errors.Kind
+	}{
+		{
+			name: "missing interval",
+			req: &goapolicy.SetPolicyAutoImportRequest{
+				PolicyURL: "http://example.com",
+				Interval:  "",
+			},
+			errtext: "invalid interval definition: time: invalid duration",
+			errkind: errors.BadRequest,
+		},
+		{
+			name: "invalid interval without unit",
+			req: &goapolicy.SetPolicyAutoImportRequest{
+				PolicyURL: "http://example.com",
+				Interval:  "1",
+			},
+			errtext: "invalid interval definition: time: missing unit in duration",
+			errkind: errors.BadRequest,
+		},
+		{
+			name: "invalid interval duration",
+			req: &goapolicy.SetPolicyAutoImportRequest{
+				PolicyURL: "http://example.com",
+				Interval:  "s",
+			},
+			errtext: "invalid interval definition: time: invalid duration",
+			errkind: errors.BadRequest,
+		},
+		{
+			name: "error saving autoimport configuration",
+			req: &goapolicy.SetPolicyAutoImportRequest{
+				PolicyURL: "http://example.com",
+				Interval:  "1m",
+			},
+			storage: &policyfakes.FakeStorage{
+				SaveAutoImportConfigStub: func(ctx context.Context, autoImport *storage.PolicyAutoImport) error {
+					return fmt.Errorf("some error")
+				},
+			},
+			errtext: "some error",
+			errkind: errors.Unknown,
+		},
+		{
+			name: "autoimport is saved successfully",
+			req: &goapolicy.SetPolicyAutoImportRequest{
+				PolicyURL: "http://example.com",
+				Interval:  "1m",
+			},
+			storage: &policyfakes.FakeStorage{
+				SaveAutoImportConfigStub: func(ctx context.Context, autoImport *storage.PolicyAutoImport) error {
+					return nil
+				},
+			},
+			result: map[string]string{
+				"policyURL": "http://example.com",
+				"interval":  "1m",
+			},
+		},
+	}
+
+	for _, test := range tests {
+		svc := policy.New(
+			context.Background(),
+			test.storage,
+			nil,
+			nil,
+			nil,
+			"hostname.com",
+			false,
+			10*time.Second,
+			http.DefaultClient,
+			zap.NewNop(),
+		)
+
+		res, err := svc.SetPolicyAutoImport(context.Background(), test.req)
+		if err != nil {
+			require.NotEmpty(t, test.errtext)
+			assert.Contains(t, err.Error(), test.errtext)
+			assert.True(t, errors.Is(test.errkind, err), fmt.Sprintf("error kind must be: %v", test.errkind))
+			assert.Nil(t, test.result)
+		} else {
+			require.Empty(t, test.errtext, "error is not expected, but got: %v", err)
+			assert.Equal(t, test.result, res)
+		}
 	}
 }

@@ -21,9 +21,12 @@ type Endpoints struct {
 	Lock                     goa.Endpoint
 	Unlock                   goa.Endpoint
 	ExportBundle             goa.Endpoint
-	ImportBundle             goa.Endpoint
 	PolicyPublicKey          goa.Endpoint
+	ImportBundle             goa.Endpoint
 	ListPolicies             goa.Endpoint
+	SetPolicyAutoImport      goa.Endpoint
+	PolicyAutoImport         goa.Endpoint
+	DeletePolicyAutoImport   goa.Endpoint
 	SubscribeForPolicyChange goa.Endpoint
 }
 
@@ -53,9 +56,12 @@ func NewEndpoints(s Service) *Endpoints {
 		Lock:                     NewLockEndpoint(s),
 		Unlock:                   NewUnlockEndpoint(s),
 		ExportBundle:             NewExportBundleEndpoint(s),
-		ImportBundle:             NewImportBundleEndpoint(s),
 		PolicyPublicKey:          NewPolicyPublicKeyEndpoint(s),
+		ImportBundle:             NewImportBundleEndpoint(s),
 		ListPolicies:             NewListPoliciesEndpoint(s),
+		SetPolicyAutoImport:      NewSetPolicyAutoImportEndpoint(s),
+		PolicyAutoImport:         NewPolicyAutoImportEndpoint(s),
+		DeletePolicyAutoImport:   NewDeletePolicyAutoImportEndpoint(s),
 		SubscribeForPolicyChange: NewSubscribeForPolicyChangeEndpoint(s),
 	}
 }
@@ -67,9 +73,12 @@ func (e *Endpoints) Use(m func(goa.Endpoint) goa.Endpoint) {
 	e.Lock = m(e.Lock)
 	e.Unlock = m(e.Unlock)
 	e.ExportBundle = m(e.ExportBundle)
-	e.ImportBundle = m(e.ImportBundle)
 	e.PolicyPublicKey = m(e.PolicyPublicKey)
+	e.ImportBundle = m(e.ImportBundle)
 	e.ListPolicies = m(e.ListPolicies)
+	e.SetPolicyAutoImport = m(e.SetPolicyAutoImport)
+	e.PolicyAutoImport = m(e.PolicyAutoImport)
+	e.DeletePolicyAutoImport = m(e.DeletePolicyAutoImport)
 	e.SubscribeForPolicyChange = m(e.SubscribeForPolicyChange)
 }
 
@@ -122,15 +131,6 @@ func NewExportBundleEndpoint(s Service) goa.Endpoint {
 	}
 }
 
-// NewImportBundleEndpoint returns an endpoint function that calls the method
-// "ImportBundle" of service "policy".
-func NewImportBundleEndpoint(s Service) goa.Endpoint {
-	return func(ctx context.Context, req any) (any, error) {
-		ep := req.(*ImportBundleRequestData)
-		return s.ImportBundle(ctx, ep.Payload, ep.Body)
-	}
-}
-
 // NewPolicyPublicKeyEndpoint returns an endpoint function that calls the
 // method "PolicyPublicKey" of service "policy".
 func NewPolicyPublicKeyEndpoint(s Service) goa.Endpoint {
@@ -140,12 +140,47 @@ func NewPolicyPublicKeyEndpoint(s Service) goa.Endpoint {
 	}
 }
 
+// NewImportBundleEndpoint returns an endpoint function that calls the method
+// "ImportBundle" of service "policy".
+func NewImportBundleEndpoint(s Service) goa.Endpoint {
+	return func(ctx context.Context, req any) (any, error) {
+		ep := req.(*ImportBundleRequestData)
+		return s.ImportBundle(ctx, ep.Payload, ep.Body)
+	}
+}
+
 // NewListPoliciesEndpoint returns an endpoint function that calls the method
 // "ListPolicies" of service "policy".
 func NewListPoliciesEndpoint(s Service) goa.Endpoint {
 	return func(ctx context.Context, req any) (any, error) {
 		p := req.(*PoliciesRequest)
 		return s.ListPolicies(ctx, p)
+	}
+}
+
+// NewSetPolicyAutoImportEndpoint returns an endpoint function that calls the
+// method "SetPolicyAutoImport" of service "policy".
+func NewSetPolicyAutoImportEndpoint(s Service) goa.Endpoint {
+	return func(ctx context.Context, req any) (any, error) {
+		p := req.(*SetPolicyAutoImportRequest)
+		return s.SetPolicyAutoImport(ctx, p)
+	}
+}
+
+// NewPolicyAutoImportEndpoint returns an endpoint function that calls the
+// method "PolicyAutoImport" of service "policy".
+func NewPolicyAutoImportEndpoint(s Service) goa.Endpoint {
+	return func(ctx context.Context, req any) (any, error) {
+		return s.PolicyAutoImport(ctx)
+	}
+}
+
+// NewDeletePolicyAutoImportEndpoint returns an endpoint function that calls
+// the method "DeletePolicyAutoImport" of service "policy".
+func NewDeletePolicyAutoImportEndpoint(s Service) goa.Endpoint {
+	return func(ctx context.Context, req any) (any, error) {
+		p := req.(*DeletePolicyAutoImportRequest)
+		return s.DeletePolicyAutoImport(ctx, p)
 	}
 }
 

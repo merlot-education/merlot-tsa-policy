@@ -14,6 +14,22 @@ import (
 	goa "goa.design/goa/v3/pkg"
 )
 
+// SetPolicyAutoImportRequestBody is the type of the "policy" service
+// "SetPolicyAutoImport" endpoint HTTP request body.
+type SetPolicyAutoImportRequestBody struct {
+	// PolicyURL defines the address from where a policy bundle will be taken.
+	PolicyURL *string `form:"policyURL,omitempty" json:"policyURL,omitempty" xml:"policyURL,omitempty"`
+	// Interval defines the period for automatic bundle import.
+	Interval *string `form:"interval,omitempty" json:"interval,omitempty" xml:"interval,omitempty"`
+}
+
+// DeletePolicyAutoImportRequestBody is the type of the "policy" service
+// "DeletePolicyAutoImport" endpoint HTTP request body.
+type DeletePolicyAutoImportRequestBody struct {
+	// PolicyURL defines the address from where a policy bundle will be taken.
+	PolicyURL *string `form:"policyURL,omitempty" json:"policyURL,omitempty" xml:"policyURL,omitempty"`
+}
+
 // SubscribeForPolicyChangeRequestBody is the type of the "policy" service
 // "SubscribeForPolicyChange" endpoint HTTP request body.
 type SubscribeForPolicyChangeRequestBody struct {
@@ -132,14 +148,6 @@ func NewExportBundleRequest(repository string, group string, policyName string, 
 	return v
 }
 
-// NewImportBundlePayload builds a policy service ImportBundle endpoint payload.
-func NewImportBundlePayload(length *int) *policy.ImportBundlePayload {
-	v := &policy.ImportBundlePayload{}
-	v.Length = length
-
-	return v
-}
-
 // NewPolicyPublicKeyRequest builds a policy service PolicyPublicKey endpoint
 // payload.
 func NewPolicyPublicKeyRequest(repository string, group string, policyName string, version string) *policy.PolicyPublicKeyRequest {
@@ -152,6 +160,14 @@ func NewPolicyPublicKeyRequest(repository string, group string, policyName strin
 	return v
 }
 
+// NewImportBundlePayload builds a policy service ImportBundle endpoint payload.
+func NewImportBundlePayload(length *int) *policy.ImportBundlePayload {
+	v := &policy.ImportBundlePayload{}
+	v.Length = length
+
+	return v
+}
+
 // NewListPoliciesPoliciesRequest builds a policy service ListPolicies endpoint
 // payload.
 func NewListPoliciesPoliciesRequest(locked *bool, rego *bool, data *bool, dataConfig *bool) *policy.PoliciesRequest {
@@ -160,6 +176,27 @@ func NewListPoliciesPoliciesRequest(locked *bool, rego *bool, data *bool, dataCo
 	v.Rego = rego
 	v.Data = data
 	v.DataConfig = dataConfig
+
+	return v
+}
+
+// NewSetPolicyAutoImportRequest builds a policy service SetPolicyAutoImport
+// endpoint payload.
+func NewSetPolicyAutoImportRequest(body *SetPolicyAutoImportRequestBody) *policy.SetPolicyAutoImportRequest {
+	v := &policy.SetPolicyAutoImportRequest{
+		PolicyURL: *body.PolicyURL,
+		Interval:  *body.Interval,
+	}
+
+	return v
+}
+
+// NewDeletePolicyAutoImportRequest builds a policy service
+// DeletePolicyAutoImport endpoint payload.
+func NewDeletePolicyAutoImportRequest(body *DeletePolicyAutoImportRequestBody) *policy.DeletePolicyAutoImportRequest {
+	v := &policy.DeletePolicyAutoImportRequest{
+		PolicyURL: *body.PolicyURL,
+	}
 
 	return v
 }
@@ -177,6 +214,38 @@ func NewSubscribeForPolicyChangeSubscribeRequest(body *SubscribeForPolicyChangeR
 	v.Version = version
 
 	return v
+}
+
+// ValidateSetPolicyAutoImportRequestBody runs the validations defined on
+// SetPolicyAutoImportRequestBody
+func ValidateSetPolicyAutoImportRequestBody(body *SetPolicyAutoImportRequestBody) (err error) {
+	if body.PolicyURL == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("policyURL", "body"))
+	}
+	if body.Interval == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("interval", "body"))
+	}
+	if body.PolicyURL != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.policyURL", *body.PolicyURL, goa.FormatURI))
+	}
+	if body.Interval != nil {
+		if utf8.RuneCountInString(*body.Interval) < 2 {
+			err = goa.MergeErrors(err, goa.InvalidLengthError("body.interval", *body.Interval, utf8.RuneCountInString(*body.Interval), 2, true))
+		}
+	}
+	return
+}
+
+// ValidateDeletePolicyAutoImportRequestBody runs the validations defined on
+// DeletePolicyAutoImportRequestBody
+func ValidateDeletePolicyAutoImportRequestBody(body *DeletePolicyAutoImportRequestBody) (err error) {
+	if body.PolicyURL == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("policyURL", "body"))
+	}
+	if body.PolicyURL != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.policyURL", *body.PolicyURL, goa.FormatURI))
+	}
+	return
 }
 
 // ValidateSubscribeForPolicyChangeRequestBody runs the validations defined on

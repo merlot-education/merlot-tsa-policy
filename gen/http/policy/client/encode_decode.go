@@ -431,6 +431,72 @@ func DecodeExportBundleResponse(decoder func(*http.Response) goahttp.Decoder, re
 	}
 }
 
+// BuildPolicyPublicKeyRequest instantiates a HTTP request object with method
+// and path set to call the "policy" service "PolicyPublicKey" endpoint
+func (c *Client) BuildPolicyPublicKeyRequest(ctx context.Context, v any) (*http.Request, error) {
+	var (
+		repository string
+		group      string
+		policyName string
+		version    string
+	)
+	{
+		p, ok := v.(*policy.PolicyPublicKeyRequest)
+		if !ok {
+			return nil, goahttp.ErrInvalidType("policy", "PolicyPublicKey", "*policy.PolicyPublicKeyRequest", v)
+		}
+		repository = p.Repository
+		group = p.Group
+		policyName = p.PolicyName
+		version = p.Version
+	}
+	u := &url.URL{Scheme: c.scheme, Host: c.host, Path: PolicyPublicKeyPolicyPath(repository, group, policyName, version)}
+	req, err := http.NewRequest("GET", u.String(), nil)
+	if err != nil {
+		return nil, goahttp.ErrInvalidURL("policy", "PolicyPublicKey", u.String(), err)
+	}
+	if ctx != nil {
+		req = req.WithContext(ctx)
+	}
+
+	return req, nil
+}
+
+// DecodePolicyPublicKeyResponse returns a decoder for responses returned by
+// the policy PolicyPublicKey endpoint. restoreBody controls whether the
+// response body should be restored after having been read.
+func DecodePolicyPublicKeyResponse(decoder func(*http.Response) goahttp.Decoder, restoreBody bool) func(*http.Response) (any, error) {
+	return func(resp *http.Response) (any, error) {
+		if restoreBody {
+			b, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return nil, err
+			}
+			resp.Body = io.NopCloser(bytes.NewBuffer(b))
+			defer func() {
+				resp.Body = io.NopCloser(bytes.NewBuffer(b))
+			}()
+		} else {
+			defer resp.Body.Close()
+		}
+		switch resp.StatusCode {
+		case http.StatusOK:
+			var (
+				body any
+				err  error
+			)
+			err = decoder(resp).Decode(&body)
+			if err != nil {
+				return nil, goahttp.ErrDecodingError("policy", "PolicyPublicKey", err)
+			}
+			return body, nil
+		default:
+			body, _ := io.ReadAll(resp.Body)
+			return nil, goahttp.ErrInvalidResponse("policy", "PolicyPublicKey", resp.StatusCode, string(body))
+		}
+	}
+}
+
 // BuildImportBundleRequest instantiates a HTTP request object with method and
 // path set to call the "policy" service "ImportBundle" endpoint
 func (c *Client) BuildImportBundleRequest(ctx context.Context, v any) (*http.Request, error) {
@@ -520,72 +586,6 @@ func BuildImportBundleStreamPayload(payload any, fpath string) (*policy.ImportBu
 	}, nil
 }
 
-// BuildPolicyPublicKeyRequest instantiates a HTTP request object with method
-// and path set to call the "policy" service "PolicyPublicKey" endpoint
-func (c *Client) BuildPolicyPublicKeyRequest(ctx context.Context, v any) (*http.Request, error) {
-	var (
-		repository string
-		group      string
-		policyName string
-		version    string
-	)
-	{
-		p, ok := v.(*policy.PolicyPublicKeyRequest)
-		if !ok {
-			return nil, goahttp.ErrInvalidType("policy", "PolicyPublicKey", "*policy.PolicyPublicKeyRequest", v)
-		}
-		repository = p.Repository
-		group = p.Group
-		policyName = p.PolicyName
-		version = p.Version
-	}
-	u := &url.URL{Scheme: c.scheme, Host: c.host, Path: PolicyPublicKeyPolicyPath(repository, group, policyName, version)}
-	req, err := http.NewRequest("GET", u.String(), nil)
-	if err != nil {
-		return nil, goahttp.ErrInvalidURL("policy", "PolicyPublicKey", u.String(), err)
-	}
-	if ctx != nil {
-		req = req.WithContext(ctx)
-	}
-
-	return req, nil
-}
-
-// DecodePolicyPublicKeyResponse returns a decoder for responses returned by
-// the policy PolicyPublicKey endpoint. restoreBody controls whether the
-// response body should be restored after having been read.
-func DecodePolicyPublicKeyResponse(decoder func(*http.Response) goahttp.Decoder, restoreBody bool) func(*http.Response) (any, error) {
-	return func(resp *http.Response) (any, error) {
-		if restoreBody {
-			b, err := io.ReadAll(resp.Body)
-			if err != nil {
-				return nil, err
-			}
-			resp.Body = io.NopCloser(bytes.NewBuffer(b))
-			defer func() {
-				resp.Body = io.NopCloser(bytes.NewBuffer(b))
-			}()
-		} else {
-			defer resp.Body.Close()
-		}
-		switch resp.StatusCode {
-		case http.StatusOK:
-			var (
-				body any
-				err  error
-			)
-			err = decoder(resp).Decode(&body)
-			if err != nil {
-				return nil, goahttp.ErrDecodingError("policy", "PolicyPublicKey", err)
-			}
-			return body, nil
-		default:
-			body, _ := io.ReadAll(resp.Body)
-			return nil, goahttp.ErrInvalidResponse("policy", "PolicyPublicKey", resp.StatusCode, string(body))
-		}
-	}
-}
-
 // BuildListPoliciesRequest instantiates a HTTP request object with method and
 // path set to call the "policy" service "ListPolicies" endpoint
 func (c *Client) BuildListPoliciesRequest(ctx context.Context, v any) (*http.Request, error) {
@@ -663,6 +663,190 @@ func DecodeListPoliciesResponse(decoder func(*http.Response) goahttp.Decoder, re
 		default:
 			body, _ := io.ReadAll(resp.Body)
 			return nil, goahttp.ErrInvalidResponse("policy", "ListPolicies", resp.StatusCode, string(body))
+		}
+	}
+}
+
+// BuildSetPolicyAutoImportRequest instantiates a HTTP request object with
+// method and path set to call the "policy" service "SetPolicyAutoImport"
+// endpoint
+func (c *Client) BuildSetPolicyAutoImportRequest(ctx context.Context, v any) (*http.Request, error) {
+	u := &url.URL{Scheme: c.scheme, Host: c.host, Path: SetPolicyAutoImportPolicyPath()}
+	req, err := http.NewRequest("POST", u.String(), nil)
+	if err != nil {
+		return nil, goahttp.ErrInvalidURL("policy", "SetPolicyAutoImport", u.String(), err)
+	}
+	if ctx != nil {
+		req = req.WithContext(ctx)
+	}
+
+	return req, nil
+}
+
+// EncodeSetPolicyAutoImportRequest returns an encoder for requests sent to the
+// policy SetPolicyAutoImport server.
+func EncodeSetPolicyAutoImportRequest(encoder func(*http.Request) goahttp.Encoder) func(*http.Request, any) error {
+	return func(req *http.Request, v any) error {
+		p, ok := v.(*policy.SetPolicyAutoImportRequest)
+		if !ok {
+			return goahttp.ErrInvalidType("policy", "SetPolicyAutoImport", "*policy.SetPolicyAutoImportRequest", v)
+		}
+		body := NewSetPolicyAutoImportRequestBody(p)
+		if err := encoder(req).Encode(&body); err != nil {
+			return goahttp.ErrEncodingError("policy", "SetPolicyAutoImport", err)
+		}
+		return nil
+	}
+}
+
+// DecodeSetPolicyAutoImportResponse returns a decoder for responses returned
+// by the policy SetPolicyAutoImport endpoint. restoreBody controls whether the
+// response body should be restored after having been read.
+func DecodeSetPolicyAutoImportResponse(decoder func(*http.Response) goahttp.Decoder, restoreBody bool) func(*http.Response) (any, error) {
+	return func(resp *http.Response) (any, error) {
+		if restoreBody {
+			b, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return nil, err
+			}
+			resp.Body = io.NopCloser(bytes.NewBuffer(b))
+			defer func() {
+				resp.Body = io.NopCloser(bytes.NewBuffer(b))
+			}()
+		} else {
+			defer resp.Body.Close()
+		}
+		switch resp.StatusCode {
+		case http.StatusOK:
+			var (
+				body any
+				err  error
+			)
+			err = decoder(resp).Decode(&body)
+			if err != nil {
+				return nil, goahttp.ErrDecodingError("policy", "SetPolicyAutoImport", err)
+			}
+			return body, nil
+		default:
+			body, _ := io.ReadAll(resp.Body)
+			return nil, goahttp.ErrInvalidResponse("policy", "SetPolicyAutoImport", resp.StatusCode, string(body))
+		}
+	}
+}
+
+// BuildPolicyAutoImportRequest instantiates a HTTP request object with method
+// and path set to call the "policy" service "PolicyAutoImport" endpoint
+func (c *Client) BuildPolicyAutoImportRequest(ctx context.Context, v any) (*http.Request, error) {
+	u := &url.URL{Scheme: c.scheme, Host: c.host, Path: PolicyAutoImportPolicyPath()}
+	req, err := http.NewRequest("GET", u.String(), nil)
+	if err != nil {
+		return nil, goahttp.ErrInvalidURL("policy", "PolicyAutoImport", u.String(), err)
+	}
+	if ctx != nil {
+		req = req.WithContext(ctx)
+	}
+
+	return req, nil
+}
+
+// DecodePolicyAutoImportResponse returns a decoder for responses returned by
+// the policy PolicyAutoImport endpoint. restoreBody controls whether the
+// response body should be restored after having been read.
+func DecodePolicyAutoImportResponse(decoder func(*http.Response) goahttp.Decoder, restoreBody bool) func(*http.Response) (any, error) {
+	return func(resp *http.Response) (any, error) {
+		if restoreBody {
+			b, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return nil, err
+			}
+			resp.Body = io.NopCloser(bytes.NewBuffer(b))
+			defer func() {
+				resp.Body = io.NopCloser(bytes.NewBuffer(b))
+			}()
+		} else {
+			defer resp.Body.Close()
+		}
+		switch resp.StatusCode {
+		case http.StatusOK:
+			var (
+				body any
+				err  error
+			)
+			err = decoder(resp).Decode(&body)
+			if err != nil {
+				return nil, goahttp.ErrDecodingError("policy", "PolicyAutoImport", err)
+			}
+			return body, nil
+		default:
+			body, _ := io.ReadAll(resp.Body)
+			return nil, goahttp.ErrInvalidResponse("policy", "PolicyAutoImport", resp.StatusCode, string(body))
+		}
+	}
+}
+
+// BuildDeletePolicyAutoImportRequest instantiates a HTTP request object with
+// method and path set to call the "policy" service "DeletePolicyAutoImport"
+// endpoint
+func (c *Client) BuildDeletePolicyAutoImportRequest(ctx context.Context, v any) (*http.Request, error) {
+	u := &url.URL{Scheme: c.scheme, Host: c.host, Path: DeletePolicyAutoImportPolicyPath()}
+	req, err := http.NewRequest("DELETE", u.String(), nil)
+	if err != nil {
+		return nil, goahttp.ErrInvalidURL("policy", "DeletePolicyAutoImport", u.String(), err)
+	}
+	if ctx != nil {
+		req = req.WithContext(ctx)
+	}
+
+	return req, nil
+}
+
+// EncodeDeletePolicyAutoImportRequest returns an encoder for requests sent to
+// the policy DeletePolicyAutoImport server.
+func EncodeDeletePolicyAutoImportRequest(encoder func(*http.Request) goahttp.Encoder) func(*http.Request, any) error {
+	return func(req *http.Request, v any) error {
+		p, ok := v.(*policy.DeletePolicyAutoImportRequest)
+		if !ok {
+			return goahttp.ErrInvalidType("policy", "DeletePolicyAutoImport", "*policy.DeletePolicyAutoImportRequest", v)
+		}
+		body := NewDeletePolicyAutoImportRequestBody(p)
+		if err := encoder(req).Encode(&body); err != nil {
+			return goahttp.ErrEncodingError("policy", "DeletePolicyAutoImport", err)
+		}
+		return nil
+	}
+}
+
+// DecodeDeletePolicyAutoImportResponse returns a decoder for responses
+// returned by the policy DeletePolicyAutoImport endpoint. restoreBody controls
+// whether the response body should be restored after having been read.
+func DecodeDeletePolicyAutoImportResponse(decoder func(*http.Response) goahttp.Decoder, restoreBody bool) func(*http.Response) (any, error) {
+	return func(resp *http.Response) (any, error) {
+		if restoreBody {
+			b, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return nil, err
+			}
+			resp.Body = io.NopCloser(bytes.NewBuffer(b))
+			defer func() {
+				resp.Body = io.NopCloser(bytes.NewBuffer(b))
+			}()
+		} else {
+			defer resp.Body.Close()
+		}
+		switch resp.StatusCode {
+		case http.StatusOK:
+			var (
+				body any
+				err  error
+			)
+			err = decoder(resp).Decode(&body)
+			if err != nil {
+				return nil, goahttp.ErrDecodingError("policy", "DeletePolicyAutoImport", err)
+			}
+			return body, nil
+		default:
+			body, _ := io.ReadAll(resp.Body)
+			return nil, goahttp.ErrInvalidResponse("policy", "DeletePolicyAutoImport", resp.StatusCode, string(body))
 		}
 	}
 }

@@ -105,24 +105,6 @@ var _ = Service("policy", func() {
 		})
 	})
 
-	Method("ImportBundle", func() {
-		Description("Import a signed policy bundle.")
-		Payload(func() {
-			Attribute("length", Int)
-		})
-		Result(Any)
-		HTTP(func() {
-			POST("/policy/import")
-			Header("length:Content-Length")
-
-			SkipRequestBodyEncodeDecode()
-
-			Response(StatusOK)
-			Response(StatusForbidden)
-			Response(StatusInternalServerError)
-		})
-	})
-
 	Method("PolicyPublicKey", func() {
 		Description("PolicyPublicKey returns the public key in JWK format which must be used to verify a signed policy bundle.")
 		Payload(PolicyPublicKeyRequest)
@@ -130,6 +112,24 @@ var _ = Service("policy", func() {
 		HTTP(func() {
 			GET("/policy/{repository}/{group}/{policyName}/{version}/key")
 			Response(StatusOK)
+		})
+	})
+
+	Method("ImportBundle", func() {
+		Description("Import a signed policy bundle.")
+		Payload(func() {
+			Attribute("length", Int)
+		})
+		Result(Any)
+		HTTP(func() {
+			POST("/v1/policy/import")
+			Header("length:Content-Length")
+
+			SkipRequestBodyEncodeDecode()
+
+			Response(StatusOK)
+			Response(StatusForbidden)
+			Response(StatusInternalServerError)
 		})
 	})
 
@@ -145,6 +145,36 @@ var _ = Service("policy", func() {
 				Param("data", Boolean, "Include policy static data in results (optional). ")
 				Param("dataConfig", Boolean, "Include static data config (optional).")
 			})
+			Response(StatusOK)
+		})
+	})
+
+	Method("SetPolicyAutoImport", func() {
+		Description("SetPolicyAutoImport enables automatic import of policy bundle on a given time interval.")
+		Payload(SetPolicyAutoImportRequest)
+		Result(Any)
+		HTTP(func() {
+			POST("/v1/policy/import/config")
+			Response(StatusOK)
+		})
+	})
+
+	Method("PolicyAutoImport", func() {
+		Description("PolicyAutoImport returns all automatic import configurations.")
+		Payload(Empty)
+		Result(Any)
+		HTTP(func() {
+			GET("/v1/policy/import/config")
+			Response(StatusOK)
+		})
+	})
+
+	Method("DeletePolicyAutoImport", func() {
+		Description("DeletePolicyAutoImport removes a single automatic import configuration.")
+		Payload(DeletePolicyAutoImportRequest)
+		Result(Any)
+		HTTP(func() {
+			DELETE("/v1/policy/import/config")
 			Response(StatusOK)
 		})
 	})

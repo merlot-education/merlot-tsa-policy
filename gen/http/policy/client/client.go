@@ -36,17 +36,29 @@ type Client struct {
 	// ExportBundle endpoint.
 	ExportBundleDoer goahttp.Doer
 
-	// ImportBundle Doer is the HTTP client used to make requests to the
-	// ImportBundle endpoint.
-	ImportBundleDoer goahttp.Doer
-
 	// PolicyPublicKey Doer is the HTTP client used to make requests to the
 	// PolicyPublicKey endpoint.
 	PolicyPublicKeyDoer goahttp.Doer
 
+	// ImportBundle Doer is the HTTP client used to make requests to the
+	// ImportBundle endpoint.
+	ImportBundleDoer goahttp.Doer
+
 	// ListPolicies Doer is the HTTP client used to make requests to the
 	// ListPolicies endpoint.
 	ListPoliciesDoer goahttp.Doer
+
+	// SetPolicyAutoImport Doer is the HTTP client used to make requests to the
+	// SetPolicyAutoImport endpoint.
+	SetPolicyAutoImportDoer goahttp.Doer
+
+	// PolicyAutoImport Doer is the HTTP client used to make requests to the
+	// PolicyAutoImport endpoint.
+	PolicyAutoImportDoer goahttp.Doer
+
+	// DeletePolicyAutoImport Doer is the HTTP client used to make requests to the
+	// DeletePolicyAutoImport endpoint.
+	DeletePolicyAutoImportDoer goahttp.Doer
 
 	// SubscribeForPolicyChange Doer is the HTTP client used to make requests to
 	// the SubscribeForPolicyChange endpoint.
@@ -77,9 +89,12 @@ func NewClient(
 		LockDoer:                     doer,
 		UnlockDoer:                   doer,
 		ExportBundleDoer:             doer,
-		ImportBundleDoer:             doer,
 		PolicyPublicKeyDoer:          doer,
+		ImportBundleDoer:             doer,
 		ListPoliciesDoer:             doer,
+		SetPolicyAutoImportDoer:      doer,
+		PolicyAutoImportDoer:         doer,
+		DeletePolicyAutoImportDoer:   doer,
 		SubscribeForPolicyChangeDoer: doer,
 		RestoreResponseBody:          restoreBody,
 		scheme:                       scheme,
@@ -199,6 +214,25 @@ func (c *Client) ExportBundle() goa.Endpoint {
 	}
 }
 
+// PolicyPublicKey returns an endpoint that makes HTTP requests to the policy
+// service PolicyPublicKey server.
+func (c *Client) PolicyPublicKey() goa.Endpoint {
+	var (
+		decodeResponse = DecodePolicyPublicKeyResponse(c.decoder, c.RestoreResponseBody)
+	)
+	return func(ctx context.Context, v any) (any, error) {
+		req, err := c.BuildPolicyPublicKeyRequest(ctx, v)
+		if err != nil {
+			return nil, err
+		}
+		resp, err := c.PolicyPublicKeyDoer.Do(req)
+		if err != nil {
+			return nil, goahttp.ErrRequestError("policy", "PolicyPublicKey", err)
+		}
+		return decodeResponse(resp)
+	}
+}
+
 // ImportBundle returns an endpoint that makes HTTP requests to the policy
 // service ImportBundle server.
 func (c *Client) ImportBundle() goa.Endpoint {
@@ -223,25 +257,6 @@ func (c *Client) ImportBundle() goa.Endpoint {
 	}
 }
 
-// PolicyPublicKey returns an endpoint that makes HTTP requests to the policy
-// service PolicyPublicKey server.
-func (c *Client) PolicyPublicKey() goa.Endpoint {
-	var (
-		decodeResponse = DecodePolicyPublicKeyResponse(c.decoder, c.RestoreResponseBody)
-	)
-	return func(ctx context.Context, v any) (any, error) {
-		req, err := c.BuildPolicyPublicKeyRequest(ctx, v)
-		if err != nil {
-			return nil, err
-		}
-		resp, err := c.PolicyPublicKeyDoer.Do(req)
-		if err != nil {
-			return nil, goahttp.ErrRequestError("policy", "PolicyPublicKey", err)
-		}
-		return decodeResponse(resp)
-	}
-}
-
 // ListPolicies returns an endpoint that makes HTTP requests to the policy
 // service ListPolicies server.
 func (c *Client) ListPolicies() goa.Endpoint {
@@ -261,6 +276,73 @@ func (c *Client) ListPolicies() goa.Endpoint {
 		resp, err := c.ListPoliciesDoer.Do(req)
 		if err != nil {
 			return nil, goahttp.ErrRequestError("policy", "ListPolicies", err)
+		}
+		return decodeResponse(resp)
+	}
+}
+
+// SetPolicyAutoImport returns an endpoint that makes HTTP requests to the
+// policy service SetPolicyAutoImport server.
+func (c *Client) SetPolicyAutoImport() goa.Endpoint {
+	var (
+		encodeRequest  = EncodeSetPolicyAutoImportRequest(c.encoder)
+		decodeResponse = DecodeSetPolicyAutoImportResponse(c.decoder, c.RestoreResponseBody)
+	)
+	return func(ctx context.Context, v any) (any, error) {
+		req, err := c.BuildSetPolicyAutoImportRequest(ctx, v)
+		if err != nil {
+			return nil, err
+		}
+		err = encodeRequest(req, v)
+		if err != nil {
+			return nil, err
+		}
+		resp, err := c.SetPolicyAutoImportDoer.Do(req)
+		if err != nil {
+			return nil, goahttp.ErrRequestError("policy", "SetPolicyAutoImport", err)
+		}
+		return decodeResponse(resp)
+	}
+}
+
+// PolicyAutoImport returns an endpoint that makes HTTP requests to the policy
+// service PolicyAutoImport server.
+func (c *Client) PolicyAutoImport() goa.Endpoint {
+	var (
+		decodeResponse = DecodePolicyAutoImportResponse(c.decoder, c.RestoreResponseBody)
+	)
+	return func(ctx context.Context, v any) (any, error) {
+		req, err := c.BuildPolicyAutoImportRequest(ctx, v)
+		if err != nil {
+			return nil, err
+		}
+		resp, err := c.PolicyAutoImportDoer.Do(req)
+		if err != nil {
+			return nil, goahttp.ErrRequestError("policy", "PolicyAutoImport", err)
+		}
+		return decodeResponse(resp)
+	}
+}
+
+// DeletePolicyAutoImport returns an endpoint that makes HTTP requests to the
+// policy service DeletePolicyAutoImport server.
+func (c *Client) DeletePolicyAutoImport() goa.Endpoint {
+	var (
+		encodeRequest  = EncodeDeletePolicyAutoImportRequest(c.encoder)
+		decodeResponse = DecodeDeletePolicyAutoImportResponse(c.decoder, c.RestoreResponseBody)
+	)
+	return func(ctx context.Context, v any) (any, error) {
+		req, err := c.BuildDeletePolicyAutoImportRequest(ctx, v)
+		if err != nil {
+			return nil, err
+		}
+		err = encodeRequest(req, v)
+		if err != nil {
+			return nil, err
+		}
+		resp, err := c.DeletePolicyAutoImportDoer.Do(req)
+		if err != nil {
+			return nil, goahttp.ErrRequestError("policy", "DeletePolicyAutoImport", err)
 		}
 		return decodeResponse(resp)
 	}

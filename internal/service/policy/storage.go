@@ -18,4 +18,15 @@ type Storage interface {
 	GetData(ctx context.Context, key string) (any, error)
 	SetData(ctx context.Context, key string, data map[string]interface{}) error
 	DeleteData(ctx context.Context, key string) error
+	// SaveAutoImportConfig stores a new autoimport configuration for a given policy bundle.
+	SaveAutoImportConfig(ctx context.Context, importConfig *storage.PolicyAutoImport) error
+	// AutoImportConfig returns config for single policy import.
+	AutoImportConfig(ctx context.Context, policyURL string) (*storage.PolicyAutoImport, error)
+	// AutoImportConfigs returns all autoimport configurations.
+	AutoImportConfigs(ctx context.Context) ([]*storage.PolicyAutoImport, error)
+	// DeleteAutoImportConfig removes a single automatic import configuration.
+	DeleteAutoImportConfig(ctx context.Context, policyURL string) error
+	// ActiveImportConfigs returns all import configurations which specify
+	// that the time to automatically import a policy bundle has been reached.
+	ActiveImportConfigs(ctx context.Context) ([]*storage.PolicyAutoImport, error)
 }

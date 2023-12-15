@@ -10,10 +10,50 @@ import (
 )
 
 type FakeStorage struct {
+	ActiveImportConfigsStub        func(context.Context) ([]*storage.PolicyAutoImport, error)
+	activeImportConfigsMutex       sync.RWMutex
+	activeImportConfigsArgsForCall []struct {
+		arg1 context.Context
+	}
+	activeImportConfigsReturns struct {
+		result1 []*storage.PolicyAutoImport
+		result2 error
+	}
+	activeImportConfigsReturnsOnCall map[int]struct {
+		result1 []*storage.PolicyAutoImport
+		result2 error
+	}
 	AddPolicyChangeSubscribersStub        func(...storage.PolicyChangeSubscriber)
 	addPolicyChangeSubscribersMutex       sync.RWMutex
 	addPolicyChangeSubscribersArgsForCall []struct {
 		arg1 []storage.PolicyChangeSubscriber
+	}
+	AutoImportConfigStub        func(context.Context, string) (*storage.PolicyAutoImport, error)
+	autoImportConfigMutex       sync.RWMutex
+	autoImportConfigArgsForCall []struct {
+		arg1 context.Context
+		arg2 string
+	}
+	autoImportConfigReturns struct {
+		result1 *storage.PolicyAutoImport
+		result2 error
+	}
+	autoImportConfigReturnsOnCall map[int]struct {
+		result1 *storage.PolicyAutoImport
+		result2 error
+	}
+	AutoImportConfigsStub        func(context.Context) ([]*storage.PolicyAutoImport, error)
+	autoImportConfigsMutex       sync.RWMutex
+	autoImportConfigsArgsForCall []struct {
+		arg1 context.Context
+	}
+	autoImportConfigsReturns struct {
+		result1 []*storage.PolicyAutoImport
+		result2 error
+	}
+	autoImportConfigsReturnsOnCall map[int]struct {
+		result1 []*storage.PolicyAutoImport
+		result2 error
 	}
 	CloseStub        func(context.Context)
 	closeMutex       sync.RWMutex
@@ -33,6 +73,18 @@ type FakeStorage struct {
 	createSubscriberReturnsOnCall map[int]struct {
 		result1 *storage.Subscriber
 		result2 error
+	}
+	DeleteAutoImportConfigStub        func(context.Context, string) error
+	deleteAutoImportConfigMutex       sync.RWMutex
+	deleteAutoImportConfigArgsForCall []struct {
+		arg1 context.Context
+		arg2 string
+	}
+	deleteAutoImportConfigReturns struct {
+		result1 error
+	}
+	deleteAutoImportConfigReturnsOnCall map[int]struct {
+		result1 error
 	}
 	DeleteDataStub        func(context.Context, string) error
 	deleteDataMutex       sync.RWMutex
@@ -102,6 +154,18 @@ type FakeStorage struct {
 		result1 *storage.Policy
 		result2 error
 	}
+	SaveAutoImportConfigStub        func(context.Context, *storage.PolicyAutoImport) error
+	saveAutoImportConfigMutex       sync.RWMutex
+	saveAutoImportConfigArgsForCall []struct {
+		arg1 context.Context
+		arg2 *storage.PolicyAutoImport
+	}
+	saveAutoImportConfigReturns struct {
+		result1 error
+	}
+	saveAutoImportConfigReturnsOnCall map[int]struct {
+		result1 error
+	}
 	SavePolicyStub        func(context.Context, *storage.Policy) error
 	savePolicyMutex       sync.RWMutex
 	savePolicyArgsForCall []struct {
@@ -147,6 +211,70 @@ type FakeStorage struct {
 	invocationsMutex sync.RWMutex
 }
 
+func (fake *FakeStorage) ActiveImportConfigs(arg1 context.Context) ([]*storage.PolicyAutoImport, error) {
+	fake.activeImportConfigsMutex.Lock()
+	ret, specificReturn := fake.activeImportConfigsReturnsOnCall[len(fake.activeImportConfigsArgsForCall)]
+	fake.activeImportConfigsArgsForCall = append(fake.activeImportConfigsArgsForCall, struct {
+		arg1 context.Context
+	}{arg1})
+	stub := fake.ActiveImportConfigsStub
+	fakeReturns := fake.activeImportConfigsReturns
+	fake.recordInvocation("ActiveImportConfigs", []interface{}{arg1})
+	fake.activeImportConfigsMutex.Unlock()
+	if stub != nil {
+		return stub(arg1)
+	}
+	if specificReturn {
+		return ret.result1, ret.result2
+	}
+	return fakeReturns.result1, fakeReturns.result2
+}
+
+func (fake *FakeStorage) ActiveImportConfigsCallCount() int {
+	fake.activeImportConfigsMutex.RLock()
+	defer fake.activeImportConfigsMutex.RUnlock()
+	return len(fake.activeImportConfigsArgsForCall)
+}
+
+func (fake *FakeStorage) ActiveImportConfigsCalls(stub func(context.Context) ([]*storage.PolicyAutoImport, error)) {
+	fake.activeImportConfigsMutex.Lock()
+	defer fake.activeImportConfigsMutex.Unlock()
+	fake.ActiveImportConfigsStub = stub
+}
+
+func (fake *FakeStorage) ActiveImportConfigsArgsForCall(i int) context.Context {
+	fake.activeImportConfigsMutex.RLock()
+	defer fake.activeImportConfigsMutex.RUnlock()
+	argsForCall := fake.activeImportConfigsArgsForCall[i]
+	return argsForCall.arg1
+}
+
+func (fake *FakeStorage) ActiveImportConfigsReturns(result1 []*storage.PolicyAutoImport, result2 error) {
+	fake.activeImportConfigsMutex.Lock()
+	defer fake.activeImportConfigsMutex.Unlock()
+	fake.ActiveImportConfigsStub = nil
+	fake.activeImportConfigsReturns = struct {
+		result1 []*storage.PolicyAutoImport
+		result2 error
+	}{result1, result2}
+}
+
+func (fake *FakeStorage) ActiveImportConfigsReturnsOnCall(i int, result1 []*storage.PolicyAutoImport, result2 error) {
+	fake.activeImportConfigsMutex.Lock()
+	defer fake.activeImportConfigsMutex.Unlock()
+	fake.ActiveImportConfigsStub = nil
+	if fake.activeImportConfigsReturnsOnCall == nil {
+		fake.activeImportConfigsReturnsOnCall = make(map[int]struct {
+			result1 []*storage.PolicyAutoImport
+			result2 error
+		})
+	}
+	fake.activeImportConfigsReturnsOnCall[i] = struct {
+		result1 []*storage.PolicyAutoImport
+		result2 error
+	}{result1, result2}
+}
+
 func (fake *FakeStorage) AddPolicyChangeSubscribers(arg1 ...storage.PolicyChangeSubscriber) {
 	fake.addPolicyChangeSubscribersMutex.Lock()
 	fake.addPolicyChangeSubscribersArgsForCall = append(fake.addPolicyChangeSubscribersArgsForCall, struct {
@@ -177,6 +305,135 @@ func (fake *FakeStorage) AddPolicyChangeSubscribersArgsForCall(i int) []storage.
 	defer fake.addPolicyChangeSubscribersMutex.RUnlock()
 	argsForCall := fake.addPolicyChangeSubscribersArgsForCall[i]
 	return argsForCall.arg1
+}
+
+func (fake *FakeStorage) AutoImportConfig(arg1 context.Context, arg2 string) (*storage.PolicyAutoImport, error) {
+	fake.autoImportConfigMutex.Lock()
+	ret, specificReturn := fake.autoImportConfigReturnsOnCall[len(fake.autoImportConfigArgsForCall)]
+	fake.autoImportConfigArgsForCall = append(fake.autoImportConfigArgsForCall, struct {
+		arg1 context.Context
+		arg2 string
+	}{arg1, arg2})
+	stub := fake.AutoImportConfigStub
+	fakeReturns := fake.autoImportConfigReturns
+	fake.recordInvocation("AutoImportConfig", []interface{}{arg1, arg2})
+	fake.autoImportConfigMutex.Unlock()
+	if stub != nil {
+		return stub(arg1, arg2)
+	}
+	if specificReturn {
+		return ret.result1, ret.result2
+	}
+	return fakeReturns.result1, fakeReturns.result2
+}
+
+func (fake *FakeStorage) AutoImportConfigCallCount() int {
+	fake.autoImportConfigMutex.RLock()
+	defer fake.autoImportConfigMutex.RUnlock()
+	return len(fake.autoImportConfigArgsForCall)
+}
+
+func (fake *FakeStorage) AutoImportConfigCalls(stub func(context.Context, string) (*storage.PolicyAutoImport, error)) {
+	fake.autoImportConfigMutex.Lock()
+	defer fake.autoImportConfigMutex.Unlock()
+	fake.AutoImportConfigStub = stub
+}
+
+func (fake *FakeStorage) AutoImportConfigArgsForCall(i int) (context.Context, string) {
+	fake.autoImportConfigMutex.RLock()
+	defer fake.autoImportConfigMutex.RUnlock()
+	argsForCall := fake.autoImportConfigArgsForCall[i]
+	return argsForCall.arg1, argsForCall.arg2
+}
+
+func (fake *FakeStorage) AutoImportConfigReturns(result1 *storage.PolicyAutoImport, result2 error) {
+	fake.autoImportConfigMutex.Lock()
+	defer fake.autoImportConfigMutex.Unlock()
+	fake.AutoImportConfigStub = nil
+	fake.autoImportConfigReturns = struct {
+		result1 *storage.PolicyAutoImport
+		result2 error
+	}{result1, result2}
+}
+
+func (fake *FakeStorage) AutoImportConfigReturnsOnCall(i int, result1 *storage.PolicyAutoImport, result2 error) {
+	fake.autoImportConfigMutex.Lock()
+	defer fake.autoImportConfigMutex.Unlock()
+	fake.AutoImportConfigStub = nil
+	if fake.autoImportConfigReturnsOnCall == nil {
+		fake.autoImportConfigReturnsOnCall = make(map[int]struct {
+			result1 *storage.PolicyAutoImport
+			result2 error
+		})
+	}
+	fake.autoImportConfigReturnsOnCall[i] = struct {
+		result1 *storage.PolicyAutoImport
+		result2 error
+	}{result1, result2}
+}
+
+func (fake *FakeStorage) AutoImportConfigs(arg1 context.Context) ([]*storage.PolicyAutoImport, error) {
+	fake.autoImportConfigsMutex.Lock()
+	ret, specificReturn := fake.autoImportConfigsReturnsOnCall[len(fake.autoImportConfigsArgsForCall)]
+	fake.autoImportConfigsArgsForCall = append(fake.autoImportConfigsArgsForCall, struct {
+		arg1 context.Context
+	}{arg1})
+	stub := fake.AutoImportConfigsStub
+	fakeReturns := fake.autoImportConfigsReturns
+	fake.recordInvocation("AutoImportConfigs", []interface{}{arg1})
+	fake.autoImportConfigsMutex.Unlock()
+	if stub != nil {
+		return stub(arg1)
+	}
+	if specificReturn {
+		return ret.result1, ret.result2
+	}
+	return fakeReturns.result1, fakeReturns.result2
+}
+
+func (fake *FakeStorage) AutoImportConfigsCallCount() int {
+	fake.autoImportConfigsMutex.RLock()
+	defer fake.autoImportConfigsMutex.RUnlock()
+	return len(fake.autoImportConfigsArgsForCall)
+}
+
+func (fake *FakeStorage) AutoImportConfigsCalls(stub func(context.Context) ([]*storage.PolicyAutoImport, error)) {
+	fake.autoImportConfigsMutex.Lock()
+	defer fake.autoImportConfigsMutex.Unlock()
+	fake.AutoImportConfigsStub = stub
+}
+
+func (fake *FakeStorage) AutoImportConfigsArgsForCall(i int) context.Context {
+	fake.autoImportConfigsMutex.RLock()
+	defer fake.autoImportConfigsMutex.RUnlock()
+	argsForCall := fake.autoImportConfigsArgsForCall[i]
+	return argsForCall.arg1
+}
+
+func (fake *FakeStorage) AutoImportConfigsReturns(result1 []*storage.PolicyAutoImport, result2 error) {
+	fake.autoImportConfigsMutex.Lock()
+	defer fake.autoImportConfigsMutex.Unlock()
+	fake.AutoImportConfigsStub = nil
+	fake.autoImportConfigsReturns = struct {
+		result1 []*storage.PolicyAutoImport
+		result2 error
+	}{result1, result2}
+}
+
+func (fake *FakeStorage) AutoImportConfigsReturnsOnCall(i int, result1 []*storage.PolicyAutoImport, result2 error) {
+	fake.autoImportConfigsMutex.Lock()
+	defer fake.autoImportConfigsMutex.Unlock()
+	fake.AutoImportConfigsStub = nil
+	if fake.autoImportConfigsReturnsOnCall == nil {
+		fake.autoImportConfigsReturnsOnCall = make(map[int]struct {
+			result1 []*storage.PolicyAutoImport
+			result2 error
+		})
+	}
+	fake.autoImportConfigsReturnsOnCall[i] = struct {
+		result1 []*storage.PolicyAutoImport
+		result2 error
+	}{result1, result2}
 }
 
 func (fake *FakeStorage) Close(arg1 context.Context) {
@@ -274,6 +531,68 @@ func (fake *FakeStorage) CreateSubscriberReturnsOnCall(i int, result1 *storage.S
 		result1 *storage.Subscriber
 		result2 error
 	}{result1, result2}
+}
+
+func (fake *FakeStorage) DeleteAutoImportConfig(arg1 context.Context, arg2 string) error {
+	fake.deleteAutoImportConfigMutex.Lock()
+	ret, specificReturn := fake.deleteAutoImportConfigReturnsOnCall[len(fake.deleteAutoImportConfigArgsForCall)]
+	fake.deleteAutoImportConfigArgsForCall = append(fake.deleteAutoImportConfigArgsForCall, struct {
+		arg1 context.Context
+		arg2 string
+	}{arg1, arg2})
+	stub := fake.DeleteAutoImportConfigStub
+	fakeReturns := fake.deleteAutoImportConfigReturns
+	fake.recordInvocation("DeleteAutoImportConfig", []interface{}{arg1, arg2})
+	fake.deleteAutoImportConfigMutex.Unlock()
+	if stub != nil {
+		return stub(arg1, arg2)
+	}
+	if specificReturn {
+		return ret.result1
+	}
+	return fakeReturns.result1
+}
+
+func (fake *FakeStorage) DeleteAutoImportConfigCallCount() int {
+	fake.deleteAutoImportConfigMutex.RLock()
+	defer fake.deleteAutoImportConfigMutex.RUnlock()
+	return len(fake.deleteAutoImportConfigArgsForCall)
+}
+
+func (fake *FakeStorage) DeleteAutoImportConfigCalls(stub func(context.Context, string) error) {
+	fake.deleteAutoImportConfigMutex.Lock()
+	defer fake.deleteAutoImportConfigMutex.Unlock()
+	fake.DeleteAutoImportConfigStub = stub
+}
+
+func (fake *FakeStorage) DeleteAutoImportConfigArgsForCall(i int) (context.Context, string) {
+	fake.deleteAutoImportConfigMutex.RLock()
+	defer fake.deleteAutoImportConfigMutex.RUnlock()
+	argsForCall := fake.deleteAutoImportConfigArgsForCall[i]
+	return argsForCall.arg1, argsForCall.arg2
+}
+
+func (fake *FakeStorage) DeleteAutoImportConfigReturns(result1 error) {
+	fake.deleteAutoImportConfigMutex.Lock()
+	defer fake.deleteAutoImportConfigMutex.Unlock()
+	fake.DeleteAutoImportConfigStub = nil
+	fake.deleteAutoImportConfigReturns = struct {
+		result1 error
+	}{result1}
+}
+
+func (fake *FakeStorage) DeleteAutoImportConfigReturnsOnCall(i int, result1 error) {
+	fake.deleteAutoImportConfigMutex.Lock()
+	defer fake.deleteAutoImportConfigMutex.Unlock()
+	fake.DeleteAutoImportConfigStub = nil
+	if fake.deleteAutoImportConfigReturnsOnCall == nil {
+		fake.deleteAutoImportConfigReturnsOnCall = make(map[int]struct {
+			result1 error
+		})
+	}
+	fake.deleteAutoImportConfigReturnsOnCall[i] = struct {
+		result1 error
+	}{result1}
 }
 
 func (fake *FakeStorage) DeleteData(arg1 context.Context, arg2 string) error {
@@ -597,6 +916,68 @@ func (fake *FakeStorage) PolicyReturnsOnCall(i int, result1 *storage.Policy, res
 	}{result1, result2}
 }
 
+func (fake *FakeStorage) SaveAutoImportConfig(arg1 context.Context, arg2 *storage.PolicyAutoImport) error {
+	fake.saveAutoImportConfigMutex.Lock()
+	ret, specificReturn := fake.saveAutoImportConfigReturnsOnCall[len(fake.saveAutoImportConfigArgsForCall)]
+	fake.saveAutoImportConfigArgsForCall = append(fake.saveAutoImportConfigArgsForCall, struct {
+		arg1 context.Context
+		arg2 *storage.PolicyAutoImport
+	}{arg1, arg2})
+	stub := fake.SaveAutoImportConfigStub
+	fakeReturns := fake.saveAutoImportConfigReturns
+	fake.recordInvocation("SaveAutoImportConfig", []interface{}{arg1, arg2})
+	fake.saveAutoImportConfigMutex.Unlock()
+	if stub != nil {
+		return stub(arg1, arg2)
+	}
+	if specificReturn {
+		return ret.result1
+	}
+	return fakeReturns.result1
+}
+
+func (fake *FakeStorage) SaveAutoImportConfigCallCount() int {
+	fake.saveAutoImportConfigMutex.RLock()
+	defer fake.saveAutoImportConfigMutex.RUnlock()
+	return len(fake.saveAutoImportConfigArgsForCall)
+}
+
+func (fake *FakeStorage) SaveAutoImportConfigCalls(stub func(context.Context, *storage.PolicyAutoImport) error) {
+	fake.saveAutoImportConfigMutex.Lock()
+	defer fake.saveAutoImportConfigMutex.Unlock()
+	fake.SaveAutoImportConfigStub = stub
+}
+
+func (fake *FakeStorage) SaveAutoImportConfigArgsForCall(i int) (context.Context, *storage.PolicyAutoImport) {
+	fake.saveAutoImportConfigMutex.RLock()
+	defer fake.saveAutoImportConfigMutex.RUnlock()
+	argsForCall := fake.saveAutoImportConfigArgsForCall[i]
+	return argsForCall.arg1, argsForCall.arg2
+}
+
+func (fake *FakeStorage) SaveAutoImportConfigReturns(result1 error) {
+	fake.saveAutoImportConfigMutex.Lock()
+	defer fake.saveAutoImportConfigMutex.Unlock()
+	fake.SaveAutoImportConfigStub = nil
+	fake.saveAutoImportConfigReturns = struct {
+		result1 error
+	}{result1}
+}
+
+func (fake *FakeStorage) SaveAutoImportConfigReturnsOnCall(i int, result1 error) {
+	fake.saveAutoImportConfigMutex.Lock()
+	defer fake.saveAutoImportConfigMutex.Unlock()
+	fake.SaveAutoImportConfigStub = nil
+	if fake.saveAutoImportConfigReturnsOnCall == nil {
+		fake.saveAutoImportConfigReturnsOnCall = make(map[int]struct {
+			result1 error
+		})
+	}
+	fake.saveAutoImportConfigReturnsOnCall[i] = struct {
+		result1 error
+	}{result1}
+}
+
 func (fake *FakeStorage) SavePolicy(arg1 context.Context, arg2 *storage.Policy) error {
 	fake.savePolicyMutex.Lock()
 	ret, specificReturn := fake.savePolicyReturnsOnCall[len(fake.savePolicyArgsForCall)]
@@ -791,12 +1172,20 @@ func (fake *FakeStorage) SetPolicyLockReturnsOnCall(i int, result1 error) {
 func (fake *FakeStorage) Invocations() map[string][][]interface{} {
 	fake.invocationsMutex.RLock()
 	defer fake.invocationsMutex.RUnlock()
+	fake.activeImportConfigsMutex.RLock()
+	defer fake.activeImportConfigsMutex.RUnlock()
 	fake.addPolicyChangeSubscribersMutex.RLock()
 	defer fake.addPolicyChangeSubscribersMutex.RUnlock()
+	fake.autoImportConfigMutex.RLock()
+	defer fake.autoImportConfigMutex.RUnlock()
+	fake.autoImportConfigsMutex.RLock()
+	defer fake.autoImportConfigsMutex.RUnlock()
 	fake.closeMutex.RLock()
 	defer fake.closeMutex.RUnlock()
 	fake.createSubscriberMutex.RLock()
 	defer fake.createSubscriberMutex.RUnlock()
+	fake.deleteAutoImportConfigMutex.RLock()
+	defer fake.deleteAutoImportConfigMutex.RUnlock()
 	fake.deleteDataMutex.RLock()
 	defer fake.deleteDataMutex.RUnlock()
 	fake.getDataMutex.RLock()
@@ -807,6 +1196,8 @@ func (fake *FakeStorage) Invocations() map[string][][]interface{} {
 	defer fake.listenPolicyDataChangesMutex.RUnlock()
 	fake.policyMutex.RLock()
 	defer fake.policyMutex.RUnlock()
+	fake.saveAutoImportConfigMutex.RLock()
+	defer fake.saveAutoImportConfigMutex.RUnlock()
 	fake.savePolicyMutex.RLock()
 	defer fake.savePolicyMutex.RUnlock()
 	fake.setDataMutex.RLock()
