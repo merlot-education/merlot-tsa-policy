@@ -327,6 +327,9 @@ func (s *Service) ExportBundle(ctx context.Context, req *policy.ExportBundleRequ
 	exportConfig, err := policyExportConfig(pol)
 	if err != nil {
 		logger.Error(err.Error())
+		if err == errExportConfigNotFound {
+			return nil, nil, errors.New(errors.Forbidden, err)
+		}
 		return nil, nil, err
 	}
 
@@ -396,6 +399,9 @@ func (s *Service) PolicyPublicKey(ctx context.Context, req *policy.PolicyPublicK
 	exportConfig, err := policyExportConfig(pol)
 	if err != nil {
 		logger.Error(err.Error())
+		if err == errExportConfigNotFound {
+			return nil, errors.New(errors.Forbidden, err)
+		}
 		return nil, err
 	}
 
