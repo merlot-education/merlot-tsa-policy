@@ -576,6 +576,20 @@ func (s *Service) ListPolicies(ctx context.Context, req *policy.PoliciesRequest)
 func (s *Service) SubscribeForPolicyChange(ctx context.Context, req *policy.SubscribeRequest) (any, error) {
 	logger := s.logger.With(zap.String("operation", "subscribeForPolicyChange"))
 
+	_, err := s.storage.Policy(ctx, req.Repository, req.Group, req.PolicyName, req.Version)
+	if err != nil {
+		return nil, err
+	}
+
+	sub, err := s.storage.Subscriber(ctx, req.Repository, req.Group, req.PolicyName, req.Version, req.WebhookURL, req.Subscriber)
+	if err != nil && !errors.Is(errors.NotFound, err) {
+		return nil, errors.New("error while retrieving subscriber", err)
+	}
+
+	if sub != nil {
+		return nil, errors.New(errors.Exist, "subscriber already exist")
+	}
+
 	subscriber, err := s.storage.CreateSubscriber(ctx, &storage.Subscriber{
 		Name:             req.Subscriber,
 		WebhookURL:       req.WebhookURL,

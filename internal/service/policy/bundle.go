@@ -200,7 +200,7 @@ func (s *Service) policyFromBundle(bundle []byte) (*storage.Policy, error) {
 
 func policyExportConfig(p *storage.Policy) (*exportConfig, error) {
 	if strings.TrimSpace(p.ExportConfig) == "" {
-		return nil, fmt.Errorf("policy export configuration is not defined")
+		return nil, errors.New(errors.Forbidden, "policy export configuration is not defined")
 	}
 
 	var cfg exportConfig

@@ -20,11 +20,14 @@ type KeyConstructor interface {
 
 type Storage struct {
 	keyConstructor KeyConstructor
-	subscribers    []storage.PolicyChangeSubscriber
+	subscribers    []storage.PolicySubscriber
 	changes        chan storage.Policy
 
 	mu       sync.RWMutex
 	policies map[string]*storage.Policy
+
+	muSubscribers     sync.RWMutex
+	policySubscribers map[string]*storage.Subscriber
 
 	muCommonStorage sync.RWMutex
 	commonStorage   map[string]interface{}
@@ -39,11 +42,12 @@ func New(c KeyConstructor, p map[string]*storage.Policy, l *zap.Logger) *Storage
 	ch := make(chan storage.Policy)
 
 	return &Storage{
-		keyConstructor: c,
-		changes:        ch,
-		policies:       p,
-		commonStorage:  map[string]interface{}{},
-		logger:         l,
+		keyConstructor:    c,
+		changes:           ch,
+		policies:          p,
+		policySubscribers: map[string]*storage.Subscriber{},
+		commonStorage:     map[string]interface{}{},
+		logger:            l,
 	}
 }
 
@@ -155,7 +159,7 @@ func (s *Storage) UpdateNextRefreshTime(_ context.Context, p *storage.Policy, ne
 	return nil
 }
 
-func (s *Storage) AddPolicyChangeSubscribers(subscribers ...storage.PolicyChangeSubscriber) {
+func (s *Storage) AddPolicySubscribers(subscribers ...storage.PolicySubscriber) {
 	s.subscribers = subscribers
 }
 
@@ -219,8 +223,26 @@ func (s *Storage) DeleteData(_ context.Context, key string) error {
 
 func (s *Storage) Close(_ context.Context) {}
 
-func (s *Storage) CreateSubscriber(_ context.Context, _ *storage.Subscriber) (*storage.Subscriber, error) {
-	return nil, errors.New(errors.Internal, "function CreateSubscriber is not implemented for memory storage")
+func (s *Storage) CreateSubscriber(_ context.Context, sub *storage.Subscriber) (*storage.Subscriber, error) {
+	s.muSubscribers.RLock()
+	defer s.muSubscribers.RUnlock()
+
+	s.policySubscribers[sub.PolicyRepository+sub.PolicyGroup+sub.PolicyName+sub.PolicyVersion+sub.WebhookURL+sub.Name] = sub
+
+	res := *sub // don't return the Subscriber by reference
+	return &res, nil
+}
+
+func (s *Storage) Subscriber(_ context.Context, policyRepository, policyGroup, policyName, policyVersion, webhookURL, name string) (*storage.Subscriber, error) {
+	s.muSubscribers.RLock()
+	defer s.muSubscribers.RUnlock()
+	subscriber, ok := s.policySubscribers[policyRepository+policyGroup+policyName+policyVersion+webhookURL+name]
+	if !ok {
+		return nil, errors.New(errors.NotFound, "subscriber not found in memory storage")
+	}
+
+	res := *subscriber // don't return the Subscriber by reference
+	return &res, nil
 }
 
 func (s *Storage) SaveAutoImportConfig(_ context.Context, importConfig *storage.PolicyAutoImport) error {

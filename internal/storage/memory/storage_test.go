@@ -153,6 +153,49 @@ func TestStorage_CommonStorage(t *testing.T) {
 	})
 }
 
+func TestStorage_PolicySubscriber(t *testing.T) {
+	s := memory.New(nil, nil, zap.NewNop())
+	subscriber := &storage.Subscriber{
+		Name:             "name",
+		WebhookURL:       "webhook",
+		PolicyRepository: "repo",
+		PolicyName:       "policyname",
+		PolicyGroup:      "policygroup",
+		PolicyVersion:    "policyversion",
+		CreatedAt:        time.Time{},
+		UpdatedAt:        time.Time{},
+	}
+	t.Run("create policy subscriber", func(t *testing.T) {
+		sub, err := s.CreateSubscriber(context.Background(), subscriber)
+		assert.NoError(t, err)
+		assert.Equal(t, subscriber, subscriber, sub)
+	})
+
+	t.Run("get subscriber", func(t *testing.T) {
+		sub, err := s.Subscriber(context.Background(),
+			subscriber.PolicyRepository,
+			subscriber.PolicyGroup,
+			subscriber.PolicyName,
+			subscriber.PolicyVersion,
+			subscriber.WebhookURL,
+			subscriber.Name)
+		assert.NoError(t, err)
+		assert.Equal(t, subscriber, sub)
+	})
+
+	t.Run("get subscriber return error", func(t *testing.T) {
+		sub, err := s.Subscriber(context.Background(),
+			subscriber.PolicyRepository,
+			subscriber.PolicyGroup,
+			subscriber.PolicyName,
+			subscriber.PolicyVersion,
+			subscriber.WebhookURL,
+			"not existing name")
+		assert.ErrorContains(t, err, "subscriber not found in memory storage")
+		assert.Nil(t, sub)
+	})
+}
+
 // makePolicies makes a valid policies map
 func makePolicies() map[string]*storage.Policy {
 	return map[string]*storage.Policy{

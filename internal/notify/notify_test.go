@@ -29,7 +29,7 @@ func TestNotify_PolicyDataChange(t *testing.T) {
 		{
 			name:              "error when sending event",
 			eventPolicyChange: &notify.EventPolicyChange{Repository: "exampleRepo", Name: "exampleName", Version: "exampleVersion", Group: "exampleGroup"},
-			storage: &notifyfakes.FakeStorage{PolicyChangeSubscribersStub: func(ctx context.Context, s1, s2, s3, s4 string) ([]*storage.Subscriber, error) {
+			storage: &notifyfakes.FakeStorage{PolicySubscribersStub: func(ctx context.Context, s1, s2, s3, s4 string) ([]*storage.Subscriber, error) {
 				return []*storage.Subscriber{}, nil
 			}},
 			events: &notifyfakes.FakeEvents{SendStub: func(ctx context.Context, a any) error {
@@ -42,7 +42,7 @@ func TestNotify_PolicyDataChange(t *testing.T) {
 		{
 			name:              "sending event is successful",
 			eventPolicyChange: &notify.EventPolicyChange{Repository: "exampleRepo", Name: "exampleName", Version: "exampleVersion", Group: "exampleGroup"},
-			storage: &notifyfakes.FakeStorage{PolicyChangeSubscribersStub: func(ctx context.Context, s1, s2, s3, s4 string) ([]*storage.Subscriber, error) {
+			storage: &notifyfakes.FakeStorage{PolicySubscribersStub: func(ctx context.Context, s1, s2, s3, s4 string) ([]*storage.Subscriber, error) {
 				return []*storage.Subscriber{}, nil
 			}},
 			events: &notifyfakes.FakeEvents{SendStub: func(ctx context.Context, a any) error {
@@ -53,7 +53,7 @@ func TestNotify_PolicyDataChange(t *testing.T) {
 		{
 			name:              "storage return error",
 			eventPolicyChange: &notify.EventPolicyChange{Repository: "exampleRepo", Name: "exampleName", Version: "exampleVersion", Group: "exampleGroup"},
-			storage: &notifyfakes.FakeStorage{PolicyChangeSubscribersStub: func(ctx context.Context, s1, s2, s3, s4 string) ([]*storage.Subscriber, error) {
+			storage: &notifyfakes.FakeStorage{PolicySubscribersStub: func(ctx context.Context, s1, s2, s3, s4 string) ([]*storage.Subscriber, error) {
 				return []*storage.Subscriber{}, fmt.Errorf("some error")
 			}},
 			events: &notifyfakes.FakeEvents{SendStub: func(ctx context.Context, a any) error {
@@ -66,7 +66,7 @@ func TestNotify_PolicyDataChange(t *testing.T) {
 		{
 			name:              "wrong webhook url return error",
 			eventPolicyChange: &notify.EventPolicyChange{Repository: "exampleRepo", Name: "exampleName", Version: "exampleVersion", Group: "exampleGroup"},
-			storage: &notifyfakes.FakeStorage{PolicyChangeSubscribersStub: func(ctx context.Context, s1, s2, s3, s4 string) ([]*storage.Subscriber, error) {
+			storage: &notifyfakes.FakeStorage{PolicySubscribersStub: func(ctx context.Context, s1, s2, s3, s4 string) ([]*storage.Subscriber, error) {
 				return []*storage.Subscriber{{WebhookURL: "wrong/url"}}, nil
 			}},
 			events: &notifyfakes.FakeEvents{SendStub: func(ctx context.Context, a any) error {

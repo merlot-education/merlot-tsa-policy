@@ -21,7 +21,7 @@ type Events interface {
 }
 
 type Storage interface {
-	PolicyChangeSubscribers(ctx context.Context, policyRepository, policyName, policyGroup, policyVersion string) ([]*storage.Subscriber, error)
+	PolicySubscribers(ctx context.Context, policyRepository, policyName, policyGroup, policyVersion string) ([]*storage.Subscriber, error)
 }
 
 type Notifier struct {
@@ -69,7 +69,7 @@ func (n *Notifier) PolicyDataChange(ctx context.Context, policyRepository, polic
 }
 
 func (n *Notifier) notifySubscribers(ctx context.Context, event *EventPolicyChange) error {
-	subscribers, err := n.storage.PolicyChangeSubscribers(ctx, event.Repository, event.Name, event.Group, event.Version)
+	subscribers, err := n.storage.PolicySubscribers(ctx, event.Repository, event.Name, event.Group, event.Version)
 	if err != nil {
 		return err
 	}

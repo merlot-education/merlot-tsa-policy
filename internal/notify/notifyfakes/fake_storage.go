@@ -10,20 +10,20 @@ import (
 )
 
 type FakeStorage struct {
-	PolicyChangeSubscribersStub        func(context.Context, string, string, string, string) ([]*storage.Subscriber, error)
-	policyChangeSubscribersMutex       sync.RWMutex
-	policyChangeSubscribersArgsForCall []struct {
+	PolicySubscribersStub        func(context.Context, string, string, string, string) ([]*storage.Subscriber, error)
+	policySubscribersMutex       sync.RWMutex
+	policySubscribersArgsForCall []struct {
 		arg1 context.Context
 		arg2 string
 		arg3 string
 		arg4 string
 		arg5 string
 	}
-	policyChangeSubscribersReturns struct {
+	policySubscribersReturns struct {
 		result1 []*storage.Subscriber
 		result2 error
 	}
-	policyChangeSubscribersReturnsOnCall map[int]struct {
+	policySubscribersReturnsOnCall map[int]struct {
 		result1 []*storage.Subscriber
 		result2 error
 	}
@@ -31,20 +31,20 @@ type FakeStorage struct {
 	invocationsMutex sync.RWMutex
 }
 
-func (fake *FakeStorage) PolicyChangeSubscribers(arg1 context.Context, arg2 string, arg3 string, arg4 string, arg5 string) ([]*storage.Subscriber, error) {
-	fake.policyChangeSubscribersMutex.Lock()
-	ret, specificReturn := fake.policyChangeSubscribersReturnsOnCall[len(fake.policyChangeSubscribersArgsForCall)]
-	fake.policyChangeSubscribersArgsForCall = append(fake.policyChangeSubscribersArgsForCall, struct {
+func (fake *FakeStorage) PolicySubscribers(arg1 context.Context, arg2 string, arg3 string, arg4 string, arg5 string) ([]*storage.Subscriber, error) {
+	fake.policySubscribersMutex.Lock()
+	ret, specificReturn := fake.policySubscribersReturnsOnCall[len(fake.policySubscribersArgsForCall)]
+	fake.policySubscribersArgsForCall = append(fake.policySubscribersArgsForCall, struct {
 		arg1 context.Context
 		arg2 string
 		arg3 string
 		arg4 string
 		arg5 string
 	}{arg1, arg2, arg3, arg4, arg5})
-	stub := fake.PolicyChangeSubscribersStub
-	fakeReturns := fake.policyChangeSubscribersReturns
-	fake.recordInvocation("PolicyChangeSubscribers", []interface{}{arg1, arg2, arg3, arg4, arg5})
-	fake.policyChangeSubscribersMutex.Unlock()
+	stub := fake.PolicySubscribersStub
+	fakeReturns := fake.policySubscribersReturns
+	fake.recordInvocation("PolicySubscribers", []interface{}{arg1, arg2, arg3, arg4, arg5})
+	fake.policySubscribersMutex.Unlock()
 	if stub != nil {
 		return stub(arg1, arg2, arg3, arg4, arg5)
 	}
@@ -54,46 +54,46 @@ func (fake *FakeStorage) PolicyChangeSubscribers(arg1 context.Context, arg2 stri
 	return fakeReturns.result1, fakeReturns.result2
 }
 
-func (fake *FakeStorage) PolicyChangeSubscribersCallCount() int {
-	fake.policyChangeSubscribersMutex.RLock()
-	defer fake.policyChangeSubscribersMutex.RUnlock()
-	return len(fake.policyChangeSubscribersArgsForCall)
+func (fake *FakeStorage) PolicySubscribersCallCount() int {
+	fake.policySubscribersMutex.RLock()
+	defer fake.policySubscribersMutex.RUnlock()
+	return len(fake.policySubscribersArgsForCall)
 }
 
-func (fake *FakeStorage) PolicyChangeSubscribersCalls(stub func(context.Context, string, string, string, string) ([]*storage.Subscriber, error)) {
-	fake.policyChangeSubscribersMutex.Lock()
-	defer fake.policyChangeSubscribersMutex.Unlock()
-	fake.PolicyChangeSubscribersStub = stub
+func (fake *FakeStorage) PolicySubscribersCalls(stub func(context.Context, string, string, string, string) ([]*storage.Subscriber, error)) {
+	fake.policySubscribersMutex.Lock()
+	defer fake.policySubscribersMutex.Unlock()
+	fake.PolicySubscribersStub = stub
 }
 
-func (fake *FakeStorage) PolicyChangeSubscribersArgsForCall(i int) (context.Context, string, string, string, string) {
-	fake.policyChangeSubscribersMutex.RLock()
-	defer fake.policyChangeSubscribersMutex.RUnlock()
-	argsForCall := fake.policyChangeSubscribersArgsForCall[i]
+func (fake *FakeStorage) PolicySubscribersArgsForCall(i int) (context.Context, string, string, string, string) {
+	fake.policySubscribersMutex.RLock()
+	defer fake.policySubscribersMutex.RUnlock()
+	argsForCall := fake.policySubscribersArgsForCall[i]
 	return argsForCall.arg1, argsForCall.arg2, argsForCall.arg3, argsForCall.arg4, argsForCall.arg5
 }
 
-func (fake *FakeStorage) PolicyChangeSubscribersReturns(result1 []*storage.Subscriber, result2 error) {
-	fake.policyChangeSubscribersMutex.Lock()
-	defer fake.policyChangeSubscribersMutex.Unlock()
-	fake.PolicyChangeSubscribersStub = nil
-	fake.policyChangeSubscribersReturns = struct {
+func (fake *FakeStorage) PolicySubscribersReturns(result1 []*storage.Subscriber, result2 error) {
+	fake.policySubscribersMutex.Lock()
+	defer fake.policySubscribersMutex.Unlock()
+	fake.PolicySubscribersStub = nil
+	fake.policySubscribersReturns = struct {
 		result1 []*storage.Subscriber
 		result2 error
 	}{result1, result2}
 }
 
-func (fake *FakeStorage) PolicyChangeSubscribersReturnsOnCall(i int, result1 []*storage.Subscriber, result2 error) {
-	fake.policyChangeSubscribersMutex.Lock()
-	defer fake.policyChangeSubscribersMutex.Unlock()
-	fake.PolicyChangeSubscribersStub = nil
-	if fake.policyChangeSubscribersReturnsOnCall == nil {
-		fake.policyChangeSubscribersReturnsOnCall = make(map[int]struct {
+func (fake *FakeStorage) PolicySubscribersReturnsOnCall(i int, result1 []*storage.Subscriber, result2 error) {
+	fake.policySubscribersMutex.Lock()
+	defer fake.policySubscribersMutex.Unlock()
+	fake.PolicySubscribersStub = nil
+	if fake.policySubscribersReturnsOnCall == nil {
+		fake.policySubscribersReturnsOnCall = make(map[int]struct {
 			result1 []*storage.Subscriber
 			result2 error
 		})
 	}
-	fake.policyChangeSubscribersReturnsOnCall[i] = struct {
+	fake.policySubscribersReturnsOnCall[i] = struct {
 		result1 []*storage.Subscriber
 		result2 error
 	}{result1, result2}
@@ -102,8 +102,8 @@ func (fake *FakeStorage) PolicyChangeSubscribersReturnsOnCall(i int, result1 []*
 func (fake *FakeStorage) Invocations() map[string][][]interface{} {
 	fake.invocationsMutex.RLock()
 	defer fake.invocationsMutex.RUnlock()
-	fake.policyChangeSubscribersMutex.RLock()
-	defer fake.policyChangeSubscribersMutex.RUnlock()
+	fake.policySubscribersMutex.RLock()
+	defer fake.policySubscribersMutex.RUnlock()
 	copiedInvocations := map[string][][]interface{}{}
 	for key, value := range fake.invocations {
 		copiedInvocations[key] = value

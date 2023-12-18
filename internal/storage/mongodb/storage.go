@@ -4,7 +4,6 @@ import (
 	"context"
 	goerrors "errors"
 	"fmt"
-	"strings"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -32,7 +31,7 @@ type Storage struct {
 	subscriber    *mongo.Collection
 	commonStorage *mongo.Collection
 	autoImport    *mongo.Collection
-	subscribers   []storage.PolicyChangeSubscriber
+	subscribers   []storage.PolicySubscriber
 	logger        *zap.Logger
 }
 
@@ -62,7 +61,7 @@ func (s *Storage) Policy(ctx context.Context, repository, group, name, version s
 	})
 
 	if result.Err() != nil {
-		if strings.Contains(result.Err().Error(), "no documents in result") {
+		if goerrors.Is(result.Err(), mongo.ErrNoDocuments) {
 			return nil, errors.New(errors.NotFound, "policy not found")
 		}
 		return nil, result.Err()
@@ -153,7 +152,7 @@ func (s *Storage) ListenPolicyDataChanges(ctx context.Context) error {
 	return stream.Err()
 }
 
-func (s *Storage) AddPolicyChangeSubscribers(subscribers ...storage.PolicyChangeSubscriber) {
+func (s *Storage) AddPolicySubscribers(subscribers ...storage.PolicySubscriber) {
 	s.subscribers = subscribers
 }
 
@@ -262,24 +261,11 @@ func (s *Storage) Close(ctx context.Context) {
 }
 
 func (s *Storage) CreateSubscriber(ctx context.Context, subscriber *storage.Subscriber) (*storage.Subscriber, error) {
-	_, err := s.policyExist(ctx, subscriber.PolicyRepository, subscriber.PolicyName, subscriber.PolicyGroup, subscriber.PolicyVersion)
-	if err != nil {
-		return nil, err
-	}
-
-	subscriberExist, err := s.subscriberExist(ctx, subscriber)
-	if err != nil {
-		return nil, err
-	}
-
-	if subscriberExist {
-		return nil, fmt.Errorf("subscriber already exists")
-	}
-
 	subscriber.CreatedAt = time.Now()
 	subscriber.UpdatedAt = time.Now()
 	subscriber.MongoID = primitive.NewObjectID()
-	_, err = s.subscriber.InsertOne(ctx, subscriber)
+
+	_, err := s.subscriber.InsertOne(ctx, subscriber)
 	if err != nil {
 		return nil, err
 	}
@@ -287,7 +273,7 @@ func (s *Storage) CreateSubscriber(ctx context.Context, subscriber *storage.Subs
 	return subscriber, nil
 }
 
-func (s *Storage) PolicyChangeSubscribers(ctx context.Context, policyRepository, policyName, policyGroup, policyVersion string) ([]*storage.Subscriber, error) {
+func (s *Storage) PolicySubscribers(ctx context.Context, policyRepository, policyName, policyGroup, policyVersion string) ([]*storage.Subscriber, error) {
 	cursor, err := s.subscriber.Find(ctx, bson.M{
 		"policyrepository": policyRepository,
 		"policyname":       policyName,
@@ -304,6 +290,31 @@ func (s *Storage) PolicyChangeSubscribers(ctx context.Context, policyRepository,
 	}
 
 	return subscribers, nil
+}
+
+func (s *Storage) Subscriber(ctx context.Context, policyRepository, policyGroup, policyName, policyVersion, webhookURL, name string) (*storage.Subscriber, error) {
+	result := s.subscriber.FindOne(ctx, bson.M{
+		"webhookurl":       webhookURL,
+		"name":             name,
+		"policyrepository": policyRepository,
+		"policygroup":      policyGroup,
+		"policyname":       policyName,
+		"policyversion":    policyVersion,
+	})
+
+	if result.Err() != nil {
+		if goerrors.Is(result.Err(), mongo.ErrNoDocuments) {
+			return nil, errors.New(errors.NotFound, "subscriber not found")
+		}
+		return nil, result.Err()
+	}
+
+	var subscriber storage.Subscriber
+	if err := result.Decode(&subscriber); err != nil {
+		return nil, err
+	}
+
+	return &subscriber, nil
 }
 
 func (s *Storage) SetData(ctx context.Context, key string, data map[string]interface{}) error {
@@ -342,37 +353,6 @@ func (s *Storage) DeleteData(ctx context.Context, key string) error {
 	}
 
 	return err
-}
-
-func (s *Storage) subscriberExist(ctx context.Context, subscriber *storage.Subscriber) (bool, error) {
-	err := s.subscriber.FindOne(ctx, bson.M{
-		"name":             subscriber.Name,
-		"webhookurl":       subscriber.WebhookURL,
-		"policyrepository": subscriber.PolicyRepository,
-		"policyname":       subscriber.PolicyName,
-		"policygroup":      subscriber.PolicyGroup,
-		"policyversion":    subscriber.PolicyVersion,
-	}).Err()
-	if err != nil {
-		if goerrors.Is(err, mongo.ErrNoDocuments) {
-			return false, nil
-		}
-		return false, err
-	}
-	return true, nil
-}
-
-func (s *Storage) policyExist(ctx context.Context, repository, name, group, version string) (bool, error) {
-	err := s.policy.FindOne(ctx, bson.M{
-		"repository": repository,
-		"name":       name,
-		"group":      group,
-		"version":    version,
-	}).Err()
-	if err != nil {
-		return false, err
-	}
-	return true, nil
 }
 
 func (s *Storage) SaveAutoImportConfig(ctx context.Context, importConfig *storage.PolicyAutoImport) error {

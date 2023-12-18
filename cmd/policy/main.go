@@ -93,7 +93,7 @@ func main() {
 	defer events.Close(context.Background())
 
 	// create policy change subscribers collection
-	var subscribers []storage.PolicyChangeSubscriber
+	var subscribers []storage.PolicySubscriber
 
 	// create rego policy cache
 	regocache := regocache.New()
@@ -116,7 +116,7 @@ func main() {
 	}
 
 	// subscribe the cache for policy data changes
-	storage.AddPolicyChangeSubscribers(subscribers...)
+	storage.AddPolicySubscribers(subscribers...)
 
 	// create policy data refresher
 	var dataRefresher *policydata.Refresher
