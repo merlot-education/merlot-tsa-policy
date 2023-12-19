@@ -13,6 +13,8 @@ import (
 	"gitlab.eclipse.org/eclipse/xfsc/tsa/policy/internal/storage"
 )
 
+var errExportConfigNotFound = fmt.Errorf("policy export configuration is not defined")
+
 type ZipFile struct {
 	Name    string
 	Content []byte
@@ -200,7 +202,7 @@ func (s *Service) policyFromBundle(bundle []byte) (*storage.Policy, error) {
 
 func policyExportConfig(p *storage.Policy) (*exportConfig, error) {
 	if strings.TrimSpace(p.ExportConfig) == "" {
-		return nil, errors.New(errors.Forbidden, "policy export configuration is not defined")
+		return nil, errExportConfigNotFound
 	}
 
 	var cfg exportConfig

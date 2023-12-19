@@ -1,6 +1,6 @@
 module gitlab.eclipse.org/eclipse/xfsc/tsa/policy
 
-go 1.21.2
+go 1.21
 
 require (
 	github.com/cloudevents/sdk-go/protocol/nats/v2 v2.14.0
@@ -9,7 +9,7 @@ require (
 	github.com/google/uuid v1.4.0
 	github.com/jpillora/ipfilter v1.2.9
 	github.com/kelseyhightower/envconfig v1.4.0
-	github.com/lestrrat-go/jwx/v2 v2.0.15-0.20231118095921-ee031a0086ff
+	github.com/lestrrat-go/jwx/v2 v2.0.18
 	github.com/open-policy-agent/opa v0.58.0
 	github.com/prometheus/client_golang v1.17.0
 	github.com/santhosh-tekuri/jsonschema/v5 v5.3.1
@@ -39,7 +39,7 @@ require (
 	github.com/nats-io/nkeys v0.4.6 // indirect
 	github.com/nats-io/nuid v1.0.1 // indirect
 	golang.ngrok.com/muxado/v2 v2.0.0 // indirect
-	golang.org/x/term v0.14.0 // indirect
+	golang.org/x/term v0.15.0 // indirect
 )
 
 require (
@@ -108,10 +108,10 @@ require (
 	go.opentelemetry.io/otel/sdk v1.19.0 // indirect
 	go.opentelemetry.io/otel/trace v1.19.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
-	golang.org/x/crypto v0.15.0 // indirect
+	golang.org/x/crypto v0.17.0 // indirect
 	golang.org/x/mod v0.13.0 // indirect
 	golang.org/x/net v0.17.0 // indirect
-	golang.org/x/sys v0.14.0 // indirect
+	golang.org/x/sys v0.15.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 	golang.org/x/tools v0.14.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
