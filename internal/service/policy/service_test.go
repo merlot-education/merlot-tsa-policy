@@ -1107,6 +1107,54 @@ func TestService_SubscribeForPolicyChange(t *testing.T) {
 		errText string
 	}{
 		{
+			name: "policy doesn't exist",
+			storage: &policyfakes.FakeStorage{PolicyStub: func(ctx context.Context, s1, s2, s3, s4 string) (*storage.Policy, error) {
+				return nil, errors.New(errors.NotFound, "not found")
+			}},
+			request: &goapolicy.SubscribeRequest{
+				WebhookURL: "http://some.url/example",
+				Subscriber: "Subscriber Name",
+				Repository: "policy repo",
+				PolicyName: "policy name",
+				Group:      "policy group",
+				Version:    "policy version",
+			},
+
+			errText: "not found",
+		},
+		{
+			name: "subscriber already exist",
+			storage: &policyfakes.FakeStorage{SubscriberStub: func(ctx context.Context, s1, s2, s3, s4, s5, s6 string) (*storage.Subscriber, error) {
+				return &storage.Subscriber{Name: "subscriber"}, nil
+			}},
+			request: &goapolicy.SubscribeRequest{
+				WebhookURL: "http://some.url/example",
+				Subscriber: "Subscriber Name",
+				Repository: "policy repo",
+				PolicyName: "policy name",
+				Group:      "policy group",
+				Version:    "policy version",
+			},
+
+			errText: "subscriber already exist",
+		},
+		{
+			name: "error retrieving subscriber",
+			storage: &policyfakes.FakeStorage{SubscriberStub: func(ctx context.Context, s1, s2, s3, s4, s5, s6 string) (*storage.Subscriber, error) {
+				return nil, errors.New("some error")
+			}},
+			request: &goapolicy.SubscribeRequest{
+				WebhookURL: "http://some.url/example",
+				Subscriber: "Subscriber Name",
+				Repository: "policy repo",
+				PolicyName: "policy name",
+				Group:      "policy group",
+				Version:    "policy version",
+			},
+
+			errText: "some error",
+		},
+		{
 			name: "error while creating subscriber",
 			storage: &policyfakes.FakeStorage{CreateSubscriberStub: func(ctx context.Context, s *storage.Subscriber) (*storage.Subscriber, error) {
 				return nil, fmt.Errorf("some error")
@@ -1419,7 +1467,7 @@ func TestService_PolicyPublicKey(t *testing.T) {
 				},
 			},
 			errtext: "policy export configuration is not defined",
-			errkind: errors.Unknown,
+			errkind: errors.Forbidden,
 		},
 		{
 			name: "wrong format for policy export configuration",

@@ -9,7 +9,7 @@ import (
 
 const RefreshPostponePeriod = 5 * time.Minute
 
-type PolicyChangeSubscriber interface {
+type PolicySubscriber interface {
 	PolicyDataChange(ctx context.Context, repo, group, name, version string) error
 }
 
