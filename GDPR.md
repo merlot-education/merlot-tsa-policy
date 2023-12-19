@@ -1,9 +1,11 @@
 # GDPR Compliance Document
 The objective of this document is to detail, the data being stored and proccessed by the Trust Service API.
 
+# Issuing Verifiable Credential 
+
 ## What information is stored
-### Source User Information
-The Open Id connect claims that MAY contain all sorts of personal data (like email, name, age and others), are received from any external source.
+### Source User Information (Private)
+The Open Id connect claims MAY contain all sorts of personal data (like email, name, age and others), typically received from an external source.
 
 ### Technical User Information (Public)
 
@@ -14,19 +16,62 @@ The Open Id connect claims that MAY contain all sorts of personal data (like ema
 - Created/updated dates
 - Offered credential attributes and attachments
 
-## How is the information stored
+## How is the information stored and used
 ### Source User Information
-Source User Information is encrypted using the Private Key of the Organizations SSI Agent and stored until the issuance of credential in Organization's SSI Agent's PostgreSQL database.
+Source User Information is encrypted using the Private Key of the organizational deployment, thereby creating the Verifiable Credential. This Verifiable Credential is shared with the legitimate recipient. Subsequently Source User Information(including the Verifiable Credential), is permanently erased from organizational deployment. 
 
 ### Technical User Information (Public)
-Technical User Information is encrypted using the Private Key of the Organizations SSI Agent and stored internally (on the agent) on PostgreSQL and externally/ metadata (shared between the OCM services) on PostgreSQL of Organization.
+Technical User Information is used to send the Verifiable credential to legitimate recipient. After successful issuance of the Verifiable Credential, per default Technical User information is permenetly erased from organizational deployment.
+
 
 ## Who can access the information
-The Source User Information and Technical User Information both are accessible only by the Organization specific SSI agent's private key.
+The Source User Information and Technical User Information both are accessible only by the system administrators of the organizational deployment.
 
 ## How long will the information stay 
 ### Source User Information
-The Source User Information is wiped out once the credential is issued.
+The Source User Information is wiped out once the Verifiable Credential is issued.
 
 ### Technical User Information (Public)
-The Technical User Information is wiped out according to the retention periods (not defined yet).
+The Technical User Information is wiped out per default after Vereifiable Credential is isssued or  optionally sored according to retention periods (not defined yet).
+
+### Extended data processing capabilities 
+
+Please note amendments to this GDPR document may become necessary, due to the usage of additional policy rules executed within the [Policy Service](https://gitlab.eclipse.org/eclipse/xfsc/tsa/policy) . This is due to the fact that these policies may lead to additional handling  and storage of personal data.
+
+
+# Receiving Verifiable Credential 
+
+## What information is stored
+### Source User Information (Private)
+The Open Id connect claims MAY contain all sorts of personal data (like email, name, age and others), typically received from an external source.
+
+### Technical User Information (Public)
+
+- Schema information (public)
+- Credential/credential definition ids and states
+- DID of issuer
+- DID of holder
+- Created/updated dates
+- Offered credential attributes and attachments
+
+## How is the information stored and used
+### Source User Information
+Source User Information is decrypted. Per default received Verifiable Credential is not stored permanently. In case this is changed within a specific organizational deployment, an amendment of this GDPR Compliance Document will be necessary. This is the due to the fact that these details depend on the specific use cases and intentions.
+
+
+### Technical User Information (Public)
+Technical User Information is used to received the Verifiable credential from legitimate sender. After successful acceptance of the Verifiable Credential, per default Technical User information is permanently erased from the organizational deployment.
+
+## Who can access the information
+The Source User Information and Technical User Information both are accessible only by the system administrators of the organizational deployment.
+
+## How long will the information stay 
+### Source User Information
+The Source User Information is wiped out per default once the Verifiable Credential is received.
+
+### Technical User Information (Public)
+The Technical User Information is wiped out per default after Vereifiable Credential is received or stored according to retention periods (not defined yet).
+
+### Extended data processing capabilities 
+
+Please note amendments to this GDPR document may become necessary, due to the usage of additional policy rules executed within the [Policy Service](https://gitlab.eclipse.org/eclipse/xfsc/tsa/policy) . Due to the fact that these policies may lead to additional handling  and storage of personal data.
