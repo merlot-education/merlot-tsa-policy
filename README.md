@@ -108,6 +108,19 @@ Currently, there are two implementations of the storage interface:
  - [MongoDB](./doc/mongodb_storage.md)
  - [Memory](./doc/memory-storage.md)
 
+Matrix for storage feature availability:
+
+ **Feature** | **MongoDB** | **Memory**
+--- |--------|------------
+Policy Lock/Unlock | Yes    | Yes*
+Change Notifications | Yes    | Yes*
+Storage extension functions | Yes | Yes*
+Automatic synchronization | Yes | N/A
+Bundle import/export | Yes | Yes*
+
+> `*` Functionality is available only for the current instance of the policy service. Synchronization between
+> instances of the policy service is not available.
+
 In order to use another storage technology, one should implement the [Storage interface](./internal/service/policy/storage.go).
 
 ```mermaid
