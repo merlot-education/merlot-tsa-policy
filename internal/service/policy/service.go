@@ -543,7 +543,7 @@ func (s *Service) DeletePolicyAutoImport(ctx context.Context, req *policy.Delete
 func (s *Service) ListPolicies(ctx context.Context, req *policy.PoliciesRequest) (*policy.PoliciesResult, error) {
 	logger := s.logger.With(zap.String("operation", "listPolicies"))
 
-	policies, err := s.storage.GetPolicies(ctx, req.Locked)
+	policies, err := s.storage.GetPolicies(ctx, req.Locked, req.PolicyName)
 	if err != nil {
 		logger.Error("error retrieving policies", zap.Error(err))
 		return nil, errors.New("error retrieving policies", err)

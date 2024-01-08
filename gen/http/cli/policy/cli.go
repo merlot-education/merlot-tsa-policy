@@ -95,6 +95,7 @@ func ParseEndpoint(
 
 		policyListPoliciesFlags          = flag.NewFlagSet("list-policies", flag.ExitOnError)
 		policyListPoliciesLockedFlag     = policyListPoliciesFlags.String("locked", "", "")
+		policyListPoliciesPolicyNameFlag = policyListPoliciesFlags.String("policy-name", "", "")
 		policyListPoliciesRegoFlag       = policyListPoliciesFlags.String("rego", "", "")
 		policyListPoliciesDataFlag       = policyListPoliciesFlags.String("data", "", "")
 		policyListPoliciesDataConfigFlag = policyListPoliciesFlags.String("data-config", "", "")
@@ -271,7 +272,7 @@ func ParseEndpoint(
 				}
 			case "list-policies":
 				endpoint = c.ListPolicies()
-				data, err = policyc.BuildListPoliciesPayload(*policyListPoliciesLockedFlag, *policyListPoliciesRegoFlag, *policyListPoliciesDataFlag, *policyListPoliciesDataConfigFlag)
+				data, err = policyc.BuildListPoliciesPayload(*policyListPoliciesLockedFlag, *policyListPoliciesPolicyNameFlag, *policyListPoliciesRegoFlag, *policyListPoliciesDataFlag, *policyListPoliciesDataConfigFlag)
 			case "set-policy-auto-import":
 				endpoint = c.SetPolicyAutoImport()
 				data, err = policyc.BuildSetPolicyAutoImportPayload(*policySetPolicyAutoImportBodyFlag)
@@ -431,16 +432,17 @@ Example:
 }
 
 func policyListPoliciesUsage() {
-	fmt.Fprintf(os.Stderr, `%[1]s [flags] policy list-policies -locked BOOL -rego BOOL -data BOOL -data-config BOOL
+	fmt.Fprintf(os.Stderr, `%[1]s [flags] policy list-policies -locked BOOL -policy-name STRING -rego BOOL -data BOOL -data-config BOOL
 
 List policies from storage with optional filters.
     -locked BOOL: 
+    -policy-name STRING: 
     -rego BOOL: 
     -data BOOL: 
     -data-config BOOL: 
 
 Example:
-    %[1]s policy list-policies --locked false --rego true --data false --data-config false
+    %[1]s policy list-policies --locked false --policy-name "example" --rego true --data false --data-config false
 `, os.Args[0])
 }
 

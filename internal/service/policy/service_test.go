@@ -857,9 +857,6 @@ func TestService_Unlock(t *testing.T) {
 }
 
 func TestService_ListPolicies(t *testing.T) {
-	strPointer := func(str string) *string {
-		return &str
-	}
 	boolTrue := true
 	boolFalse := false
 	tests := []struct {
@@ -872,21 +869,21 @@ func TestService_ListPolicies(t *testing.T) {
 	}{
 		{
 			name: "storage return error",
-			storage: &policyfakes.FakeStorage{GetPoliciesStub: func(ctx context.Context, b *bool) ([]*storage.Policy, error) {
+			storage: &policyfakes.FakeStorage{GetPoliciesStub: func(ctx context.Context, b *bool, s *string) ([]*storage.Policy, error) {
 				return nil, fmt.Errorf("some error")
 			}},
 			request: &goapolicy.PoliciesRequest{
-				Locked:     new(bool),
-				Rego:       new(bool),
-				Data:       new(bool),
-				DataConfig: new(bool),
+				Locked:     ptr.Bool(false),
+				Rego:       ptr.Bool(false),
+				Data:       ptr.Bool(false),
+				DataConfig: ptr.Bool(false),
 			},
 
 			errText: "some error",
 		},
 		{
 			name: "request without errors and any additional request parameter return all policies",
-			storage: &policyfakes.FakeStorage{GetPoliciesStub: func(ctx context.Context, b *bool) ([]*storage.Policy, error) {
+			storage: &policyfakes.FakeStorage{GetPoliciesStub: func(ctx context.Context, b *bool, s *string) ([]*storage.Policy, error) {
 				return []*storage.Policy{{
 					Repository: "policies",
 					Name:       "example",
@@ -934,7 +931,7 @@ func TestService_ListPolicies(t *testing.T) {
 		},
 		{
 			name: "request with only locked parameter equal to true returns only locked policies",
-			storage: &policyfakes.FakeStorage{GetPoliciesStub: func(ctx context.Context, b *bool) ([]*storage.Policy, error) {
+			storage: &policyfakes.FakeStorage{GetPoliciesStub: func(ctx context.Context, b *bool, s *string) ([]*storage.Policy, error) {
 				return []*storage.Policy{{
 					Repository: "policies",
 					Name:       "example",
@@ -966,7 +963,7 @@ func TestService_ListPolicies(t *testing.T) {
 		},
 		{
 			name: "request with only locked parameter equal to false returns only unlocked policies",
-			storage: &policyfakes.FakeStorage{GetPoliciesStub: func(ctx context.Context, b *bool) ([]*storage.Policy, error) {
+			storage: &policyfakes.FakeStorage{GetPoliciesStub: func(ctx context.Context, b *bool, s *string) ([]*storage.Policy, error) {
 				return []*storage.Policy{{
 					Repository: "policies",
 					Name:       "example",
@@ -997,8 +994,8 @@ func TestService_ListPolicies(t *testing.T) {
 			},
 		},
 		{
-			name: "request with all additional params set to true",
-			storage: &policyfakes.FakeStorage{GetPoliciesStub: func(ctx context.Context, b *bool) ([]*storage.Policy, error) {
+			name: "request with all additional params set to true and policy name is blank",
+			storage: &policyfakes.FakeStorage{GetPoliciesStub: func(ctx context.Context, b *bool, s *string) ([]*storage.Policy, error) {
 				return []*storage.Policy{{
 					Repository: "policies",
 					Name:       "example",
@@ -1007,12 +1004,13 @@ func TestService_ListPolicies(t *testing.T) {
 					Rego:       "some rego",
 					Data:       "some data",
 					DataConfig: "data config",
-					Locked:     false,
+					Locked:     true,
 					LastUpdate: time.Time{},
 				}}, nil
 			}},
 			request: &goapolicy.PoliciesRequest{
-				Locked:     new(bool),
+				Locked:     ptr.Bool(true),
+				PolicyName: ptr.String(""),
 				Rego:       &boolTrue,
 				Data:       &boolTrue,
 				DataConfig: &boolTrue,
@@ -1025,18 +1023,18 @@ func TestService_ListPolicies(t *testing.T) {
 						PolicyName: "example",
 						Group:      "example",
 						Version:    "example",
-						Rego:       strPointer("some rego"),
-						Data:       strPointer("some data"),
-						DataConfig: strPointer("data config"),
-						Locked:     false,
+						Rego:       ptr.String("some rego"),
+						Data:       ptr.String("some data"),
+						DataConfig: ptr.String("data config"),
+						Locked:     true,
 						LastUpdate: time.Time{}.Unix(),
 					},
 				},
 			},
 		},
 		{
-			name: "request with all additional params set to false",
-			storage: &policyfakes.FakeStorage{GetPoliciesStub: func(ctx context.Context, b *bool) ([]*storage.Policy, error) {
+			name: "request with all additional params set to false and policy name is blank",
+			storage: &policyfakes.FakeStorage{GetPoliciesStub: func(ctx context.Context, b *bool, s *string) ([]*storage.Policy, error) {
 				return []*storage.Policy{{
 					Repository: "policies",
 					Name:       "example",
@@ -1050,10 +1048,43 @@ func TestService_ListPolicies(t *testing.T) {
 				}}, nil
 			}},
 			request: &goapolicy.PoliciesRequest{
-				Locked:     new(bool),
+				Locked:     ptr.Bool(false),
+				PolicyName: ptr.String(""),
 				Rego:       &boolFalse,
 				Data:       &boolFalse,
 				DataConfig: &boolFalse,
+			},
+
+			response: &goapolicy.PoliciesResult{
+				Policies: []*goapolicy.Policy{
+					{
+						Repository: "policies",
+						PolicyName: "example",
+						Group:      "example",
+						Version:    "example",
+						Locked:     false,
+						LastUpdate: time.Time{}.Unix(),
+					},
+				},
+			},
+		},
+		{
+			name: "request with policy name filter return every policy which contains the policy name",
+			storage: &policyfakes.FakeStorage{GetPoliciesStub: func(ctx context.Context, b *bool, s *string) ([]*storage.Policy, error) {
+				return []*storage.Policy{{
+					Repository: "policies",
+					Name:       "example",
+					Group:      "example",
+					Version:    "example",
+					Rego:       "some rego",
+					Data:       "some data",
+					DataConfig: "data config",
+					Locked:     false,
+					LastUpdate: time.Time{},
+				}}, nil
+			}},
+			request: &goapolicy.PoliciesRequest{
+				PolicyName: ptr.String("exam"),
 			},
 
 			response: &goapolicy.PoliciesResult{

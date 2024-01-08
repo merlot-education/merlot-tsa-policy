@@ -347,6 +347,7 @@ func DecodeListPoliciesRequest(mux goahttp.Muxer, decoder func(*http.Request) go
 	return func(r *http.Request) (any, error) {
 		var (
 			locked     *bool
+			policyName *string
 			rego       *bool
 			data       *bool
 			dataConfig *bool
@@ -361,6 +362,10 @@ func DecodeListPoliciesRequest(mux goahttp.Muxer, decoder func(*http.Request) go
 				}
 				locked = &v
 			}
+		}
+		policyNameRaw := r.URL.Query().Get("policyName")
+		if policyNameRaw != "" {
+			policyName = &policyNameRaw
 		}
 		{
 			regoRaw := r.URL.Query().Get("rego")
@@ -395,7 +400,7 @@ func DecodeListPoliciesRequest(mux goahttp.Muxer, decoder func(*http.Request) go
 		if err != nil {
 			return nil, err
 		}
-		payload := NewListPoliciesPoliciesRequest(locked, rego, data, dataConfig)
+		payload := NewListPoliciesPoliciesRequest(locked, policyName, rego, data, dataConfig)
 
 		return payload, nil
 	}

@@ -83,23 +83,30 @@ func TestStorage_GetPolicies(t *testing.T) {
 	storage := memory.New(nil, policies, zap.NewNop())
 
 	// get all policies
-	res, err := storage.GetPolicies(context.Background(), nil)
+	res, err := storage.GetPolicies(context.Background(), nil, nil)
 	assert.NoError(t, err)
 	assert.Equal(t, len(policies), len(res))
 
 	// get locked policies
 	locked := true
-	res, err = storage.GetPolicies(context.Background(), &locked)
+	res, err = storage.GetPolicies(context.Background(), &locked, nil)
 	assert.NoError(t, err)
 	assert.Equal(t, 1, len(res))
 	assert.Equal(t, locked, res[0].Locked)
 
 	// get unlocked policies
 	locked = false
-	res, err = storage.GetPolicies(context.Background(), &locked)
+	res, err = storage.GetPolicies(context.Background(), &locked, nil)
+	assert.NoError(t, err)
+	assert.Equal(t, 2, len(res))
+	assert.Equal(t, locked, res[0].Locked)
+
+	// get policies filtered by name
+	name := "example"
+	res, err = storage.GetPolicies(context.Background(), nil, &name)
 	assert.NoError(t, err)
 	assert.Equal(t, 1, len(res))
-	assert.Equal(t, locked, res[0].Locked)
+	assert.Contains(t, res[0].Name, name)
 }
 
 func TestStorage_GetRefreshPolicies(t *testing.T) {
@@ -212,6 +219,13 @@ func makePolicies() map[string]*storage.Policy {
 			Group:      "example",
 			Version:    "1.1",
 			Locked:     true,
+		},
+		"policies,example,examplePolicy,1.1": {
+			Repository: "policies",
+			Name:       "examplePolicy",
+			Group:      "example",
+			Version:    "1.1",
+			Locked:     false,
 		},
 	}
 }

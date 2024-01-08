@@ -141,6 +141,7 @@ var _ = Service("policy", func() {
 			GET("/v1/policies")
 			Params(func() {
 				Param("locked", Boolean, "Filter to return locked/unlocked policies (optional).")
+				Param("policyName", String, "Filter to return policies (optional).")
 				Param("rego", Boolean, "Include policy source code in results (optional).")
 				Param("data", Boolean, "Include policy static data in results (optional). ")
 				Param("dataConfig", Boolean, "Include static data config (optional).")

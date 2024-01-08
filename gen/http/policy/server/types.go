@@ -170,9 +170,10 @@ func NewImportBundlePayload(length *int) *policy.ImportBundlePayload {
 
 // NewListPoliciesPoliciesRequest builds a policy service ListPolicies endpoint
 // payload.
-func NewListPoliciesPoliciesRequest(locked *bool, rego *bool, data *bool, dataConfig *bool) *policy.PoliciesRequest {
+func NewListPoliciesPoliciesRequest(locked *bool, policyName *string, rego *bool, data *bool, dataConfig *bool) *policy.PoliciesRequest {
 	v := &policy.PoliciesRequest{}
 	v.Locked = locked
+	v.PolicyName = policyName
 	v.Rego = rego
 	v.Data = data
 	v.DataConfig = dataConfig

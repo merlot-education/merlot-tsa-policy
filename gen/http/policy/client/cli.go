@@ -271,7 +271,7 @@ func BuildImportBundlePayload(policyImportBundleLength string) (*policy.ImportBu
 
 // BuildListPoliciesPayload builds the payload for the policy ListPolicies
 // endpoint from CLI flags.
-func BuildListPoliciesPayload(policyListPoliciesLocked string, policyListPoliciesRego string, policyListPoliciesData string, policyListPoliciesDataConfig string) (*policy.PoliciesRequest, error) {
+func BuildListPoliciesPayload(policyListPoliciesLocked string, policyListPoliciesPolicyName string, policyListPoliciesRego string, policyListPoliciesData string, policyListPoliciesDataConfig string) (*policy.PoliciesRequest, error) {
 	var err error
 	var locked *bool
 	{
@@ -282,6 +282,12 @@ func BuildListPoliciesPayload(policyListPoliciesLocked string, policyListPolicie
 			if err != nil {
 				return nil, fmt.Errorf("invalid value for locked, must be BOOL")
 			}
+		}
+	}
+	var policyName *string
+	{
+		if policyListPoliciesPolicyName != "" {
+			policyName = &policyListPoliciesPolicyName
 		}
 	}
 	var rego *bool
@@ -319,6 +325,7 @@ func BuildListPoliciesPayload(policyListPoliciesLocked string, policyListPolicie
 	}
 	v := &policy.PoliciesRequest{}
 	v.Locked = locked
+	v.PolicyName = policyName
 	v.Rego = rego
 	v.Data = data
 	v.DataConfig = dataConfig
