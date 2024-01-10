@@ -21,6 +21,7 @@ const (
 	commonStorage            = "common_storage"
 	autoImportCollection     = "policy_auto_import"
 	lockedField              = "locked"
+	policyNameField          = "name"
 	dataField                = "data"
 	nextDataRefreshTimeField = "nextDataRefreshTime"
 )
@@ -237,10 +238,14 @@ func (s *Storage) Transaction(ctx context.Context, callback func(mCtx mongo.Sess
 	return res, nil
 }
 
-func (s *Storage) GetPolicies(ctx context.Context, locked *bool) ([]*storage.Policy, error) {
-	var filter bson.M
+func (s *Storage) GetPolicies(ctx context.Context, locked *bool, policyName *string) ([]*storage.Policy, error) {
+	filter := bson.M{}
 	if locked != nil {
-		filter = bson.M{lockedField: locked}
+		filter[lockedField] = locked
+	}
+
+	if policyName != nil {
+		filter[policyNameField] = primitive.Regex{Pattern: *policyName, Options: "i"}
 	}
 
 	cursor, err := s.policy.Find(ctx, filter)

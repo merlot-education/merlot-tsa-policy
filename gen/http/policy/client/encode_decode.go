@@ -613,6 +613,9 @@ func EncodeListPoliciesRequest(encoder func(*http.Request) goahttp.Encoder) func
 		if p.Locked != nil {
 			values.Add("locked", fmt.Sprintf("%v", *p.Locked))
 		}
+		if p.PolicyName != nil {
+			values.Add("policyName", *p.PolicyName)
+		}
 		if p.Rego != nil {
 			values.Add("rego", fmt.Sprintf("%v", *p.Rego))
 		}

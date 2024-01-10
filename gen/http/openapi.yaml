@@ -588,6 +588,11 @@ paths:
                   description: Filter to return locked/unlocked policies (optional).
                   required: false
                   type: boolean
+                - name: policyName
+                  in: query
+                  description: Filter to return policies (optional).
+                  required: false
+                  type: string
                 - name: rego
                   in: query
                   description: Include policy source code in results (optional).

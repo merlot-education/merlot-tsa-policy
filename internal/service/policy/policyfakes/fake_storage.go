@@ -112,11 +112,12 @@ type FakeStorage struct {
 		result1 any
 		result2 error
 	}
-	GetPoliciesStub        func(context.Context, *bool) ([]*storage.Policy, error)
+	GetPoliciesStub        func(context.Context, *bool, *string) ([]*storage.Policy, error)
 	getPoliciesMutex       sync.RWMutex
 	getPoliciesArgsForCall []struct {
 		arg1 context.Context
 		arg2 *bool
+		arg3 *string
 	}
 	getPoliciesReturns struct {
 		result1 []*storage.Policy
@@ -741,19 +742,20 @@ func (fake *FakeStorage) GetDataReturnsOnCall(i int, result1 any, result2 error)
 	}{result1, result2}
 }
 
-func (fake *FakeStorage) GetPolicies(arg1 context.Context, arg2 *bool) ([]*storage.Policy, error) {
+func (fake *FakeStorage) GetPolicies(arg1 context.Context, arg2 *bool, arg3 *string) ([]*storage.Policy, error) {
 	fake.getPoliciesMutex.Lock()
 	ret, specificReturn := fake.getPoliciesReturnsOnCall[len(fake.getPoliciesArgsForCall)]
 	fake.getPoliciesArgsForCall = append(fake.getPoliciesArgsForCall, struct {
 		arg1 context.Context
 		arg2 *bool
-	}{arg1, arg2})
+		arg3 *string
+	}{arg1, arg2, arg3})
 	stub := fake.GetPoliciesStub
 	fakeReturns := fake.getPoliciesReturns
-	fake.recordInvocation("GetPolicies", []interface{}{arg1, arg2})
+	fake.recordInvocation("GetPolicies", []interface{}{arg1, arg2, arg3})
 	fake.getPoliciesMutex.Unlock()
 	if stub != nil {
-		return stub(arg1, arg2)
+		return stub(arg1, arg2, arg3)
 	}
 	if specificReturn {
 		return ret.result1, ret.result2
@@ -767,17 +769,17 @@ func (fake *FakeStorage) GetPoliciesCallCount() int {
 	return len(fake.getPoliciesArgsForCall)
 }
 
-func (fake *FakeStorage) GetPoliciesCalls(stub func(context.Context, *bool) ([]*storage.Policy, error)) {
+func (fake *FakeStorage) GetPoliciesCalls(stub func(context.Context, *bool, *string) ([]*storage.Policy, error)) {
 	fake.getPoliciesMutex.Lock()
 	defer fake.getPoliciesMutex.Unlock()
 	fake.GetPoliciesStub = stub
 }
 
-func (fake *FakeStorage) GetPoliciesArgsForCall(i int) (context.Context, *bool) {
+func (fake *FakeStorage) GetPoliciesArgsForCall(i int) (context.Context, *bool, *string) {
 	fake.getPoliciesMutex.RLock()
 	defer fake.getPoliciesMutex.RUnlock()
 	argsForCall := fake.getPoliciesArgsForCall[i]
-	return argsForCall.arg1, argsForCall.arg2
+	return argsForCall.arg1, argsForCall.arg2, argsForCall.arg3
 }
 
 func (fake *FakeStorage) GetPoliciesReturns(result1 []*storage.Policy, result2 error) {

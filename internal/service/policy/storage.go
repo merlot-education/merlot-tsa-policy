@@ -10,7 +10,7 @@ type Storage interface {
 	Policy(ctx context.Context, repository, group, name, version string) (*storage.Policy, error)
 	SavePolicy(ctx context.Context, policy *storage.Policy) error
 	SetPolicyLock(ctx context.Context, repository, group, name, version string, lock bool) error
-	GetPolicies(ctx context.Context, locked *bool) ([]*storage.Policy, error)
+	GetPolicies(ctx context.Context, locked *bool, policyName *string) ([]*storage.Policy, error)
 	AddPolicySubscribers(subscribers ...storage.PolicySubscriber)
 	ListenPolicyDataChanges(ctx context.Context) error
 	Subscriber(ctx context.Context, policyRepository, policyGroup, policyName, policyVersion, webhook, name string) (*storage.Subscriber, error)

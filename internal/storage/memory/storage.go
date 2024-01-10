@@ -3,6 +3,7 @@ package memory
 import (
 	"context"
 	"fmt"
+	"strings"
 	"sync"
 	"time"
 
@@ -111,16 +112,28 @@ func (s *Storage) SetPolicyLock(ctx context.Context, repository, group, name, ve
 	return nil
 }
 
-func (s *Storage) GetPolicies(_ context.Context, locked *bool) ([]*storage.Policy, error) {
+func (s *Storage) GetPolicies(_ context.Context, locked *bool, policyName *string) ([]*storage.Policy, error) {
 	var res []*storage.Policy
 
 	s.mu.RLock()
 	defer s.mu.RUnlock()
+
+	var name string
+	if policyName != nil {
+		name = strings.ToLower(strings.TrimSpace(*policyName))
+	}
+
 	for _, p := range s.policies {
-		if locked == nil || *locked == p.Locked {
-			cpy := *p
-			res = append(res, &cpy)
+		if locked != nil && *locked != p.Locked {
+			continue
 		}
+
+		if policyName != nil && !strings.Contains(strings.ToLower(p.Name), name) {
+			continue
+		}
+
+		cpy := *p
+		res = append(res, &cpy)
 	}
 
 	return res, nil

@@ -100,9 +100,10 @@ var Policy = Type("Policy", func() {
 
 var PoliciesRequest = Type("PoliciesRequest", func() {
 	Field(1, "locked", Boolean)
-	Field(2, "rego", Boolean)
-	Field(3, "data", Boolean)
-	Field(4, "dataConfig", Boolean)
+	Field(2, "policyName", String, func() { Example("example") })
+	Field(3, "rego", Boolean)
+	Field(4, "data", Boolean)
+	Field(5, "dataConfig", Boolean)
 })
 
 var PoliciesResult = Type("PoliciesResult", func() {

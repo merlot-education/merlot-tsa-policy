@@ -135,6 +135,7 @@ type LockRequest struct {
 // method.
 type PoliciesRequest struct {
 	Locked     *bool
+	PolicyName *string
 	Rego       *bool
 	Data       *bool
 	DataConfig *bool
