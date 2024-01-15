@@ -118,5 +118,5 @@ ingress:
     kubernetes.io/ingress.class: nginx
     nginx.ingress.kubernetes.io/rewrite-target: /$2
   tlsEnabled: true
-  frontendDomain: gaiax.vereign.com
+  frontendDomain: tsa.xfsc.dev
   frontendTlsSecretName: cert-manager-tls
