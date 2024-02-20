@@ -2,16 +2,24 @@
 [![coverage report](https://gitlab.eclipse.org/eclipse/xfsc/tsa/policy/badges/main/coverage.svg)](https://gitlab.eclipse.org/eclipse/xfsc/tsa/policy/-/commits/main)
 
 # Policy Service
-This project has been migrated to Eclipse Foundation, and it can be found under https://gitlab.eclipse.org/eclipse/xfsc/
 
-The policy service provides HTTP API to evaluate/execute 
-[OPA](https://www.openpolicyagent.org/) policies.
+The policy service provides REST API to evaluate/execute 
+[OPA](https://www.openpolicyagent.org/) policies written in
+the Rego language. The policy engine is extended with custom 
+functions available for use through the Rego runtime during
+policy execution.
 
 It is developed using the [Goa v3](https://goa.design/) framework
 and uses the [Go OPA framework](https://github.com/open-policy-agent/opa) 
 as a library.
 
-[Swagger OpenAPI documentation](https://gitlab.eclipse.org/eclipse/xfsc/tsa/policy/-/blob/main/gen/http/openapi3.json)
+> A helper script named `goagen.sh` can be found inside the root directory of
+> the service. It can be used to generate the transport layer code from the
+> Goa DSL definitions in the [design](./design) directory. The script should
+> be executed everytime the design definitions are updated. It also generates
+> updated OpenAPI documentation from the DSL.
+
+[OpenAPI documentation](https://gitlab.eclipse.org/eclipse/xfsc/tsa/policy/-/blob/main/gen/http/openapi3.json)
 
 In the local docker-compose environment, the Swagger URL is available at http://localhost:8081/swagger-ui/ 
 
@@ -139,6 +147,45 @@ flowchart LR
 		F[(policies DB)]
 	end
 ```
+
+### Subscribe for Policy Changes
+
+The service allows external clients to subscribe for policy changes.
+A change event happens when policy source code, static data, export configuration or
+any state-related data is updated. Two subscription mechanisms are supported.
+
+##### Cloud Events  
+
+When policy change event happens, a cloud event is sent using the CloudEvents Go SDK.
+It uses standard format for encoding/decoding events and typically uses a message
+queue under the hood for delivery of events. Our implementation is using NATS, but
+any broker supporting the CloudEvents specification should work. 
+
+##### Web Hooks
+
+This mechanism allow clients to express interest in change events for a specific policy
+and when such change event is triggered, the policy service shall notify the client.
+A client subscribes for policy change by making an HTTP request to a policy endpoint
+with the suffix `notifychage`, for example:
+```
+$ curl https://mysvc.com/policy/policies/example/policyname/1.0/notifychange 
+-d '{"webhook_url":"https://url-to-call-when-policy-changes.com"}'
+```
+
+This request creates a record in storage, so the Policy service will know which 
+webhook URL to call when a policy change event happens. 
+
+### Policy Admin API
+
+The API allows to inspect the internal state of the policies without requiring
+direct access to the policy database. This could be useful for debugging or checking
+what is the current source code or static data for a given policy. The endpoint is called
+with HTTP GET requests and supports basic filtering and expansion via query params:
+```
+GET /v1/policies?policyName=hello&locked=true&rego=true&data=true&dataConfig=true
+```
+
+> All query parameters are optional.
 
 ### Policy Development
 
@@ -288,6 +335,38 @@ which can be used during policy development.
 
 You can also look at the source code in package [`regofunc`](./internal/regofunc) to understand the
 inner-working and capabilities of the extension functions.
+
+### Build
+
+##### Local binary
+To make the service binary locally, you can run the following command from the root
+directory (you must have [Go](https://go.dev/) installed):
+```shell
+go build -o policy ./cmd/policy/...
+```
+
+##### Docker image
+
+You can see the Dockerfile of the service under the [deployment](./deployment) directory.
+There is one Dockerfile for use during local development with docker-compose and one for
+building an optimized production image: [deployment/ci/Dockerfile](./deployment/ci/Dockerfile).
+
+### Versioning
+
+There is one global exported variable named `Version` in `main.go`. The variable is set 
+to the latest tag or commit hash during the build process. You can look in the production 
+Dockerfile to see how the Version is set during build. The version is printed in the service 
+log on startup and can be used to verify which specific commit of the code is deployed.
+
+> Version should *not* be set or modified manually in the source code.
+
+### Logging
+
+The service outputs all logs to `stdout` as defined by the best practices in the Cloud Native
+community. See here for more details [12 Factor App](https://12factor.net/logs).
+From there logs could be processed as needed in the specific running environment.
+The standard log levels are `[debug,info,warn,error,fatal`] and `info` is the default level.
+If you want to set another log level, use the ENV configuration variable `LOG_LEVEL` to set it.
 
 ### GDPR
 
