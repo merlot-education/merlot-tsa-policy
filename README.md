@@ -7,7 +7,9 @@ The policy service provides REST API to evaluate/execute
 [OPA](https://www.openpolicyagent.org/) policies written in
 the Rego language. The policy engine is extended with custom 
 functions available for use through the Rego runtime during
-policy execution.
+policy execution. The service also provides endpoints for exporting
+and importing policy bundles, for subscribing for policy changes and endpoints for policy
+administration (e.g. listing policies, lock/unlock specific policy).
 
 It is developed using the [Goa v3](https://goa.design/) framework
 and uses the [Go OPA framework](https://github.com/open-policy-agent/opa) 
@@ -72,6 +74,21 @@ Here is a complete example CURL request:
 ```shell
 curl -X POST http://localhost:8081/policy/policies/xfsc/didresolve/1.0/evaluation -d '{"message":"hello world"}'
 ```
+
+### Policy output JSON schema validation
+
+The policy service exposes HTTP endpoint to validate the output of the policy. It uses
+[JSON Schema](https://json-schema.org/) to validate the JSON schema of the output
+of the policy. To execute the validation procedure, a new HTTP URL is automatically generated.
+
+```
+Evaluation URL pattern: {service_addr}/{repo}/{group}/{policyname}/{version}/evaluation
+Validation URL pattern: {service_addr}/{repo}/{group}/{policyname}/{version}/validation
+```
+
+In order to use the validation endpoint, `output-schema.json` file following the [JSON Schema](https://json-schema.org/)
+specification must be present in the policy repository directory. For more information on policy development refer to:
+[Policy Development](#Policy-Development)
 
 ### Policy Locking
 
