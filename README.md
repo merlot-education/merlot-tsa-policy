@@ -192,6 +192,18 @@ $ curl https://mysvc.com/policy/policies/example/policyname/1.0/notifychange
 This request creates a record in storage, so the Policy service will know which 
 webhook URL to call when a policy change event happens. 
 
+The event type that will be received by the subscriber is per policy and is sent
+as JSON structure like:
+```json
+{
+  "repository": "policies",
+  "group": "example",
+  "name" : "mypolicy",
+  "version": "1.0"
+}
+```
+It is defined in [notify.go](./internal/notify/notify.go)
+
 ### Policy Admin API
 
 The API allows to inspect the internal state of the policies without requiring
