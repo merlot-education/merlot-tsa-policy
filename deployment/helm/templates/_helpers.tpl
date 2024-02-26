@@ -86,3 +86,15 @@ PostgreSQL Connection  string URI
 postgresql://{{ .Values.connectionManager.database.user }}:{{ .Values.connectionManager.database.password }}@{{ .Values.connectionManager.database.host }}:{{ .Values.connectionManager.database.port }}/{{ .Release.Namespace }}_{{ include "app.name" . | replace "-" "_" }}?schema={{ .Values.connectionManager.database.schema }}
 {{- end -}}
 
+
+{{/*
+Istio labels
+*/}}
+{{- define "app.istioLabels" -}}
+{{- if ((.Values.istio).injection).pod -}}
+sidecar.istio.io/inject: "true"
+{{- else if eq (((.Values.istio).injection).pod) false -}}
+sidecar.istio.io/inject: "false"
+{{- end -}}
+{{- end -}}
+{{/*

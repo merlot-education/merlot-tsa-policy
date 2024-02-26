@@ -1,5 +1,5 @@
 # -- Default number of instances to start 
-replicaCount: 2
+replicaCount: 1
 # -- Application name
 name: policy
 # -- Ovverwrites application name
@@ -41,11 +41,11 @@ podAnnotations: {}
 
 resources:
   requests:
-    cpu: 50m
-    memory: 128Mi
+    cpu: 25m
+    memory: 64Mi
   limits:
-    cpu: 300m
-    memory: 256Mi
+    cpu: 150m
+    memory: 128Mi
 
 ## Configure pod autoscaling
 ##
@@ -54,7 +54,7 @@ autoscaling:
   # -- Enable autoscaling
   enabled: false
   # -- Minimum replicas
-  minReplicas: 2
+  minReplicas: 1
   # -- Maximum replicas
   maxReplicas: 3
   # -- CPU target for autoscaling trigger
