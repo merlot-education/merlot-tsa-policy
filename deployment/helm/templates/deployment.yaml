@@ -29,12 +29,23 @@ spec:
     spec:
       securityContext:
 {{- include "app.securitycontext" . | nindent 8 }}
+      {{- if .Values.image.pullSecrets }}
       imagePullSecrets:
         - name: {{ .Values.image.pullSecrets }}
+      {{- end }}
       containers:
       - name: {{ template "app.name" . }}
         image: "{{ .Values.image.repository }}/{{ .Values.image.name }}:{{ default .Chart.AppVersion .Values.image.tag }}"
         imagePullPolicy: {{ .Values.image.pullPolicy | quote }}
+      {{- if .Values.useSecretRef }}
+        envFrom:
+          - secretRef:
+            name: {{ .Values.secretRefName }}
+      {{- else if .Values.useConfigMap }}
+        envFrom:
+          - configMapRef:
+              name: {{ .Values.configMapName }}
+      {{- else }}
         env:
           {{- if .Values.mongo.addr }}
           - name: MONGO_ADDR
@@ -82,6 +93,7 @@ spec:
             value: {{ .Values.addresses.signer | quote }}
           - name: OCM_ADDR
             value: {{ .Values.addresses.ocm | quote }}
+        {{- end }}
 {{- if .Values.extraVars }}
 {{- toYaml .Values.extraVars | indent 10 }}
 {{- end }}

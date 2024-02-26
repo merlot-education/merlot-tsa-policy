@@ -405,6 +405,10 @@ If you want to set another log level, use the ENV configuration variable `LOG_LE
 
 [Dependencies](go.mod)
 
+### Deployment
+
+[Helm deployment documentation](deployment/helm/README.md)
+
 ### License
 
 [Apache 2.0 license](LICENSE)
