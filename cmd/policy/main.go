@@ -420,7 +420,7 @@ func makeStorage(cfg config.Config, logger *zap.Logger) (policy.Storage, error) 
 			return nil, err
 		}
 
-		policies, err := cloner.IterateRepo("", repo)
+		policies, err := cloner.IterateRepo(cfg.Policy.Folder, repo)
 		if err != nil {
 			return nil, err
 		}
