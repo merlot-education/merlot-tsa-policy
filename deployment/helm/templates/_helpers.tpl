@@ -97,4 +97,3 @@ sidecar.istio.io/inject: "true"
 sidecar.istio.io/inject: "false"
 {{- end -}}
 {{- end -}}
-{{/*

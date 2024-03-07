@@ -40,7 +40,7 @@ spec:
       {{- if .Values.useSecretRef }}
         envFrom:
           - secretRef:
-            name: {{ .Values.secretRefName }}
+             name: {{ .Values.secretRefName }}
       {{- else if .Values.useConfigMap }}
         envFrom:
           - configMapRef:
@@ -93,6 +93,13 @@ spec:
             value: {{ .Values.addresses.signer | quote }}
           - name: OCM_ADDR
             value: {{ .Values.addresses.ocm | quote }}
+
+          {{- if .Values.memoryStorage}}
+          - name: {{.Values.memoryStorage.policiesRepoVar}}
+            value: {{.Values.memoryStorage.policiesRepo}}
+          - name: {{.Values.memoryStorage.policiesFolderVar}}
+            value: {{.Values.memoryStorage.policiesFolder}}
+          {{- end}}
         {{- end }}
 {{- if .Values.extraVars }}
 {{- toYaml .Values.extraVars | indent 10 }}
