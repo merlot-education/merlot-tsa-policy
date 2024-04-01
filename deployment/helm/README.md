@@ -10,7 +10,7 @@
 ## Install Helm Chart
 
 ```console
-helm install -n <namespace> [RELEASE_NAME] Chart.yaml
+helm install [RELEASE_NAME] -f values.yaml .
 ```
 
 _See [configuration](#configuration) below._
@@ -41,10 +41,8 @@ _See [helm uninstall](https://helm.sh/docs/helm/helm_uninstall/) for command doc
 ## Upgrading Chart
 
 ```console
-# Install chart with development environment values
-helm upgrade -n <namespace> [RELEASE_NAME] Chart.yaml -f values-dev.yaml
-# Install chart with production environment values
-helm upgrade -n <namespace> [RELEASE_NAME] Chart.yaml -f values.yaml
+# Upgrade chart to development environment values
+helm upgrade -f values-dev.yaml [RELEASE_NAME] .
 ```
 
 ## Configuration
