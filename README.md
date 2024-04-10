@@ -36,6 +36,14 @@ flowchart LR
 	C --sync--- D[Git Server]
 ```
 
+### Configuration
+
+The Policy service is configured using the [Configuration File](./internal/config/config.go).
+All configurations are expected as Environment variables specified in the
+configuration file. For managing the configuration data from ENV variables,
+[envconfig library](https://github.com/kelseyhightower/envconfig) is used.
+
+
 ### Policy Evaluation
 
 The policy service exposes HTTP endpoints to evaluate/execute policies.
