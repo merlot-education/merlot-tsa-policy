@@ -184,7 +184,11 @@ func (c *Client) GetWhitelistingQuery(ctx context.Context, presentationID string
 
 	//the easiest way to get the issuer did from the presentation seems through the creddef
 	creddef := response.Data.Presentations[0].CredDefID
+	if len(creddef) < 6 {
+		return false, nil
+	}
 	endOfDid := strings.Index(creddef, ":")
+	//change for variablilty in did length
 	did := creddef[0:endOfDid]
 
 	var allowed AgentDidsResponse
