@@ -116,6 +116,7 @@ func main() {
 		ocmFuncs := regofunc.NewOcmFuncs(cfg.OCM.Addr, httpClient)
 		signerFuncs := regofunc.NewSignerFuncs(cfg.Signer.Addr, oauthClient)
 		didWebFuncs := regofunc.NewDIDWebFuncs()
+		regofunc.Register("getWhitelisting", rego.Function1(ocmFuncs.GetWhitelisting()))
 		regofunc.Register("cacheGet", rego.Function3(cacheFuncs.CacheGetFunc()))
 		regofunc.Register("cacheSet", rego.Function4(cacheFuncs.CacheSetFunc()))
 		regofunc.Register("didResolve", rego.Function1(didResolverFuncs.ResolveFunc()))
