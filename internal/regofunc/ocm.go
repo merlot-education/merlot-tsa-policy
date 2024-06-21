@@ -189,3 +189,40 @@ func (of *OcmFuncs) GetRawProofResult() (*rego.Function, rego.Builtin1) {
 			return ast.NewTerm(val), nil
 		}
 }
+
+// this func extends the OPA capabilities and adds support for defining a Whitelisting Function inside the Policy.
+func (of *OcmFuncs) GetWhitelisting() (*rego.Function, rego.Builtin1) {
+	return &rego.Function{
+			Name:    "ocm.getWhitelisting",
+			Decl:    types.NewFunction(types.Args(types.S), types.A),
+			Memoize: true,
+		},
+		func(bctx rego.BuiltinContext, id *ast.Term) (*ast.Term, error) {
+			if of.addr == "" {
+				return nil, fmt.Errorf("OCM Address was not set in env")
+			}
+
+			var presentationID string
+			if err := ast.As(id.Value, &presentationID); err != nil {
+				return nil, fmt.Errorf("invalid presentationId: %s", err)
+			}
+
+			fmt.Println("Whitelisting Rego Function called")
+			//checks the actuall whitelisting with the presentationID provided in the policy
+			answer, err := of.client.GetWhitelistingQuery(bctx.Context, presentationID)
+
+			if err != nil {
+				return nil, err
+			}
+
+			var val ast.Value
+			val, err = ast.InterfaceToValue(answer)
+
+			if err != nil {
+				return nil, err
+			}
+
+			//should return "true/false"
+			return ast.NewTerm(val), nil
+		}
+}
