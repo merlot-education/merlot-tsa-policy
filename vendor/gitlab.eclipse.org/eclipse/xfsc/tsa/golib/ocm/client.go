@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -216,7 +215,7 @@ func (c *Client) GetWhitelistingQuery(ctx context.Context, presentationID string
 	}
 
 	fmt.Println("Once reached here: Did is not in whitelist")
-	return false, errors.New("Is not in Whitelist")
+	return false, nil
 
 }
 
