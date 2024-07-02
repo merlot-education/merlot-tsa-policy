@@ -4,7 +4,7 @@ go 1.21
 
 require (
 	github.com/cloudevents/sdk-go/protocol/nats/v2 v2.14.0
-	github.com/cloudevents/sdk-go/v2 v2.14.0
+	github.com/cloudevents/sdk-go/v2 v2.15.2
 	github.com/go-git/go-git/v5 v5.10.0
 	github.com/google/uuid v1.4.0
 	github.com/jpillora/ipfilter v1.2.9
