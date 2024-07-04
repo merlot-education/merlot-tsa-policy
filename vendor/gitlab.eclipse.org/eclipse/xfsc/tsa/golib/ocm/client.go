@@ -204,25 +204,30 @@ func (c *Client) GetWhitelistingQuery(ctx context.Context, presentationID string
 		}
 	}
 	//this calls the MPO to retrieve a list of allowed issueres according to the MPO based on the given didweb
-	allowed, _ = getAllowedDids(issuer)
+	allowed, err = getAllowedDids(issuer)
+
+	if err != nil {
+		log.Fatalln("Error retrieving the Allowed Dids")
+		return false, nil
+	}
 
 	//check whitelisting
 	for _, v := range allowed.AgentDids {
 		if v == did {
-			fmt.Println("Is in whitelist. Value:", v)
+			log.Println("Is in whitelist. Value:", v)
 			return true, nil
 		}
 	}
 
-	fmt.Println("Once reached here: Did is not in whitelist")
 	return false, nil
 
 }
 
 func getAllowedDids(orgaID string) (AgentDidsResponse, error) {
 
-	baseUrl := os.Getenv("BASEURL")
-	pathUrl := os.Getenv("PATHURL")
+	//rename
+	baseUrl := os.Getenv("BASEURL_DID_AUTH")
+	pathUrl := os.Getenv("PATHURL_DID_AUTH")
 
 	if baseUrl == "" {
 		fmt.Println("Baseurl  is not set")
@@ -230,16 +235,14 @@ func getAllowedDids(orgaID string) (AgentDidsResponse, error) {
 		fmt.Println("URL and Path:", baseUrl, pathUrl)
 	}
 
-	fmt.Println("Orga ID should be did:web and is:", orgaID)
+	log.Println("Orga ID should be did:web and is:", orgaID)
 
-	//config abrufen
-	//konfigurierbar machen
-	//mock := "did:web:marketplace.dev.merlot-education.eu:participant:14e2471b-a276-3349-8a6e-caa941f9369b"
 	url := fmt.Sprintf("%s/%s/%s", baseUrl, pathUrl, orgaID)
-	fmt.Println("URL:", url)
+	log.Println("URL:", url)
 
 	resp, err := http.Get(url)
 	if err != nil {
+		//return error
 		log.Fatalf("Failed to make the request: %v", err)
 	}
 	defer resp.Body.Close()
@@ -258,7 +261,7 @@ func getAllowedDids(orgaID string) (AgentDidsResponse, error) {
 		log.Fatalf("Failed to unmarshal response: %v", err)
 	}
 
-	fmt.Println("Live: Agent DIDs that are retrieved from Merlot:", allowedDidResponse.AgentDids)
+	log.Println("Live: Agent DIDs that are retrieved from Merlot:", allowedDidResponse.AgentDids)
 
 	return allowedDidResponse, nil
 }
