@@ -243,22 +243,22 @@ func getAllowedDids(orgaID string) (AgentDidsResponse, error) {
 	resp, err := http.Get(url)
 	if err != nil {
 		//return error
-		log.Fatalf("Failed to make the request: %v", err)
+		fmt.Println("Failed to make the request:", err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		log.Fatalf("Failed to get a valid response: status code %d", resp.StatusCode)
+		log.Println("Failed to get a valid response: status code ", resp.StatusCode)
 	}
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		log.Fatalf("Failed to read the response body: %v", err)
+		log.Println("Failed to read the response body: ", err)
 	}
 
 	var allowedDidResponse AgentDidsResponse
 	if err := json.Unmarshal(body, &allowedDidResponse); err != nil {
-		log.Fatalf("Failed to unmarshal response: %v", err)
+		log.Println("Failed to unmarshal response: ", err)
 	}
 
 	log.Println("Live: Agent DIDs that are retrieved from Merlot:", allowedDidResponse.AgentDids)
