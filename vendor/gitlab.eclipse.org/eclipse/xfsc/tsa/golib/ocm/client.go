@@ -244,6 +244,7 @@ func getAllowedDids(orgaID string) (AgentDidsResponse, error) {
 	if err != nil {
 		//return error
 		fmt.Println("Failed to make the request:", err)
+
 	}
 	defer resp.Body.Close()
 
@@ -261,7 +262,7 @@ func getAllowedDids(orgaID string) (AgentDidsResponse, error) {
 		log.Println("Failed to unmarshal response: ", err)
 	}
 
-	log.Println("Live: Agent DIDs that are retrieved from Merlot:", allowedDidResponse.AgentDids)
+	log.Println("Agent DIDs that are retrieved from Merlot:", allowedDidResponse.AgentDids)
 
 	return allowedDidResponse, nil
 }
