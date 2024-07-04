@@ -207,7 +207,7 @@ func (c *Client) GetWhitelistingQuery(ctx context.Context, presentationID string
 	allowed, err = getAllowedDids(issuer)
 
 	if err != nil {
-		log.Fatalln("Error retrieving the Allowed Dids")
+		log.Println("Error retrieving the Allowed Dids")
 		return false, nil
 	}
 
